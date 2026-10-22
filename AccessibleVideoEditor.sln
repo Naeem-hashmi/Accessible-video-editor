@@ -15,6 +15,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tools", "tools", "{327457F1
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AccessibleVideoEditor.AssetGenerator", "tools\AccessibleVideoEditor.AssetGenerator\AccessibleVideoEditor.AssetGenerator.csproj", "{1C43D2C0-CB60-40A6-AFC3-084550C6BB0C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AccessibleVideoEditor.App", "src\AccessibleVideoEditor.App\AccessibleVideoEditor.App.csproj", "{D2166659-6D19-4634-B903-823147FA5A24}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -36,10 +38,15 @@ Global
 		{1C43D2C0-CB60-40A6-AFC3-084550C6BB0C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1C43D2C0-CB60-40A6-AFC3-084550C6BB0C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1C43D2C0-CB60-40A6-AFC3-084550C6BB0C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D2166659-6D19-4634-B903-823147FA5A24}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D2166659-6D19-4634-B903-823147FA5A24}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D2166659-6D19-4634-B903-823147FA5A24}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D2166659-6D19-4634-B903-823147FA5A24}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{FFA1B83E-8CD5-420D-B196-B313B63700CF} = {9C0FAEF9-4C43-435E-B6F3-6A5646933D05}
 		{4F1291EE-8C0B-48EA-A672-6EAEF210E078} = {3EFAE560-1B78-4900-BDCA-80B34405E168}
 		{1C43D2C0-CB60-40A6-AFC3-084550C6BB0C} = {327457F1-7FA7-48EA-BAED-F8F91B6DAE3B}
+		{D2166659-6D19-4634-B903-823147FA5A24} = {9C0FAEF9-4C43-435E-B6F3-6A5646933D05}
 	EndGlobalSection
 EndGlobal

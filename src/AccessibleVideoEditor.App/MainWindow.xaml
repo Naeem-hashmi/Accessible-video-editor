@@ -1,0 +1,91 @@
+<Window x:Class="AccessibleVideoEditor.App.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Accessible Video Editor"
+        Width="1100" Height="720" MinWidth="640" MinHeight="420"
+        FontSize="15"
+        WindowStartupLocation="CenterScreen">
+    <Window.Resources>
+        <Style x:Key="SpokenItem" TargetType="ListBoxItem">
+            <Setter Property="AutomationProperties.Name" Value="{Binding Spoken}" />
+            <Setter Property="Padding" Value="6" />
+            <Setter Property="Margin" Value="2" />
+        </Style>
+    </Window.Resources>
+
+    <DockPanel>
+        <Menu x:Name="MainMenu" DockPanel.Dock="Top" AutomationProperties.Name="Menu bar" />
+
+        <StatusBar DockPanel.Dock="Bottom" AutomationProperties.Name="Status bar">
+            <StatusBarItem>
+                <TextBlock x:Name="StatusText" TextWrapping="Wrap" AutomationProperties.Name="Last message" />
+            </StatusBarItem>
+            <Separator />
+            <StatusBarItem HorizontalAlignment="Right">
+                <TextBlock x:Name="PlayheadText" AutomationProperties.Name="Playhead" />
+            </StatusBarItem>
+        </StatusBar>
+
+        <Grid Margin="8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="280" MinWidth="180" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <DockPanel Grid.Column="0">
+                <Label x:Name="LayersLabel" DockPanel.Dock="Top" Content="_Layers:" Target="{Binding ElementName=LayersList}" Padding="0,0,0,4" />
+                <ListBox x:Name="LayersList"
+                         AutomationProperties.Name="Layers"
+                         AutomationProperties.HelpText="Up and Down arrows choose a layer. Enter goes to its items. F6 switches back to the timeline."
+                         ItemContainerStyle="{StaticResource SpokenItem}"
+                         IsTextSearchEnabled="False"
+                         SelectionMode="Single">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Display}" TextWrapping="Wrap" />
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </DockPanel>
+
+            <GridSplitter Grid.Column="1" Width="6" HorizontalAlignment="Center" VerticalAlignment="Stretch" Focusable="False" IsTabStop="False" />
+
+            <Grid Grid.Column="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" MinHeight="120" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <Label x:Name="ItemsLabel" Grid.Row="0" Content="_Timeline:" Target="{Binding ElementName=ItemsList}" Padding="0,0,0,4" />
+                <ListBox x:Name="ItemsList" Grid.Row="1"
+                         AutomationProperties.Name="Timeline"
+                         AutomationProperties.HelpText="Left and Right arrows move between items. Up and Down change layer. Enter opens item options. F1 lists every key."
+                         ItemContainerStyle="{StaticResource SpokenItem}"
+                         IsTextSearchEnabled="False"
+                         SelectionMode="Single"
+                         ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                         ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                         VirtualizingPanel.IsVirtualizing="False">
+                    <ListBox.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal" />
+                        </ItemsPanelTemplate>
+                    </ListBox.ItemsPanel>
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Border BorderBrush="Gray" BorderThickness="1" CornerRadius="3" Padding="6" Width="200">
+                                <TextBlock Text="{Binding Display}" TextWrapping="Wrap" />
+                            </Border>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+
+                <Border Grid.Row="2" Background="Black" Height="240" Margin="0,8,0,0">
+                    <MediaElement x:Name="Player" Focusable="False" Stretch="Uniform" AutomationProperties.Name="Preview picture" />
+                </Border>
+            </Grid>
+        </Grid>
+    </DockPanel>
+</Window>

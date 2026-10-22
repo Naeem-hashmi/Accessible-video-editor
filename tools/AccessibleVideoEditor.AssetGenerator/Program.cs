@@ -1,11 +1,24 @@
 ﻿using AccessibleVideoEditor.Core.Input;
 using AccessibleVideoEditor.Core.Sound;
 
-// Writes the built-in sounds and the default keymap to a folder, for packing into the installer.
+// Writes the built-in sounds and default keymap for the installer, or the keyboard documents.
 // Usage: AccessibleVideoEditor.AssetGenerator <output folder>
+//        AccessibleVideoEditor.AssetGenerator --docs <docs folder>
+if (args.Length == 2 && args[0] == "--docs")
+{
+    var docs = Path.GetFullPath(args[1]);
+    Directory.CreateDirectory(docs);
+    var keymap = Keymap.Default();
+    File.WriteAllText(Path.Combine(docs, "KEYBOARD.md"), KeyboardReference.Markdown(keymap));
+    File.WriteAllText(Path.Combine(docs, "KEYBOARD.html"), KeyboardReference.Html(keymap));
+    Console.WriteLine($"Wrote KEYBOARD.md and KEYBOARD.html to {docs}");
+    return 0;
+}
+
 if (args.Length != 1)
 {
     Console.Error.WriteLine("Usage: AccessibleVideoEditor.AssetGenerator <output folder>");
+    Console.Error.WriteLine("       AccessibleVideoEditor.AssetGenerator --docs <docs folder>");
     return 2;
 }
 

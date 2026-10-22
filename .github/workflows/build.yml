@@ -1,0 +1,132 @@
+name: Build and test
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_NOLOGO: "1"
+  DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+
+jobs:
+  core-linux:
+    name: Core tests (Linux, system FFmpeg)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: Install FFmpeg
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg
+      - name: Test
+        run: dotnet test tests/AccessibleVideoEditor.Core.Tests -c Release --logger "console;verbosity=normal"
+
+  windows:
+    name: Windows build, tests, self-test and installer
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Download FFmpeg (GPL build by BtbN)
+        shell: pwsh
+        run: |
+          $base = "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest"
+          $names = @("ffmpeg-n7.1-latest-win64-gpl-7.1.zip", "ffmpeg-n8.0-latest-win64-gpl-8.0.zip", "ffmpeg-master-latest-win64-gpl.zip")
+          $ok = $false
+          foreach ($name in $names) {
+            try {
+              Invoke-WebRequest "$base/$name" -OutFile ffmpeg.zip -UseBasicParsing
+              Write-Host "Downloaded $name"
+              $ok = $true
+              break
+            } catch {
+              Write-Host "Not available: $name"
+            }
+          }
+          if (-not $ok) { throw "No FFmpeg build could be downloaded." }
+          Expand-Archive ffmpeg.zip -DestinationPath ffmpeg-download
+          $exe = Get-ChildItem ffmpeg-download -Recurse -Filter ffmpeg.exe | Select-Object -First 1
+          $root = $exe.Directory.Parent.FullName
+          New-Item -ItemType Directory -Force build/ffmpeg | Out-Null
+          Copy-Item (Join-Path $exe.DirectoryName "ffmpeg.exe"), (Join-Path $exe.DirectoryName "ffprobe.exe") build/ffmpeg
+          if (Test-Path (Join-Path $root "LICENSE.txt")) { Copy-Item (Join-Path $root "LICENSE.txt") build/ffmpeg/FFMPEG-LICENSE.txt }
+          & build/ffmpeg/ffmpeg.exe -hide_banner -version | Select-Object -First 1
+          "FFMPEG_PATH=$((Resolve-Path build/ffmpeg).Path)" >> $env:GITHUB_ENV
+
+      - name: Core tests (Windows, bundled FFmpeg)
+        run: dotnet test tests/AccessibleVideoEditor.Core.Tests -c Release --logger "console;verbosity=normal"
+
+      - name: Publish the app (self-contained, x64)
+        run: dotnet publish src/AccessibleVideoEditor.App -c Release -o build/app
+
+      - name: Add FFmpeg, sounds and documentation
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force build/app/ffmpeg | Out-Null
+          Copy-Item build/ffmpeg/* build/app/ffmpeg
+          dotnet run --project tools/AccessibleVideoEditor.AssetGenerator -c Release -- build/app
+          New-Item -ItemType Directory -Force build/app/docs | Out-Null
+          Copy-Item docs/*.html build/app/docs
+          Copy-Item LICENSE build/app/LICENSE.txt
+
+      - name: Add NVDA controller client (optional, for direct NVDA speech)
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          $version = "2024.4.2"
+          Invoke-WebRequest "https://www.nvaccess.org/files/nvda/releases/$version/nvda_${version}_controllerClient.zip" -OutFile nvda.zip -UseBasicParsing
+          Expand-Archive nvda.zip -DestinationPath nvda-client
+          $dll = Get-ChildItem nvda-client -Recurse -Filter "nvdaControllerClient*.dll" | Where-Object { $_.FullName -match "x64" } | Select-Object -First 1
+          if (-not $dll) { throw "x64 controller client not found in the download." }
+          Copy-Item $dll.FullName build/app/nvdaControllerClient.dll
+          Write-Host "Added $($dll.FullName)"
+
+      - name: Self-test the real app on the Windows desktop
+        shell: pwsh
+        run: |
+          $log = Join-Path $pwd "self-test.log"
+          $p = Start-Process -FilePath build/app/AccessibleVideoEditor.exe -ArgumentList "--self-test", "`"$log`"" -PassThru
+          if (-not $p.WaitForExit(600000)) { $p.Kill(); throw "Self-test timed out." }
+          if (Test-Path $log) { Get-Content $log } else { Write-Host "No self-test log was written." }
+          $appLog = Join-Path $env:APPDATA "AccessibleVideoEditor/log.txt"
+          if (Test-Path $appLog) { Write-Host "--- application log ---"; Get-Content $appLog }
+          if ($p.ExitCode -ne 0) { throw "Self-test failed with exit code $($p.ExitCode)." }
+
+      - name: Build the installer
+        shell: pwsh
+        run: |
+          if (-not (Get-Command iscc -ErrorAction SilentlyContinue)) {
+            $default = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+            if (-not (Test-Path $default)) { choco install innosetup -y --no-progress }
+          }
+          $iscc = (Get-Command iscc -ErrorAction SilentlyContinue).Source
+          if (-not $iscc) { $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" }
+          & $iscc "/DSourceDir=$((Resolve-Path build/app).Path)" "/DAppVersion=0.1.0" installer/AccessibleVideoEditor.iss
+          if ($LASTEXITCODE -ne 0) { throw "Installer build failed." }
+
+      - name: Make the portable zip
+        shell: pwsh
+        run: Compress-Archive -Path build/app/* -DestinationPath build/installer/AccessibleVideoEditor-portable-0.1.0.zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AccessibleVideoEditor-windows
+          path: build/installer/*
+          if-no-files-found: error
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: self-test-log
+          path: self-test.log
+          if-no-files-found: ignore

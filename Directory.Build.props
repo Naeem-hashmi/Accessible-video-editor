@@ -1,0 +1,12 @@
+<Project>
+  <PropertyGroup>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <Version>0.1.0</Version>
+    <Company>Accessible Video Editor contributors</Company>
+    <Product>Accessible Video Editor</Product>
+    <Copyright>Copyright (c) Accessible Video Editor contributors. GPL-3.0-or-later.</Copyright>
+  </PropertyGroup>
+</Project>

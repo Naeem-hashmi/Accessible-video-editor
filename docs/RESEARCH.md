@@ -244,14 +244,14 @@ ffmpeg -i a.mp4 -i b.mp4 -i logo.png -i music.mp3 -filter_complex "
  [0:v]trim=0:12.5,setpts=PTS-STARTPTS[v0];[0:a]atrim=0:12.5,asetpts=PTS-STARTPTS[a0];
  [1:v]trim=3:33,setpts=PTS-STARTPTS[v1];[1:a]atrim=3:33,asetpts=PTS-STARTPTS[a1];
  [v0][a0][v1][a1]concat=n=2:v=1:a=1[base][dialog];
- [2:v]scale=384:-1[logo];          (20% of a 1920-wide frame)
+ [2:v]scale=384:-1[logo];
  [base][logo]overlay=W-w-40:40[vout];
  [3:a]volume=0.3,afade=t=out:st=39.5:d=3[mus];
  [dialog][mus]amix=inputs=2:duration=first:normalize=0[aout]"
  -map [vout] -map [aout] -c:v libx264 -crf 18 -preset slow -c:a aac -b:a 320k out.mp4
 ```
 
-(Timestamps must be reset with `setpts=PTS-STARTPTS` after `trim`; build `amix` graphs carefully, since FFmpeg has had crash bugs when combining `concat` and `amix` on many streams. Test with the FFmpeg version we bundle.)
+(The logo is scaled to 384 px, which is 20% of a 1920-wide frame. Timestamps must be reset with `setpts=PTS-STARTPTS` after `trim`; build `amix` graphs carefully, since FFmpeg has had crash bugs when combining `concat` and `amix` on many streams. Test with the FFmpeg version we bundle.)
 
 ---
 

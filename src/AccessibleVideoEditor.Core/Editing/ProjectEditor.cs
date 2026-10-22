@@ -614,8 +614,11 @@ public static class ProjectEditor
         var bestDistance = double.MaxValue;
         for (var i = 1; i < spans.Count; i++)
         {
-            // The cut point between two items is where the previous one ends, or where this one starts.
-            var distance = Math.Min(Math.Abs(spans[i - 1].End - time), Math.Abs(spans[i].Start - time));
+            // A join runs from where this item starts to where the previous one ends (they differ when a
+            // transition overlaps them or a gap separates them). Measure the distance to that stretch.
+            var from = Math.Min(spans[i].Start, spans[i - 1].End);
+            var to = Math.Max(spans[i].Start, spans[i - 1].End);
+            var distance = time < from ? from - time : time > to ? time - to : 0;
             if (distance < bestDistance)
             {
                 bestDistance = distance;
@@ -623,7 +626,7 @@ public static class ProjectEditor
             }
         }
 
-        if (best < 0 || bestDistance > 0.5 + spec.Duration)
+        if (best < 0 || bestDistance > 0.5)
         {
             return EditResult.Fail($"There is no join between two items on {layer.Name} at {TimeFormat.Words(time)}. Split the item here first with S, or move the marker to a join.");
         }

@@ -37,20 +37,25 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
-      - name: Download FFmpeg (GPL build by BtbN)
+      - name: Download FFmpeg (stable GPL release build)
         shell: pwsh
         run: |
-          $base = "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest"
-          $names = @("ffmpeg-n7.1-latest-win64-gpl-7.1.zip", "ffmpeg-n8.0-latest-win64-gpl-8.0.zip", "ffmpeg-master-latest-win64-gpl.zip")
+          # Prefer a stable release; fall back to BtbN release branches, and only then to a nightly.
+          $urls = @(
+            "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip",
+            "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-n8.0-latest-win64-gpl-8.0.zip",
+            "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-n7.1-latest-win64-gpl-7.1.zip",
+            "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip"
+          )
           $ok = $false
-          foreach ($name in $names) {
+          foreach ($url in $urls) {
             try {
-              Invoke-WebRequest "$base/$name" -OutFile ffmpeg.zip -UseBasicParsing
-              Write-Host "Downloaded $name"
+              Invoke-WebRequest $url -OutFile ffmpeg.zip -UseBasicParsing
+              Write-Host "Downloaded $url"
               $ok = $true
               break
             } catch {
-              Write-Host "Not available: $name"
+              Write-Host "Not available: $url"
             }
           }
           if (-not $ok) { throw "No FFmpeg build could be downloaded." }
@@ -59,7 +64,10 @@ jobs:
           $root = $exe.Directory.Parent.FullName
           New-Item -ItemType Directory -Force build/ffmpeg | Out-Null
           Copy-Item (Join-Path $exe.DirectoryName "ffmpeg.exe"), (Join-Path $exe.DirectoryName "ffprobe.exe") build/ffmpeg
-          if (Test-Path (Join-Path $root "LICENSE.txt")) { Copy-Item (Join-Path $root "LICENSE.txt") build/ffmpeg/FFMPEG-LICENSE.txt }
+          foreach ($name in "LICENSE.txt", "LICENSE", "README.txt") {
+            $file = Join-Path $root $name
+            if (Test-Path $file) { Copy-Item $file "build/ffmpeg/FFMPEG-$name" }
+          }
           & build/ffmpeg/ffmpeg.exe -hide_banner -version | Select-Object -First 1
           "FFMPEG_PATH=$((Resolve-Path build/ffmpeg).Path)" >> $env:GITHUB_ENV
 

@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>User guide - Accessible Video Editor</title>
+<style>
+body{font-family:Segoe UI,sans-serif;max-width:50em;margin:1em auto;padding:0 1em;line-height:1.6}
+kbd{font-family:inherit;font-weight:bold}
+</style>
+</head>
+<body>
+<h1>Accessible Video Editor user guide</h1>
+<p>Accessible Video Editor is a video editor for Windows designed first for screen reader users. It works with NVDA, JAWS and Narrator, and everything is done from the keyboard. Each section of this guide is a heading, so you can press <kbd>H</kbd> in your screen reader's browse mode to jump between them. The full list of keys is in the <a href="KEYBOARD.html">keyboard reference</a>.</p>
+
+<h2>The idea in one minute</h2>
+<p>A video is made of <strong>layers</strong>, stacked like sheets of paper. Layer 1 is at the bottom. Video layers hold video clips, pictures and colour cards; a higher video layer appears in front of a lower one, which is how you put a logo or a small camera picture over the main video. Audio layers hold music, voice and sound effects; all layers' sound is mixed together.</p>
+<p>Each layer holds <strong>items</strong> that play one after another, from left to right in time. There can be a gap before an item, and a transition between two touching items.</p>
+<p>The <strong>playhead</strong> is the current time. Playing starts from it, splitting happens at it, and markers are added at it.</p>
+
+<h2>The window</h2>
+<ul>
+<li><strong>Timeline</strong>: the items of the focused layer, in time order. This is where you spend most of your time. Each item is read as, for example, "2 of 5, interview.mp4, video, starts 12.5 seconds, length 30 seconds".</li>
+<li><strong>Layer list</strong>: every layer, for example "Layer 3, Audio, Music, 2 items, muted". Press <kbd>F6</kbd> to move between the timeline and the layer list.</li>
+<li><strong>Menu bar</strong>: press <kbd>Alt</kbd> to reach every command and see its key.</li>
+<li><strong>Status bar</strong>: the last message, the playhead time and the listening mode. Your screen reader's status bar command reads it (<kbd>NVDA+End</kbd> or <kbd>Insert+Page Down</kbd> in JAWS).</li>
+</ul>
+
+<h2>Moving around: a grid of layers and time</h2>
+<ul>
+<li><kbd>Left arrow</kbd> and <kbd>Right arrow</kbd>: previous and next item on this layer. The playhead moves to the start of the item. <kbd>Home</kbd> and <kbd>End</kbd> go to the first and last item.</li>
+<li><kbd>Up arrow</kbd> and <kbd>Down arrow</kbd>: the layer above or below in the list, landing on the item at the same time. This works with any number of layers, so 9, 20 or 50 layers are all easy to reach.</li>
+<li><kbd>Alt 1</kbd> to <kbd>Alt 9</kbd>: jump straight to layers 1 to 9, and listen to that layer on its own.</li>
+<li><kbd>Alt 0</kbd>: listen to all layers together. Press again to go back to listening to the focused layer only.</li>
+<li><kbd>Control L</kbd>: type a layer number to jump to it, for layer 10 and above.</li>
+<li><kbd>Control G</kbd>: type a time to move the playhead, such as 1:30, 90, 1m 30s, or +5 to move 5 seconds on.</li>
+<li><kbd>Comma</kbd> and <kbd>period</kbd> move the playhead 1 second; with <kbd>Shift</kbd> 10 seconds; with <kbd>Control</kbd> one frame. <kbd>Control Home</kbd> and <kbd>Control End</kbd> go to the start and end.</li>
+</ul>
+
+<h2>Playing and listening</h2>
+<ul>
+<li><kbd>K</kbd> or <kbd>Space</kbd>: play from the playhead, or pause. When you pause, the program says where you stopped.</li>
+<li><kbd>L</kbd>: play; press again for double, then four times speed, then normal again.</li>
+<li><kbd>J</kbd>: jump back 5 seconds (you can change this in Preferences).</li>
+<li><kbd>Escape</kbd>: stop.</li>
+<li><kbd>T</kbd>: say the playhead time and how far into the current item it is. <kbd>W</kbd>: say what every layer has at the playhead, including where pictures are placed. <kbd>Shift T</kbd>: a summary of the whole project.</li>
+</ul>
+<p>The first time you play a part of the project, a quick preview is prepared, which usually takes a second or two; you hear "Preparing preview" if it takes longer. Playing the same part again starts at once. You can keep editing while it plays: pressing <kbd>S</kbd> while playing splits exactly where you are listening.</p>
+
+<h3>Mute and solo</h3>
+<ul>
+<li><kbd>M</kbd>: mute or unmute the focused layer. Muted layers are not heard and are left out of the export.</li>
+<li><kbd>Shift M</kbd>: solo the focused layer, which mutes all the others. Press again to unmute them.</li>
+<li><kbd>Control Shift M</kbd>: unmute every layer.</li>
+</ul>
+
+<h2>Adding videos, pictures and sound</h2>
+<ul>
+<li><kbd>Control I</kbd>: choose one or more files to add after the last item of the focused layer. Sound files go to an audio layer automatically, and pictures and videos to a video layer.</li>
+<li><kbd>Control Shift I</kbd>: add files at the playhead without moving anything. The program finds a layer with free space at that time, or makes a new one. Use this for a logo that appears at a certain moment.</li>
+<li><kbd>Control Shift E</kbd>: the sound library. It has whooshes, pops, chimes, a riser, an impact and other effects, plus three music beds. All of them were generated by the program itself, so they are free to use in any video, including commercial ones. Your own sounds go in Documents, Accessible Video Editor, Sound Effects, and appear in the same list. Use Preview to listen, then Enter to add at the playhead.</li>
+<li><kbd>Control Shift C</kbd>: a solid colour card, for a title background or a pause.</li>
+<li><kbd>Control Shift V</kbd> and <kbd>Control Shift A</kbd>: a new video or audio layer.</li>
+</ul>
+
+<h2>Cutting and trimming</h2>
+<ul>
+<li><kbd>S</kbd>: split the item at the playhead into two.</li>
+<li><kbd>Shift left bracket</kbd>: trim away the part of the item before the playhead. <kbd>Shift right bracket</kbd>: trim away the part after it.</li>
+<li><kbd>Delete</kbd>: delete the focused item. <kbd>Control Delete</kbd>: delete it but leave the time empty, so later items do not move.</li>
+<li><kbd>Control Z</kbd> undoes anything, and says what it undid. <kbd>Control Y</kbd> redoes.</li>
+</ul>
+
+<h3>Ripple</h3>
+<p>Ripple is on at first. With ripple on, deleting, trimming or sliding an item moves the later items on the same layer too, so no holes appear. With ripple off, later items keep their time, which is what you want when music or a logo must stay exactly in place. <kbd>Control R</kbd> switches ripple on and off.</p>
+
+<h2>Range and markers</h2>
+<ul>
+<li><kbd>Left bracket</kbd> sets the range start at the playhead, and <kbd>right bracket</kbd> sets the range end.</li>
+<li><kbd>Shift Delete</kbd> removes everything between range start and range end on the focused layer. Export can also export only the range.</li>
+<li><kbd>B</kbd> adds a named marker at the playhead.</li>
+<li><kbd>Alt left arrow</kbd> and <kbd>Alt right arrow</kbd> jump the playhead to the previous and next marker. The range start and end count as markers too.</li>
+<li><kbd>Shift B</kbd> lists every marker. From the list you can go to a marker, rename or move it, delete it, split the item there, or add a transition there.</li>
+</ul>
+
+<h2>Arranging items</h2>
+<ul>
+<li><kbd>Alt Shift left arrow</kbd> and <kbd>Alt Shift right arrow</kbd>: swap the item with the one before or after it, changing the order. For example, to put item 3 first, go to it and press <kbd>Alt Shift Home</kbd>.</li>
+<li><kbd>Alt J</kbd> and <kbd>Alt L</kbd>: slide the item earlier or later in time by 1 second. With <kbd>Shift</kbd> added, by a tenth of a second.</li>
+<li><kbd>Control Shift J</kbd> and <kbd>Control Shift L</kbd>: slide the whole layer.</li>
+<li><kbd>Alt Shift up arrow</kbd> and <kbd>Alt Shift down arrow</kbd>: move the focused layer up or down the list. For video layers, a higher number is in front.</li>
+<li><kbd>Control C</kbd>, <kbd>Control X</kbd>, <kbd>Control V</kbd> and <kbd>Control D</kbd> copy, cut, paste and duplicate items.</li>
+</ul>
+
+<h2>Item options</h2>
+<p>Press <kbd>Enter</kbd> on an item. The options dialog has tabs; press <kbd>Control Tab</kbd> to move between them.</p>
+<ul>
+<li><strong>General</strong>: name, where in the file to start, length, gap before, fade in and fade out.</li>
+<li><strong>Transition in</strong>: the transition from the previous item into this one. Picture transitions include cross fade, fade through black or white, dissolve, wipes and slides in four directions, cover and reveal, circle and box shapes, clock wipe, barn doors, pixelate, blur and zoom. Sound crossfades come in many curves, from linear to smooth (good for music) and exponential. A transition only plays when the two items touch.</li>
+<li><strong>Picture</strong>, on video layers: position (full frame, centre, the four corners, top, bottom and sides, or custom), size as a percentage of the frame, and opacity.</li>
+<li><strong>Sound</strong>: volume up to 400 percent, mute, noise reduction (light, medium or strong), hum removal (50 or 60 hertz), rumble removal, a three-band equaliser (low at 100 hertz, middle at 1000 hertz, high at 8000 hertz, each from minus 12 to plus 12 decibels), voice presets (clear, warm, broadcast) and loudness levelling.</li>
+</ul>
+<p><kbd>Control T</kbd> chooses the transition at the join nearest the playhead without opening the whole dialog. <kbd>D</kbd> reads every setting of the focused item.</p>
+
+<h2>Layer options and templates</h2>
+<p><kbd>Alt Enter</kbd> opens the layer options: name, layer volume, and defaults for new items, such as how long pictures show, the default transition, and the default position for a logo layer.</p>
+<p><kbd>Control N</kbd> starts a new project from a template: basic video, YouTube video with music and logo, photo slideshow, picture in picture, podcast to video, or vertical short. Templates only set up layers and defaults; they contain no media of anyone else's.</p>
+
+<h2>Checking and exporting</h2>
+<ul>
+<li><kbd>F7</kbd> checks the project for things a sighted editor would notice: black gaps, missing files, transitions that cannot play, muted layers, or picture ending before the sound. Press Enter on a finding to go there.</li>
+<li><kbd>Control E</kbd> exports. Choose a format: YouTube 1080p (recommended), 720p, 4K, vertical for Shorts and Reels, square, the project size, or audio only as MP3, WAV or M4A. Progress is spoken every 10 percent; Escape cancels.</li>
+<li><kbd>Control S</kbd> saves the project. A recovery copy is also kept automatically, and offered if the program ever closes unexpectedly.</li>
+</ul>
+
+<h2>Speech and sounds</h2>
+<p>When NVDA or JAWS is running, the program talks to it directly; otherwise it uses Windows UI Automation, which Narrator also reads. Short sounds confirm actions without words: moving, reaching an edge, changing layer, adding a marker, an error, muting. Choose a sound theme (Soft, Classic, Crisp, Retro or Off) and its volume in Preferences (<kbd>Control Shift comma</kbd>). <kbd>Shift V</kbd> switches between brief, normal and detailed descriptions.</p>
+<p>To make your own sound theme, use Tools, "Copy the current sound theme to my themes folder", replace the WAV files with your own (keep the file names), and choose your theme in Preferences.</p>
+
+<h2>Changing keys</h2>
+<p>Tools, "Open the keyboard settings file" opens a text file listing every command and its keys. Change the keys, save, and restart the program. If your keyboard layout has no bracket keys, this is how to move those commands to other keys.</p>
+
+<h2>Getting help</h2>
+<p><kbd>F1</kbd> lists every command with its keys; type to search, then press Enter to run one. Help, Getting started gives a short summary. If something goes wrong, Tools, "Open the log file" shows details you can send to the developers.</p>
+</body>
+</html>

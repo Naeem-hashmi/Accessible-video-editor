@@ -45,6 +45,22 @@ public sealed class SpokenViewModel : INotifyPropertyChanged
 
     public string Spoken => _spoken;
 
+    private string _icon = "";
+
+    /// <summary>An icon-font glyph showing the kind of entry (video, picture, sound, text).</summary>
+    public string Icon
+    {
+        get => _icon;
+        set
+        {
+            if (_icon != value)
+            {
+                _icon = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Icon)));
+            }
+        }
+    }
+
     /// <summary>The current full description, even while the spoken name is frozen.</summary>
     public string Description => _description;
 

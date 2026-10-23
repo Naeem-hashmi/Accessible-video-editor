@@ -2,19 +2,71 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Accessible Video Editor"
-        Width="1280" Height="800" MinWidth="800" MinHeight="500"
+        Width="1320" Height="840" MinWidth="820" MinHeight="520"
         FontSize="15"
+        Background="{DynamicResource {x:Static SystemColors.WindowBrushKey}}"
         WindowStartupLocation="CenterScreen">
     <Window.Resources>
+        <!-- Icons come from the Segoe icon fonts built into Windows 11 (Fluent) and Windows 10 (MDL2). -->
+        <FontFamily x:Key="IconFont">Segoe Fluent Icons, Segoe MDL2 Assets</FontFamily>
+
+        <!-- A thick, high-contrast focus outline that low-vision users can find easily. -->
+        <Style x:Key="StrongFocus">
+            <Setter Property="Control.Template">
+                <Setter.Value>
+                    <ControlTemplate>
+                        <Rectangle Margin="-2" StrokeThickness="3" RadiusX="3" RadiusY="3"
+                                   Stroke="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}" />
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="Button">
+            <Setter Property="FocusVisualStyle" Value="{StaticResource StrongFocus}" />
+            <Setter Property="Padding" Value="8,4" />
+            <Setter Property="Margin" Value="2" />
+        </Style>
+
         <Style x:Key="SpokenItem" TargetType="ListBoxItem">
             <Setter Property="AutomationProperties.Name" Value="{Binding Spoken}" />
             <Setter Property="Padding" Value="6" />
             <Setter Property="Margin" Value="2" />
+            <Setter Property="FocusVisualStyle" Value="{StaticResource StrongFocus}" />
+        </Style>
+
+        <!-- A panel heading: an icon and a title. The icon is decoration; the title is what screen readers use. -->
+        <Style x:Key="PanelHeader" TargetType="Border">
+            <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" />
+            <Setter Property="BorderThickness" Value="0,0,0,1" />
+            <Setter Property="Padding" Value="8,5" />
+        </Style>
+
+        <Style x:Key="Panel" TargetType="Border">
+            <Setter Property="BorderBrush" Value="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Margin" Value="3" />
+        </Style>
+
+        <Style x:Key="IconText" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="{StaticResource IconFont}" />
+            <Setter Property="FontSize" Value="18" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Margin" Value="0,0,8,0" />
         </Style>
     </Window.Resources>
 
     <DockPanel>
         <Menu x:Name="MainMenu" DockPanel.Dock="Top" AutomationProperties.Name="Menu bar" />
+
+        <!-- Toolbar: icon buttons with words. Arrow keys move between the buttons. -->
+        <Border DockPanel.Dock="Top" Style="{StaticResource PanelHeader}" Padding="4,2">
+            <WrapPanel x:Name="Toolbar" AutomationProperties.Name="Toolbar"
+                       KeyboardNavigation.DirectionalNavigation="Cycle"
+                       KeyboardNavigation.TabNavigation="Once" />
+        </Border>
 
         <StatusBar DockPanel.Dock="Bottom" AutomationProperties.Name="Status bar">
             <StatusBarItem>
@@ -26,21 +78,30 @@
             </StatusBarItem>
         </StatusBar>
 
-        <Grid Margin="8">
+        <Grid Margin="4">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="300" MinWidth="200" />
+                <ColumnDefinition Width="320" MinWidth="220" />
                 <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="*" MinWidth="300" />
+                <ColumnDefinition Width="*" MinWidth="320" />
                 <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="330" MinWidth="220" />
+                <ColumnDefinition Width="340" MinWidth="230" />
             </Grid.ColumnDefinitions>
 
             <!-- Left: library (Control 1) -->
-            <DockPanel x:Name="LibraryRegion" Grid.Column="0" AutomationProperties.Name="Library">
-                <TextBlock DockPanel.Dock="Top" Text="Library" FontWeight="Bold" Margin="0,0,0,4" />
-                <WrapPanel x:Name="LibraryButtons" DockPanel.Dock="Top" Margin="0,0,0,6" />
-                <TabControl x:Name="LibraryTabs" AutomationProperties.Name="Library" />
-            </DockPanel>
+            <Border Grid.Column="0" Style="{StaticResource Panel}">
+                <DockPanel x:Name="LibraryRegion" AutomationProperties.Name="Library">
+                    <Border DockPanel.Dock="Top" Style="{StaticResource PanelHeader}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Style="{StaticResource IconText}" Text="&#xE8F1;" />
+                            <TextBlock Text="Library" FontWeight="Bold" />
+                            <TextBlock Text="  (Ctrl+1)" Opacity="0.7" />
+                        </StackPanel>
+                    </Border>
+                    <WrapPanel x:Name="LibraryButtons" DockPanel.Dock="Top" Margin="4"
+                               KeyboardNavigation.DirectionalNavigation="Cycle" KeyboardNavigation.TabNavigation="Once" />
+                    <TabControl x:Name="LibraryTabs" Margin="4" AutomationProperties.Name="Library" />
+                </DockPanel>
+            </Border>
 
             <GridSplitter Grid.Column="1" Width="6" HorizontalAlignment="Center" VerticalAlignment="Stretch" Focusable="False" IsTabStop="False" />
 
@@ -48,79 +109,119 @@
             <Grid Grid.Column="2">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
-                    <RowDefinition Height="*" MinHeight="160" />
+                    <RowDefinition Height="*" MinHeight="180" />
                 </Grid.RowDefinitions>
 
-                <Border x:Name="PreviewRegion" Grid.Row="0" Background="Black" Height="260" Margin="0,0,0,8"
-                        Focusable="True" KeyboardNavigation.IsTabStop="True"
-                        FocusVisualStyle="{x:Null}" BorderBrush="DodgerBlue"
-                        AutomationProperties.Name="Preview"
-                        AutomationProperties.HelpText="The picture. It describes what is on screen at the playhead. Playback and timeline keys work here; P moves the focused picture.">
-                    <Image x:Name="PreviewImage" Focusable="False" Stretch="Uniform" RenderOptions.BitmapScalingMode="LowQuality" AutomationProperties.Name="Preview picture" />
+                <Border Grid.Row="0" Style="{StaticResource Panel}">
+                    <DockPanel>
+                        <Border DockPanel.Dock="Top" Style="{StaticResource PanelHeader}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Style="{StaticResource IconText}" Text="&#xE714;" />
+                                <TextBlock Text="Preview" FontWeight="Bold" />
+                                <TextBlock Text="  (Ctrl+4)" Opacity="0.7" />
+                            </StackPanel>
+                        </Border>
+                        <Border x:Name="PreviewRegion" Background="Black" Height="270"
+                                Focusable="True" KeyboardNavigation.IsTabStop="True"
+                                FocusVisualStyle="{StaticResource StrongFocus}"
+                                AutomationProperties.Name="Preview"
+                                AutomationProperties.HelpText="The picture. It describes what is on screen at the playhead. Playback and timeline keys work here; P moves the focused picture.">
+                            <Image x:Name="PreviewImage" Focusable="False" Stretch="Uniform" RenderOptions.BitmapScalingMode="LowQuality" AutomationProperties.Name="Preview picture" />
+                        </Border>
+                    </DockPanel>
                 </Border>
 
                 <Grid Grid.Row="1">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="230" MinWidth="150" />
+                        <ColumnDefinition Width="240" MinWidth="160" />
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
 
-                    <DockPanel Grid.Column="0">
-                        <Label x:Name="LayersLabel" DockPanel.Dock="Top" Content="Layers:" Target="{Binding ElementName=LayersList}" Padding="0,0,0,4" />
-                        <ListBox x:Name="LayersList"
-                                 AutomationProperties.Name="Layers"
-                                 AutomationProperties.HelpText="Up and Down arrows choose a layer. Enter goes to its items. F6 moves to the next area."
-                                 ItemContainerStyle="{StaticResource SpokenItem}"
-                                 IsTextSearchEnabled="False"
-                                 SelectionMode="Single">
-                            <ListBox.ItemTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="{Binding Display}" TextWrapping="Wrap" />
-                                </DataTemplate>
-                            </ListBox.ItemTemplate>
-                        </ListBox>
-                    </DockPanel>
+                    <Border Grid.Column="0" Style="{StaticResource Panel}">
+                        <DockPanel>
+                            <Border DockPanel.Dock="Top" Style="{StaticResource PanelHeader}">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Style="{StaticResource IconText}" Text="&#xE81E;" />
+                                    <Label x:Name="LayersLabel" Content="Layers:" Target="{Binding ElementName=LayersList}" Padding="0" FontWeight="Bold" />
+                                    <TextBlock Text="  (Ctrl+5)" Opacity="0.7" />
+                                </StackPanel>
+                            </Border>
+                            <ListBox x:Name="LayersList" BorderThickness="0"
+                                     AutomationProperties.Name="Layers"
+                                     AutomationProperties.HelpText="Up and Down arrows choose a layer. Enter goes to its items. F6 moves to the next area."
+                                     ItemContainerStyle="{StaticResource SpokenItem}"
+                                     IsTextSearchEnabled="False"
+                                     SelectionMode="Single">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Style="{StaticResource IconText}" Text="{Binding Icon}" />
+                                            <TextBlock Text="{Binding Display}" TextWrapping="Wrap" MaxWidth="170" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </DockPanel>
+                    </Border>
 
                     <GridSplitter Grid.Column="1" Width="6" HorizontalAlignment="Center" VerticalAlignment="Stretch" Focusable="False" IsTabStop="False" />
 
-                    <DockPanel Grid.Column="2">
-                        <Label x:Name="ItemsLabel" DockPanel.Dock="Top" Content="Timeline:" Target="{Binding ElementName=ItemsList}" Padding="0,0,0,4" />
-                        <ListBox x:Name="ItemsList"
-                                 AutomationProperties.Name="Timeline"
-                                 AutomationProperties.HelpText="Left and Right arrows move between items. Up and Down change layer. Enter opens item options. F1 lists every key."
-                                 ItemContainerStyle="{StaticResource SpokenItem}"
-                                 IsTextSearchEnabled="False"
-                                 SelectionMode="Single"
-                                 ScrollViewer.HorizontalScrollBarVisibility="Auto"
-                                 ScrollViewer.VerticalScrollBarVisibility="Disabled"
-                                 VirtualizingPanel.IsVirtualizing="False">
-                            <ListBox.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <StackPanel Orientation="Horizontal" />
-                                </ItemsPanelTemplate>
-                            </ListBox.ItemsPanel>
-                            <ListBox.ItemTemplate>
-                                <DataTemplate>
-                                    <Border BorderBrush="Gray" BorderThickness="1" CornerRadius="3" Padding="6" Width="200">
-                                        <TextBlock Text="{Binding Display}" TextWrapping="Wrap" />
-                                    </Border>
-                                </DataTemplate>
-                            </ListBox.ItemTemplate>
-                        </ListBox>
-                    </DockPanel>
+                    <Border Grid.Column="2" Style="{StaticResource Panel}">
+                        <DockPanel>
+                            <Border DockPanel.Dock="Top" Style="{StaticResource PanelHeader}">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Style="{StaticResource IconText}" Text="&#xE916;" />
+                                    <Label x:Name="ItemsLabel" Content="Timeline:" Target="{Binding ElementName=ItemsList}" Padding="0" FontWeight="Bold" />
+                                    <TextBlock Text="  (Ctrl+2)" Opacity="0.7" />
+                                </StackPanel>
+                            </Border>
+                            <ListBox x:Name="ItemsList" BorderThickness="0"
+                                     AutomationProperties.Name="Timeline"
+                                     AutomationProperties.HelpText="Left and Right arrows move between items. Up and Down change layer. Enter opens item options. F1 or Control H lists every key."
+                                     ItemContainerStyle="{StaticResource SpokenItem}"
+                                     IsTextSearchEnabled="False"
+                                     SelectionMode="Single"
+                                     ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                                     ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                                     VirtualizingPanel.IsVirtualizing="False">
+                                <ListBox.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="Horizontal" />
+                                    </ItemsPanelTemplate>
+                                </ListBox.ItemsPanel>
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" BorderThickness="1" CornerRadius="4" Padding="8" Width="210">
+                                            <DockPanel>
+                                                <TextBlock DockPanel.Dock="Left" Style="{StaticResource IconText}" FontSize="26" Text="{Binding Icon}" />
+                                                <TextBlock Text="{Binding Display}" TextWrapping="Wrap" />
+                                            </DockPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </DockPanel>
+                    </Border>
                 </Grid>
             </Grid>
 
             <GridSplitter Grid.Column="3" Width="6" HorizontalAlignment="Center" VerticalAlignment="Stretch" Focusable="False" IsTabStop="False" />
 
             <!-- Right: properties of the focused item (Control 3) -->
-            <DockPanel x:Name="PropertiesRegion" Grid.Column="4" AutomationProperties.Name="Properties">
-                <TextBlock x:Name="PropertiesTitle" DockPanel.Dock="Top" Text="Properties" FontWeight="Bold" TextWrapping="Wrap" Margin="0,0,0,4" />
-                <ScrollViewer VerticalScrollBarVisibility="Auto" Focusable="False">
-                    <StackPanel x:Name="PropertiesPanel" Margin="0,0,6,0" />
-                </ScrollViewer>
-            </DockPanel>
+            <Border Grid.Column="4" Style="{StaticResource Panel}">
+                <DockPanel x:Name="PropertiesRegion" AutomationProperties.Name="Properties">
+                    <Border DockPanel.Dock="Top" Style="{StaticResource PanelHeader}">
+                        <DockPanel>
+                            <TextBlock DockPanel.Dock="Left" Style="{StaticResource IconText}" Text="&#xE713;" />
+                            <TextBlock x:Name="PropertiesTitle" Text="Properties" FontWeight="Bold" TextWrapping="Wrap" />
+                        </DockPanel>
+                    </Border>
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" Focusable="False">
+                        <StackPanel x:Name="PropertiesPanel" Margin="8,4,10,8" />
+                    </ScrollViewer>
+                </DockPanel>
+            </Border>
         </Grid>
     </DockPanel>
 </Window>

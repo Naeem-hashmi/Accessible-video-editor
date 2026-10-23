@@ -77,6 +77,12 @@ public sealed class ListDialog : Window
                 RunDefault();
                 e.Handled = true;
             }
+            else if (e.Key == Key.Space && _actions.FirstOrDefault(a => !a.Closes) is { Text: { } } preview)
+            {
+                // Space runs the first action that keeps the dialog open, such as Preview.
+                Run(preview.Text, preview.Run, preview.Closes);
+                e.Handled = true;
+            }
         };
         root.Children.Add(_list);
         Content = root;

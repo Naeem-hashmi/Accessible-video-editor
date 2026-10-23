@@ -75,6 +75,7 @@ public partial class MainWindow : Window
         BuildKeyTable();
         BuildMenu();
         BuildLibrary();
+        BuildToolbar();
         PropertiesRegion.PreviewKeyDown += OnPropertiesKeyDown;
         PreviewRegion.GotKeyboardFocus += (_, _) => PreviewRegion.BorderThickness = new Thickness(3);
         PreviewRegion.LostKeyboardFocus += (_, _) => PreviewRegion.BorderThickness = new Thickness(0);
@@ -468,9 +469,13 @@ public partial class MainWindow : Window
         {
             var project = _editor.Project;
             var describer = _editor.Describer;
-            Sync(_layers, project.Layers, l => l.Id, (vm, layer, i) => vm.Update(
+            Sync(_layers, project.Layers, l => l.Id, (vm, layer, i) =>
+            {
+                vm.Icon = Icons.ForLayer(layer.Kind, layer.Muted);
+                vm.Update(
                 describer.Layer(project, layer),
-                $"{i + 1}. {layer.Name} ({Describer.LayerKindName(layer.Kind)}, {layer.Items.Count}){(layer.Muted ? " muted" : "")}"));
+                $"{i + 1}. {layer.Name} ({Describer.LayerKindName(layer.Kind)}, {layer.Items.Count}){(layer.Muted ? " muted" : "")}");
+            });
             LayersList.SelectedItem = _layers.FirstOrDefault(v => v.Id == _editor.FocusedLayerId);
 
             var layer = _editor.FocusedLayer;
@@ -484,6 +489,7 @@ public partial class MainWindow : Window
             Sync(_items, items, i => i.Id, (vm, item, i) =>
             {
                 var span = Timeline.Span(layer!, i);
+                vm.Icon = Icons.ForItem(item.Kind, layer!.Kind);
                 vm.Update(describer.Item(layer!, i),
                     $"{i + 1}. {item.Name}\n{describer.Time(span.Start)}, {describer.Time(item.Duration)} long");
             });
@@ -552,6 +558,13 @@ public partial class MainWindow : Window
     /// </summary>
     private void FocusAndSay(string speech)
     {
+        if (Toolbar.IsKeyboardFocusWithin)
+        {
+            // Toolbar buttons keep focus, so the user can press the next one.
+            Say(speech);
+            return;
+        }
+
         if (PreviewRegion.IsKeyboardFocusWithin)
         {
             // The preview keeps focus; describe the item reached when moving around.

@@ -81,7 +81,8 @@ public sealed class OpenverseClient
             "format=json",
             "q=" + Uri.EscapeDataString(query.Trim()),
             "license=" + AllowedLicenses,
-            "category=" + (category == OnlineAudioCategory.Music ? "music" : "sound_effect"),
+            // Freesound, the main source of sound effects, leaves the category empty, so search it directly.
+            category == OnlineAudioCategory.Music ? "category=music" : "source=freesound",
             "mature=false",
             "page_size=" + Math.Clamp(pageSize, 1, 20).ToString(CultureInfo.InvariantCulture),
             "page=" + Math.Max(1, page).ToString(CultureInfo.InvariantCulture),

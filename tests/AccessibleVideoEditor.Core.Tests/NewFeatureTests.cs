@@ -362,7 +362,7 @@ public sealed class OnlineAndCreditsTests
         Assert.Contains("category=music", uri.Query);
         Assert.Contains("q=calm%20piano%20%26%20rain", uri.Query);
         Assert.Contains("page=2", uri.Query);
-        Assert.Contains("category=sound_effect", OpenverseClient.SearchUri("x", OnlineAudioCategory.SoundEffect, 1).Query);
+        Assert.Contains("source=freesound", OpenverseClient.SearchUri("x", OnlineAudioCategory.SoundEffect, 1).Query);
     }
 
     [Fact]

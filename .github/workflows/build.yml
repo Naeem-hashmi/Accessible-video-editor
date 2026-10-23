@@ -32,6 +32,8 @@ jobs:
   windows:
     name: Windows build, tests, self-test and installer
     runs-on: windows-latest
+    permissions:
+      contents: write
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
@@ -128,18 +130,35 @@ jobs:
           }
           $iscc = (Get-Command iscc -ErrorAction SilentlyContinue).Source
           if (-not $iscc) { $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" }
-          & $iscc "/DSourceDir=$((Resolve-Path build/app).Path)" "/DAppVersion=0.2.0" installer/AccessibleVideoEditor.iss
+          & $iscc "/DSourceDir=$((Resolve-Path build/app).Path)" "/DAppVersion=0.2.1" installer/AccessibleVideoEditor.iss
           if ($LASTEXITCODE -ne 0) { throw "Installer build failed." }
 
       - name: Make the portable zip
         shell: pwsh
-        run: Compress-Archive -Path build/app/* -DestinationPath build/installer/AccessibleVideoEditor-portable-0.2.0.zip
+        run: Compress-Archive -Path build/app/* -DestinationPath build/installer/AccessibleVideoEditor-portable-0.2.1.zip
 
       - uses: actions/upload-artifact@v4
         with:
           name: AccessibleVideoEditor-windows
           path: build/installer/*
           if-no-files-found: error
+
+      - name: Publish the installer as a downloadable release
+        if: github.event_name == 'push'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v0.2.1
+          target_commitish: ${{ github.sha }}
+          name: Accessible Video Editor 0.2.1 (test build)
+          prerelease: true
+          body: |
+            Test build from commit ${{ github.sha }}.
+            Download AccessibleVideoEditor-Setup-0.2.1.exe to install, or the portable zip to run without installing.
+            Windows may warn that the installer is from an unknown publisher because it is not code-signed: choose More info, then Run anyway.
+          files: |
+            build/installer/AccessibleVideoEditor-Setup-0.2.1.exe
+            build/installer/AccessibleVideoEditor-portable-0.2.1.zip
+          fail_on_unmatched_files: true
 
       - uses: actions/upload-artifact@v4
         if: always()

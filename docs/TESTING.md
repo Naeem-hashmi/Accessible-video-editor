@@ -56,9 +56,21 @@ Automated tests cover the editing logic, rendering and the UI Automation names. 
 - Letter keys do nothing unexpected inside text boxes.
 - With JAWS, check that the virtual cursor is off in the main window (the timeline is an application list, not a document).
 
+## New in 0.2.1
+
+| Step | Do | Expect |
+|---|---|---|
+| A | Press `K` on any project | Sound starts within about half a second; no "Windows could not play the preview" message |
+| B | Tab from the start of the window | Toolbar, then library, preview, layers, timeline and properties; arrows move inside each |
+| C | In the toolbar, Left and Right arrow | Each button reads its name and shortcut, for example "Split, S" |
+| D | `Ctrl+1`, Sounds tab, Down arrow, Space | The real recording plays (for example keyboard typing); Enter adds it |
+| E | Delete an item | "Deleted item 2 of 5, name, length, from time. 4 items left on layer." The next item gets focus |
+| F | On a laptop: `Ctrl+Left`, `Ctrl+Right`, `Shift+I`, `Shift+O`, `Alt+.` | First and last item, trim start and end, next area |
+
 ## Known limits
 
 - No scrubbing sound while moving the playhead with the arrows (the playhead moves silently, and `T` speaks it).
+- The preview picture is small (480 by 270 at most).
 - Reverse playback isn't available; `J` jumps back instead.
 - Spoken text sizes are estimates (about 0.55 of the letter height per letter).
 - Right-to-left scripts such as Urdu depend on the bundled FFmpeg's text shaping; check them in an export.

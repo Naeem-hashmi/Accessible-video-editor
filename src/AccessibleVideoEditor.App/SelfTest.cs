@@ -329,6 +329,33 @@ internal static class SelfTest
             Check(File.Exists(output), "A preview renders");
         });
 
+        await Step("real recorded sounds", () =>
+        {
+            var sounds = RecordedSounds.Load(AppPaths.Recordings);
+            Check(sounds.Count >= 30, $"Real recordings are installed ({sounds.Count} found)");
+            Check(sounds.All(s => s.License == "CC0"), "Every recording is public domain (CC0)");
+            Check(sounds.Any(s => s.Category == "Typing") && sounds.Any(s => s.Category == "Clicks") && sounds.Any(s => s.Category == "Whooshes"),
+                "Typing, click and whoosh recordings are included");
+            if (sounds.Count > 0 && window.Tools is { } tools)
+            {
+                using var stream = FfmpegStream.Decode(tools, RecordedSounds.FullPath(AppPaths.Recordings, sounds[0]), maxSeconds: 1);
+                var buffer = new byte[65536];
+                long total = 0;
+                int read;
+                while ((read = stream.Output.Read(buffer, 0, buffer.Length)) > 0)
+                {
+                    total += read;
+                }
+
+                Check(total > 0, "A recording decodes for Space preview without Windows Media Player");
+            }
+
+            var player = new SoundPreviewPlayer(() => window.Tools);
+            log.Add("Sound preview player on this machine: " + (sounds.Count > 0 && player.Play(RecordedSounds.FullPath(AppPaths.Recordings, sounds[0])) ? "played" : "no sound device"));
+            player.Dispose();
+            return Task.CompletedTask;
+        });
+
         await Step("live preview", async () =>
         {
             var clock = Stopwatch.StartNew();

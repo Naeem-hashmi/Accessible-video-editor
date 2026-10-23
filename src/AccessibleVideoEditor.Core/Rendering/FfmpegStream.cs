@@ -72,6 +72,28 @@ public sealed class FfmpegStream : IDisposable
             }
         }
 
+        return Launch(tools, plan.BuildArguments(script, tools.FilterScriptOption), workFolder);
+    }
+
+    /// <summary>
+    /// Decodes the sound of one file or web address to raw 16-bit stereo 48 kHz, for listening to a sound
+    /// before adding it. Plays at most <paramref name="maxSeconds"/>.
+    /// </summary>
+    public static FfmpegStream Decode(FfmpegTools tools, string source, double maxSeconds = 300)
+    {
+        var workFolder = Path.Combine(Path.GetTempPath(), $"ave-stream-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(workFolder);
+        string[] args =
+        [
+            "-hide_banner", "-nostdin", "-loglevel", "error", "-i", source, "-vn",
+            "-t", maxSeconds.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture),
+            "-ac", "2", "-ar", "48000", "-c:a", "pcm_s16le", "-f", "s16le", "pipe:1",
+        ];
+        return Launch(tools, args, workFolder);
+    }
+
+    private static FfmpegStream Launch(FfmpegTools tools, IEnumerable<string> arguments, string workFolder)
+    {
         var psi = new ProcessStartInfo(tools.FfmpegPath)
         {
             RedirectStandardOutput = true,
@@ -81,7 +103,7 @@ public sealed class FfmpegStream : IDisposable
             CreateNoWindow = true,
             WorkingDirectory = workFolder,
         };
-        foreach (var arg in plan.BuildArguments(script, tools.FilterScriptOption))
+        foreach (var arg in arguments)
         {
             psi.ArgumentList.Add(arg);
         }

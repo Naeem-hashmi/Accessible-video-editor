@@ -97,7 +97,7 @@ public sealed class OpenverseClient
             throw new OnlineSearchException("Type what you are looking for, for example calm piano.");
         }
 
-        using var response = await _http.GetAsync(SearchUri(query, category, page), token).ConfigureAwait(false);
+        using var response = await GetWithRetryAsync(SearchUri(query, category, page), token).ConfigureAwait(false);
         if (response.StatusCode == HttpStatusCode.TooManyRequests)
         {
             throw new OnlineSearchException("Openverse asks to slow down: too many searches in a minute. Wait a minute and try again.");
@@ -111,6 +111,36 @@ public sealed class OpenverseClient
         var json = await response.Content.ReadAsStringAsync(token).ConfigureAwait(false);
         return Parse(json);
     }
+
+    /// <summary>Openverse sometimes fails or times out for a moment; one more try after a short wait usually works.</summary>
+    private async Task<HttpResponseMessage> GetWithRetryAsync(Uri uri, CancellationToken token)
+    {
+        for (var attempt = 1; ; attempt++)
+        {
+            try
+            {
+                var response = await _http.GetAsync(uri, token).ConfigureAwait(false);
+                if ((int)response.StatusCode < 500 || attempt == 2)
+                {
+                    return response;
+                }
+
+                response.Dispose();
+            }
+            catch (TaskCanceledException) when (!token.IsCancellationRequested && attempt < 2)
+            {
+                // A timeout, not the user cancelling.
+            }
+            catch (HttpRequestException) when (attempt < 2)
+            {
+            }
+
+            await Task.Delay(RetryDelay, token).ConfigureAwait(false);
+        }
+    }
+
+    /// <summary>Wait before the second try.</summary>
+    public TimeSpan RetryDelay { get; init; } = TimeSpan.FromSeconds(2);
 
     /// <summary>Reads an Openverse search response, keeping only usable, allowed results.</summary>
     public static OnlineSearchResult Parse(string json)

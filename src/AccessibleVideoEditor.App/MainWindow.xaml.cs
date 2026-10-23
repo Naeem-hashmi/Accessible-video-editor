@@ -89,7 +89,7 @@ public partial class MainWindow : Window
         Closing += OnClosing;
         Closed += (_, _) =>
         {
-            _libraryPlayer.Close();
+            _soundPlayer?.Dispose();
             _preview.Dispose();
             _announcer.Dispose();
         };

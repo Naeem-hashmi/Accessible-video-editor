@@ -29,7 +29,9 @@ public partial class MainWindow
     }
 
     private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(60) };
-    private readonly MediaPlayer _libraryPlayer = new();
+    private SoundPreviewPlayer? _soundPlayer;
+
+    private SoundPreviewPlayer SoundPlayer => _soundPlayer ??= new SoundPreviewPlayer(() => _preview.Tools);
     private readonly List<string> _importedFiles = new();
     private ListBox _mediaList = null!;
     private ListBox _soundList = null!;
@@ -67,7 +69,7 @@ public partial class MainWindow
         media.Children.Add(LibraryButton("Add at playhead", () => AddSelected(_mediaList, true)));
 
         // Built-in and user sounds
-        var sounds = TabPanel(LibraryTab.Sounds, "Sounds", "Built-in sounds are original and free for any use. Your own go in Documents, Accessible Video Editor, Sound Effects. Space previews, Enter adds at the playhead.");
+        var sounds = TabPanel(LibraryTab.Sounds, "Sounds", "Real recordings (typing, clicks, whooshes and more) and built-in sounds, all free for any use. Your own go in Documents, Accessible Video Editor, Sound Effects. Space previews, Enter adds at the playhead.");
         _soundSearch = LabelledBox(sounds, "Search sounds");
         _soundSearch.TextChanged += (_, _) => FillSounds();
         _soundList = LibraryList("Sounds");
@@ -274,6 +276,15 @@ public partial class MainWindow
     {
         var filter = _soundSearch.Text.Trim();
         _soundList.Items.Clear();
+        foreach (var sound in RecordedSounds.Load(AppPaths.Recordings))
+        {
+            var text = "Real recording: " + sound.Spoken;
+            if (filter.Length == 0 || text.Contains(filter, StringComparison.CurrentCultureIgnoreCase))
+            {
+                _soundList.Items.Add(Entry(text, RecordedSounds.FullPath(AppPaths.Recordings, sound)));
+            }
+        }
+
         try
         {
             var builtIn = AppPaths.BuiltInSoundEffects;
@@ -371,7 +382,7 @@ public partial class MainWindow
     private async Task DownloadAndAddAsync(OnlineAudio audio)
     {
         _openverse ??= new OpenverseClient(Http);
-        _libraryPlayer.Stop();
+        _soundPlayer?.Stop();
         Say($"Downloading {audio.Title}.", interrupt: false);
         try
         {
@@ -526,7 +537,7 @@ public partial class MainWindow
             else if (e.Key is Key.Enter or Key.Return)
             {
                 e.Handled = true;
-                _libraryPlayer.Stop();
+                _soundPlayer?.Stop();
                 _ = AddFilesAsync([path(tag)], atPlayhead: true);
             }
         };
@@ -534,19 +545,13 @@ public partial class MainWindow
 
     private void PreviewUri(Uri uri, string? name)
     {
-        try
-        {
-            _libraryPlayer.Stop();
-            _libraryPlayer.Open(uri);
-            _libraryPlayer.Play();
-            if (name is not null)
-            {
-                Say($"Playing {name}. Space again restarts; Enter adds it.", interrupt: false);
-            }
-        }
-        catch (Exception ex) when (ex is InvalidOperationException or UriFormatException)
+        if (!SoundPlayer.Play(uri.IsFile ? uri.LocalPath : uri.AbsoluteUri))
         {
             Say("This sound can't be previewed.");
+        }
+        else if (name is not null)
+        {
+            Say($"Playing {name}. Space again restarts; Enter adds it.", interrupt: false);
         }
     }
 

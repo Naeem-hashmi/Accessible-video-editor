@@ -29,6 +29,9 @@ public static class AppPaths
 
     public static string PreviewFolder => Path.Combine(Path.GetTempPath(), "AccessibleVideoEditor");
 
+    /// <summary>Real recorded sounds (CC0) installed with the program, listed in sounds.json.</summary>
+    public static string Recordings => Path.Combine(AppContext.BaseDirectory, "Sounds", "Recordings");
+
     /// <summary>
     /// The built-in sound effects: installed next to the program, or generated once into local app data
     /// when running from a build folder.

@@ -415,6 +415,11 @@ public partial class MainWindow
     private async Task AddSoundEffectAsync()
     {
         var entries = new List<ListEntry>();
+        foreach (var sound in RecordedSounds.Load(AppPaths.Recordings))
+        {
+            entries.Add(new ListEntry($"{sound.Name}. {sound.Description}", RecordedSounds.FullPath(AppPaths.Recordings, sound), "Real recording, " + sound.Category));
+        }
+
         try
         {
             var builtIn = AppPaths.BuiltInSoundEffects;
@@ -440,19 +445,19 @@ public partial class MainWindow
             }
         }
 
-        var player = new MediaPlayer();
+        using var player = new SoundPreviewPlayer(() => _preview.Tools);
         var dialog = new ListDialog(this, "Add sound effect or music", "Sounds", entries, searchable: true,
-            intro: "All built-in sounds are original and free to use in any video. Your own sounds come from Documents, Accessible Video Editor, Sound Effects. Press Enter to add at the playhead, or use Preview to listen.");
+            intro: "Real recordings and built-in sounds are all public domain and free to use in any video. Your own sounds come from Documents, Accessible Video Editor, Sound Effects. Press Enter to add at the playhead, or use Preview to listen.");
         dialog.AddAction("_Add at playhead");
         dialog.AddAction("_Preview", entry =>
         {
-            player.Stop();
-            player.Open(new Uri((string)entry.Tag!));
-            player.Play();
+            if (!player.Play((string)entry.Tag!))
+            {
+                Say("This sound can't be previewed.");
+            }
         }, closes: false);
         var ok = dialog.ShowDialog() == true;
         player.Stop();
-        player.Close();
         if (ok && dialog.Chosen?.Tag is string path)
         {
             await AddFilesAsync([path], atPlayhead: true);

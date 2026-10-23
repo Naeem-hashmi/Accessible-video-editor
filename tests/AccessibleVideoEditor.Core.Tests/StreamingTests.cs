@@ -49,6 +49,21 @@ public sealed class StreamingTests(MediaFixture media)
     }
 
     [Fact]
+    public void A_single_sound_file_decodes_to_raw_pcm_for_listening()
+    {
+        using var stream = FfmpegStream.Decode(media.Tools, media.VideoA);
+        var seconds = ReadAll(stream) / (48000.0 * 4);
+        Assert.InRange(seconds, 2.9, 3.1);
+    }
+
+    [Fact]
+    public void Decoding_stops_at_the_limit()
+    {
+        using var stream = FfmpegStream.Decode(media.Tools, media.VideoA, maxSeconds: 1);
+        Assert.InRange(ReadAll(stream) / (48000.0 * 4), 0.95, 1.05);
+    }
+
+    [Fact]
     public async Task Picture_streams_as_whole_bgra_frames_at_15_per_second()
     {
         var plan = new GraphBuilder(media.Tools.HasEncoder, media.Tools.Text).Build(new RenderRequest

@@ -21,9 +21,11 @@ This lists what the editor can't do yet, roughly in order of value to blind and 
 
 | Limitation | Why | How to fix |
 |---|---|---|
-| No sound while moving the playhead with the arrows | The preview is a pre-rendered file played by Windows Media Foundation | Add libmpv behind `PreviewService` for instant seeking and scrubbing |
-| First play of a section waits 1–3 seconds | Each preview window is rendered with FFmpeg | Render ahead in the background after each edit; use libmpv's live filters for simple cases |
-| No reverse playback | Media Foundation can't play backwards | libmpv supports it |
+| No sound while moving the playhead with the arrows | Each play starts a new live FFmpeg stream (fast, but not instant enough for scrubbing) | Add libmpv behind `PreviewService` for scrubbing |
+| The preview picture is small (at most 480 by 270, 15 frames a second) | Kept small so it starts at once on any computer | Offer a "large preview" setting |
+| No reverse playback | FFmpeg streams play forwards | libmpv supports it |
+
+Fixed in 0.2.1: the preview no longer uses Windows Media Player, so "Windows could not play the preview" and the Media Feature Pack message are gone, and play starts without a "Preparing preview" wait.
 | Text size, and so placement, is an estimate in speech | Exact text width depends on the font | Measure with the font itself (WPF `FormattedText`) and pass the real width to `Geometry` |
 | Urdu, Arabic and other right-to-left or joined scripts may draw wrongly | Depends on whether the FFmpeg build includes HarfBuzz text shaping | Check `ffmpeg -h filter=drawtext` for `text_shaping`; bundle a build that has it; add Urdu and Arabic fonts to the font list |
 | Typewriter text on centred lines starts from an estimated left edge | drawtext can't measure the whole line before it is typed | Measure as above |
@@ -57,7 +59,7 @@ This lists what the editor can't do yet, roughly in order of value to blind and 
 
 Built into the program:
 
-- **Library, Sounds**: 18 sound effects and music beds made by the program itself. They are public domain (CC0), free for any use with no credit.
+- **Library, Sounds**: real recordings (typing, clicks, whooshes, pops, applause, rain and more) from Freesound, all CC0; plus 18 sound effects and music beds made by the program itself. All public domain, free for any use with no credit. The list of recordings, with who recorded each one, is in `assets/sounds/recordings/CREDITS.md`.
 - **Library, Free music online** (`Ctrl+Shift+O`): searches [Openverse](https://openverse.org), which collects openly licensed audio from Jamendo, Freesound, ccMixter, Wikimedia Commons and others. It only shows:
   - **CC0** and the **Public Domain Mark**: use freely, no credit needed;
   - **CC BY**: use freely, including in monetised videos, but you must credit the artist. The program saves the credit and writes it to a "credits" file next to your export, ready to paste into the video description.

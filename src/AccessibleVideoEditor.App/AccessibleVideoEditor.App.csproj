@@ -22,4 +22,9 @@
     <PackageReference Include="NAudio.WinMM" Version="2.2.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Real recorded sounds, public domain (CC0); see assets/sounds/recordings/CREDITS.md. -->
+    <None Include="..\..\assets\sounds\recordings\**\*" LinkBase="Sounds\Recordings" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

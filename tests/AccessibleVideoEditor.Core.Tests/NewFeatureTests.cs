@@ -387,6 +387,46 @@ public sealed class OnlineAndCreditsTests
         await Assert.ThrowsAsync<OnlineSearchException>(() => client.SearchAsync("  ", OnlineAudioCategory.Music));
     }
 
+    private sealed class ScriptedHandler(params System.Net.HttpStatusCode[] codes) : HttpMessageHandler
+    {
+        public int Calls { get; private set; }
+
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            var code = codes[Math.Min(Calls++, codes.Length - 1)];
+            return Task.FromResult(new HttpResponseMessage(code) { Content = new StringContent("""{"result_count":0,"results":[]}""") });
+        }
+    }
+
+    [Fact]
+    public async Task A_server_error_is_tried_once_more()
+    {
+        var handler = new ScriptedHandler(System.Net.HttpStatusCode.InternalServerError, System.Net.HttpStatusCode.OK);
+        var client = new OpenverseClient(new HttpClient(handler)) { RetryDelay = TimeSpan.Zero };
+        var result = await client.SearchAsync("whoosh", OnlineAudioCategory.SoundEffect);
+        Assert.Empty(result.Items);
+        Assert.Equal(2, handler.Calls);
+    }
+
+    [Fact]
+    public async Task A_lasting_server_error_is_reported_after_two_tries()
+    {
+        var handler = new ScriptedHandler(System.Net.HttpStatusCode.BadGateway);
+        var client = new OpenverseClient(new HttpClient(handler)) { RetryDelay = TimeSpan.Zero };
+        var error = await Assert.ThrowsAsync<OnlineSearchException>(() => client.SearchAsync("whoosh", OnlineAudioCategory.SoundEffect));
+        Assert.Contains("502", error.Message);
+        Assert.Equal(2, handler.Calls);
+    }
+
+    [Fact]
+    public async Task Too_many_requests_is_not_retried()
+    {
+        var handler = new ScriptedHandler(System.Net.HttpStatusCode.TooManyRequests);
+        var client = new OpenverseClient(new HttpClient(handler)) { RetryDelay = TimeSpan.Zero };
+        await Assert.ThrowsAsync<OnlineSearchException>(() => client.SearchAsync("whoosh", OnlineAudioCategory.SoundEffect));
+        Assert.Equal(1, handler.Calls);
+    }
+
     [Fact]
     public void Credits_follow_the_media_that_needs_them()
     {

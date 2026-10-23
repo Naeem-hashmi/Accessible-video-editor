@@ -71,7 +71,7 @@ Fixed in 0.2.1: the preview no longer uses Windows Media Player, so "Windows cou
 
 Built into the program:
 
-- **Library, Sounds**: real recordings (typing, clicks, whooshes, pops, applause, rain and more) from Freesound, all CC0; plus 18 sound effects and music beds made by the program itself. All public domain, free for any use with no credit. The list of recordings, with who recorded each one, is in `assets/sounds/recordings/CREDITS.md`.
+- **Library, Sounds**: 26 real recordings (typing, clicks, bells, coins, applause, laughter, drum roll, knocks, clock, rain and thunder) from Wikimedia Commons, all public domain or CC0; plus 18 sound effects and music beds made by the program itself. All public domain, free for any use with no credit. The list of recordings, with who recorded each one, is in `assets/sounds/recordings/CREDITS.md`.
 - **Library, Free music online** (`Ctrl+Shift+O`): searches [Openverse](https://openverse.org), which collects openly licensed audio from Jamendo, Freesound, ccMixter, Wikimedia Commons and others. It only shows:
   - **CC0** and the **Public Domain Mark**: use freely, no credit needed;
   - **CC BY**: use freely, including in monetised videos, but you must credit the artist. The program saves the credit and writes it to a "credits" file next to your export, ready to paste into the video description.

@@ -15,7 +15,7 @@ It can trim and split clips, join several videos, add music, voice and sound eff
 - **Arranging.** `Alt+J` and `Alt+L` slide an item in time; `Alt+Shift+Left` and `Alt+Shift+Right` change its order.
 - **Speech that never fights the screen reader.** Messages go to NVDA or JAWS directly when they are running, otherwise through Windows UI Automation. When focus moves, the message is read as part of the newly focused item, so the two never cut each other off.
 - **Standard Windows controls only.** Menus, lists, tabs, text boxes and combo boxes, with every field labelled. Nothing is a custom drawing that screen readers can't read.
-- **Copyright-free sounds.** Real recordings of typing, clicks, whooshes, pops, reactions and more, all public domain (CC0) from Freesound, plus earcon themes and 18 effects and music beds made by the program's own synthesizer. Space previews any sound.
+- **Copyright-free sounds.** Real recordings of typing, clicks, bells, applause, laughter, rain and more, all public domain or CC0 from Wikimedia Commons, plus earcon themes and 18 effects and music beds made by the program's own synthesizer. Space previews any sound.
 - **Live preview.** Plays at once from the playhead, mixed live by FFmpeg; no Windows Media Player needed.
 - **Laptop friendly.** Every command has a key that needs no number pad, and Tab, Shift+Tab and the arrows reach everything, including an icon toolbar.
 

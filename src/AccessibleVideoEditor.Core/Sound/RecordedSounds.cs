@@ -37,8 +37,8 @@ public sealed record RecordedSound
 }
 
 /// <summary>
-/// The real recordings that come with the program: typing, clicks, whooshes, pops, reactions and more,
-/// all public domain (CC0), listed in <c>sounds.json</c> beside the files.
+/// The real recordings that come with the program: typing, clicks, bells, applause, rain and more, all
+/// public domain or CC0, listed in <c>sounds.json</c> beside the files.
 /// </summary>
 public static class RecordedSounds
 {

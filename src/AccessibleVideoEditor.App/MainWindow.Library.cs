@@ -69,7 +69,7 @@ public partial class MainWindow
         media.Children.Add(LibraryButton("Add at playhead", () => AddSelected(_mediaList, true)));
 
         // Built-in and user sounds
-        var sounds = TabPanel(LibraryTab.Sounds, "Sounds", "Real recordings (typing, clicks, whooshes and more) and built-in sounds, all free for any use. Your own go in Documents, ClipScribe, Sound Effects. Space previews, Enter adds at the playhead.");
+        var sounds = TabPanel(LibraryTab.Sounds, "Sounds", "Real recordings (typing, clicks, bells, applause, rain and more) and built-in sounds, all free for any use. Your own go in Documents, ClipScribe, Sound Effects. Space previews, Enter adds at the playhead.");
         _soundSearch = LabelledBox(sounds, "Search sounds");
         _soundSearch.TextChanged += (_, _) => FillSounds();
         _soundList = LibraryList("Sounds");

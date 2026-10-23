@@ -577,7 +577,10 @@ public partial class MainWindow
         }
 
         var chosenStyle = styles[style()];
+        // A real recorded whoosh if one is installed, otherwise the built-in one.
         var whoosh = RecordedSounds.Load(AppPaths.Recordings).FirstOrDefault(s => s.Category == "Whooshes");
+        var whooshPath = whoosh is null ? Path.Combine(AppPaths.BuiltInSoundEffects, "Whoosh.wav") : RecordedSounds.FullPath(AppPaths.Recordings, whoosh);
+        var whooshLength = whoosh is null ? 0.6 : Math.Min(0.8, whoosh.Seconds);
         var result = await WithProgressAsync("Making your video", async (progress, token) =>
         {
             progress.SetStatus("Listening to the clips and the music");
@@ -599,8 +602,8 @@ public partial class MainWindow
                 var request = QuickVideo.Analyse(tools, new QuickVideoRequest
                 {
                     Files = infos, Style = chosenStyle, Title = title(), Music = musicInfo, Transcripts = transcripts, AddCaptions = captions(),
-                    WhooshPath = whoosh is null ? null : RecordedSounds.FullPath(AppPaths.Recordings, whoosh),
-                    WhooshLength = whoosh is null ? 0.6 : Math.Min(0.8, whoosh.Seconds),
+                    WhooshPath = File.Exists(whooshPath) ? whooshPath : null,
+                    WhooshLength = whooshLength,
                 }, token);
                 return QuickVideo.Build(request);
             }, token);

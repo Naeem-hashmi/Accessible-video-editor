@@ -210,6 +210,12 @@ public sealed class Item
 
     public double FadeOut { get; set; }
 
+    /// <summary>
+    /// A very short sound-only fade at both ends (a few milliseconds), so joins made by cutting out pauses
+    /// or words don't click. The picture is not faded.
+    /// </summary>
+    public double SoundJoinFade { get; set; }
+
     /// <summary>Transition from the previous item into this one.</summary>
     public TransitionSpec TransitionIn { get; set; } = new();
 

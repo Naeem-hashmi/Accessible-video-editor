@@ -544,14 +544,19 @@ public sealed class GraphBuilder
             $",{AudioFormat},apad=whole_len={samples},atrim=end_sample={samples},asetpts=PTS-STARTPTS");
 
         var length = samples / (double)SampleRate;
-        var fadeIn = Math.Min(item.FadeIn, length / 2);
-        var fadeOut = Math.Min(item.FadeOut, length / 2);
-        if (fadeIn > 0.01)
+        if (DipExpression(item, length) is { } dips)
+        {
+            chain.Append(CultureInfo.InvariantCulture, $",volume='{dips}':eval=frame");
+        }
+
+        var fadeIn = Math.Min(Math.Max(item.FadeIn, item.SoundJoinFade), length / 2);
+        var fadeOut = Math.Min(Math.Max(item.FadeOut, item.SoundJoinFade), length / 2);
+        if (fadeIn > 0.001)
         {
             chain.Append(CultureInfo.InvariantCulture, $",afade=t=in:st=0:d={Num(fadeIn)}");
         }
 
-        if (fadeOut > 0.01)
+        if (fadeOut > 0.001)
         {
             chain.Append(CultureInfo.InvariantCulture, $",afade=t=out:st={Num(length - fadeOut)}:d={Num(fadeOut)}");
         }
@@ -559,6 +564,31 @@ public sealed class GraphBuilder
         chain.Append(CultureInfo.InvariantCulture, $"[{label}]");
         _chains.Add(chain.ToString());
         return label;
+    }
+
+    /// <summary>
+    /// The volume over time for an item's <see cref="Item.VolumeDips"/>, as an FFmpeg expression of t
+    /// (seconds from the item's start), or null when no dip falls inside the item.
+    /// </summary>
+    internal static string? DipExpression(Item item, double length)
+    {
+        var factors = new List<string>();
+        foreach (var dip in item.VolumeDips.OrderBy(d => d.Start))
+        {
+            var ramp = Math.Max(0.01, dip.Ramp);
+            var start = dip.Start - item.SourceIn;
+            var end = dip.End - item.SourceIn;
+            if (end + ramp <= 0 || start - ramp >= length || end <= start)
+            {
+                continue;
+            }
+
+            var level = Math.Clamp(dip.Level, 0, 1);
+            // 1 outside the dip, `level` inside, straight ramps of `ramp` seconds before and after.
+            factors.Add($"(1-{Num(1 - level)}*clip((t-{Num(start - ramp)})/{Num(ramp)},0,1)*clip(({Num(end + ramp)}-t)/{Num(ramp)},0,1))");
+        }
+
+        return factors.Count == 0 ? null : string.Join("*", factors);
     }
 
     /// <summary>

@@ -4,9 +4,9 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <Version>0.2.1</Version>
-    <Company>Accessible Video Editor contributors</Company>
-    <Product>Accessible Video Editor</Product>
-    <Copyright>Copyright (c) Accessible Video Editor contributors. GPL-3.0-or-later.</Copyright>
+    <Version>0.3.0</Version>
+    <Company>ClipScribe contributors</Company>
+    <Product>ClipScribe</Product>
+    <Copyright>Copyright (c) ClipScribe contributors. GPL-3.0-or-later.</Copyright>
   </PropertyGroup>
 </Project>

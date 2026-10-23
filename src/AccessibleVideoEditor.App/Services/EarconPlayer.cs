@@ -12,7 +12,7 @@ public sealed class EarconPlayer
     private EarconTheme _theme = EarconTheme.BuiltIn[0];
     private int _volume = 60;
 
-    /// <summary>Built-in themes plus folders in Documents\Accessible Video Editor\Sound Themes.</summary>
+    /// <summary>Built-in themes plus folders in Documents\ClipScribe\Sound Themes.</summary>
     public static IReadOnlyList<EarconTheme> AvailableThemes()
     {
         var themes = new List<EarconTheme>(EarconTheme.BuiltIn);

@@ -69,7 +69,7 @@ public partial class MainWindow
         media.Children.Add(LibraryButton("Add at playhead", () => AddSelected(_mediaList, true)));
 
         // Built-in and user sounds
-        var sounds = TabPanel(LibraryTab.Sounds, "Sounds", "Real recordings (typing, clicks, whooshes and more) and built-in sounds, all free for any use. Your own go in Documents, Accessible Video Editor, Sound Effects. Space previews, Enter adds at the playhead.");
+        var sounds = TabPanel(LibraryTab.Sounds, "Sounds", "Real recordings (typing, clicks, whooshes and more) and built-in sounds, all free for any use. Your own go in Documents, ClipScribe, Sound Effects. Space previews, Enter adds at the playhead.");
         _soundSearch = LabelledBox(sounds, "Search sounds");
         _soundSearch.TextChanged += (_, _) => FillSounds();
         _soundList = LibraryList("Sounds");
@@ -223,7 +223,7 @@ public partial class MainWindow
                 (target ?? (Control)item).Focus();
             }
 
-            Say($"Library, {item.Header}.", interrupt: false);
+            Say($"Library, {AutomationProperties.GetName(item)}.", interrupt: false);
         }
     }
 
@@ -559,7 +559,21 @@ public partial class MainWindow
     {
         var panel = new StackPanel { Margin = new Thickness(4) };
         panel.Children.Add(new TextBlock { Text = intro, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 6) });
-        var item = new TabItem { Header = header, Content = new ScrollViewer { Content = panel, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, Focusable = false } };
+        // An icon above the name, like the activity bar in VS Code.
+        var icon = tab switch
+        {
+            LibraryTab.Media => Icons.Video,
+            LibraryTab.Sounds => Icons.Music,
+            LibraryTab.OnlineMusic => Icons.Search,
+            LibraryTab.Text => Icons.Text,
+            _ => Icons.Templates,
+        };
+        var head = new StackPanel { Width = 64 };
+        var glyph = IconBlock(icon, 22);
+        glyph.Margin = new Thickness(0, 2, 0, 2);
+        head.Children.Add(glyph);
+        head.Children.Add(new TextBlock { Text = header, FontSize = 12, TextWrapping = TextWrapping.Wrap, TextAlignment = TextAlignment.Center });
+        var item = new TabItem { Header = head, Content = new ScrollViewer { Content = panel, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, Focusable = false } };
         AutomationProperties.SetName(item, header);
         AutomationProperties.SetHelpText(item, intro);
         LibraryTabs.Items.Insert(Math.Min((int)tab, LibraryTabs.Items.Count), item);

@@ -87,7 +87,7 @@ public sealed partial class FfmpegTools
         }
 
         throw new FfmpegNotFoundException(
-            "FFmpeg was not found. Reinstall Accessible Video Editor, or put ffmpeg and ffprobe in the program's ffmpeg folder.");
+            "FFmpeg was not found. Reinstall ClipScribe, or put ffmpeg and ffprobe in the program's ffmpeg folder.");
     }
 
     public static async Task<FfmpegTools> InspectAsync(string ffmpegPath, string ffprobePath, CancellationToken token = default)

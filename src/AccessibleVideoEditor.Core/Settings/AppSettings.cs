@@ -57,8 +57,11 @@ public sealed class AppSettings
 
     public bool AutoSave { get; set; } = true;
 
+    /// <summary>The language last chosen for speech recognition: a Whisper code, or auto.</summary>
+    public string SpeechLanguage { get; set; } = "auto";
+
     public static string DefaultFolder =>
-        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "AccessibleVideoEditor");
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ClipScribe");
 
     public static string DefaultPath => Path.Combine(DefaultFolder, "settings.json");
 

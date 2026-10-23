@@ -29,7 +29,7 @@ public static class ProjectSerializer
         if (project.FormatVersion > Project.CurrentFormatVersion)
         {
             throw new InvalidDataException(
-                "This project was saved by a newer version of Accessible Video Editor. Please update the program.");
+                "This project was saved by a newer version of ClipScribe. Please update the program.");
         }
 
         Normalize(project);

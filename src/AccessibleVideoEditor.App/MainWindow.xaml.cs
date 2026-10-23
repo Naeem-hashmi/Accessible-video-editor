@@ -75,7 +75,9 @@ public partial class MainWindow : Window
         BuildKeyTable();
         BuildMenu();
         BuildLibrary();
-        BuildToolbar();
+        BuildRibbon();
+        BuildTransport();
+        WireTracks();
         PropertiesRegion.PreviewKeyDown += OnPropertiesKeyDown;
         PreviewRegion.GotKeyboardFocus += (_, _) => PreviewRegion.BorderThickness = new Thickness(3);
         PreviewRegion.LostKeyboardFocus += (_, _) => PreviewRegion.BorderThickness = new Thickness(0);
@@ -148,8 +150,8 @@ public partial class MainWindow : Window
         }
 
         var intro = Tools is null
-            ? "Accessible Video Editor. Warning: FFmpeg was not found, so playing and exporting will not work. Reinstall the program."
-            : "Accessible Video Editor.";
+            ? "ClipScribe. Warning: FFmpeg was not found, so playing and exporting will not work. Reinstall the program."
+            : "ClipScribe.";
         var where = _editor.FocusedItemText();
         Say($"{intro} {(opened ? "" : "New basic project. ")}{where}. Press F1 for keyboard help.");
         _autosave.Start();
@@ -295,9 +297,9 @@ public partial class MainWindow : Window
         {
             switch (command)
             {
-                // The layer list moves with its own arrow keys; its selection follows the layer.
-                case CommandId.PreviousLayer or CommandId.NextLayer or CommandId.FirstItem or CommandId.LastItem
-                    or CommandId.PreviousItem or CommandId.NextItem:
+                // Up and Down are the list's own (its selection follows the layer). Left, Right, Home and End
+                // go through the layer's items and say each one, staying on the layer.
+                case CommandId.PreviousLayer or CommandId.NextLayer:
                     return;
                 case CommandId.ItemProperties:
                     command = CommandId.SwitchPane;
@@ -441,6 +443,16 @@ public partial class MainWindow : Window
             {
                 vm.OnFocusChanged(true);
             }
+
+            // The inspector shows the layer while the Layers list has focus.
+            RebuildProperties(force: true);
+        };
+        ItemsList.GotKeyboardFocus += (_, _) =>
+        {
+            if (_propertiesItemId is null && _editor.FocusedItem is not null)
+            {
+                RebuildProperties(force: true);
+            }
         };
         LayersList.LostKeyboardFocus += (_, e) =>
         {
@@ -505,6 +517,7 @@ public partial class MainWindow : Window
             }
 
             UpdatePlayheadText();
+            Tracks.Update(_editor.Project, _editor.FocusedLayerId, _editor.FocusedItemId, _editor.Playhead);
             RebuildProperties();
             RefreshLibraryMedia();
         }
@@ -558,9 +571,9 @@ public partial class MainWindow : Window
     /// </summary>
     private void FocusAndSay(string speech)
     {
-        if (Toolbar.IsKeyboardFocusWithin)
+        if (Ribbon.IsKeyboardFocusWithin || Transport.IsKeyboardFocusWithin)
         {
-            // Toolbar buttons keep focus, so the user can press the next one.
+            // Ribbon and play buttons keep focus, so the user can press the next one.
             Say(speech);
             return;
         }
@@ -584,6 +597,13 @@ public partial class MainWindow : Window
             var layerVm = _layers.FirstOrDefault(v => v.Id == _editor.FocusedLayerId);
             if (layerVm is null)
             {
+                Say(speech);
+                return;
+            }
+
+            if (layerVm.IsFocused)
+            {
+                // Left and Right on a layer go through its items; focus stays on the layer.
                 Say(speech);
                 return;
             }
@@ -659,7 +679,7 @@ public partial class MainWindow : Window
         }
     }
 
-    private void FocusLayerList()
+    internal void FocusLayerList()
     {
         LayersList.UpdateLayout();
         if (_layers.FirstOrDefault(v => v.Id == _editor.FocusedLayerId) is { } vm &&
@@ -677,6 +697,8 @@ public partial class MainWindow : Window
 
     private void UpdatePlayheadText()
     {
+        TransportTime.Text = $"{TimeFormat.Clock(_editor.Playhead)} / {TimeFormat.Clock(_editor.ProjectDuration)}";
+        Tracks.SetPlayhead(_editor.Playhead);
         PlayheadText.Text =
             $"{TimeFormat.Clock(_editor.Playhead)} / {TimeFormat.Clock(_editor.ProjectDuration)}  |  {_editor.ListeningText}  |  ripple {(_settings.Ripple ? "on" : "off")}";
     }
@@ -684,7 +706,7 @@ public partial class MainWindow : Window
     private void UpdateTitle()
     {
         var name = _editor.Session.FilePath is { } path ? Path.GetFileNameWithoutExtension(path) : _editor.Project.Title;
-        Title = $"{name}{(_editor.Session.IsDirty ? " (not saved)" : "")} - Accessible Video Editor";
+        Title = $"{name}{(_editor.Session.IsDirty ? " (not saved)" : "")} - ClipScribe";
     }
 
     // ------------------------------------------------------------------ playback

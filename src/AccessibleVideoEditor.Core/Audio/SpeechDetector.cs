@@ -16,12 +16,18 @@ public sealed record SpeechAnalysis(
     double ThresholdDb,
     double NoiseFloorDb)
 {
+    /// <summary>Where the analysed stretch begins (0, or the file time after <see cref="Shift"/>).</summary>
+    public double Start { get; init; }
+
+    public double End => Start + Length;
+
     /// <summary>A noisy recording: the quiet parts are within 25 dB of the loud parts.</summary>
     public bool IsNoisy { get; init; }
 
     /// <summary>The same analysis moved by <paramref name="offset"/> seconds (for example into file time).</summary>
     public SpeechAnalysis Shift(double offset) => this with
     {
+        Start = Start + offset,
         Sound = Sound.Select(s => new TimeStretch(s.Start + offset, s.End + offset)).ToList(),
         Pauses = Pauses.Select(s => new TimeStretch(s.Start + offset, s.End + offset)).ToList(),
     };

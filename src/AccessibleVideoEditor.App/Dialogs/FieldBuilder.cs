@@ -25,6 +25,26 @@ public sealed class FieldBuilder(Panel panel)
         return block;
     }
 
+    /// <summary>A section title with an icon, for example "Text style". Only for the eye; fields carry their own names.</summary>
+    public void AddHeading(string text, string? icon = null)
+    {
+        var row = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 10, 0, 4) };
+        if (icon is not null)
+        {
+            row.Children.Add(new TextBlock
+            {
+                Text = icon,
+                FontFamily = new System.Windows.Media.FontFamily("Segoe Fluent Icons, Segoe MDL2 Assets"),
+                FontSize = 16,
+                Margin = new Thickness(0, 0, 6, 0),
+                VerticalAlignment = VerticalAlignment.Center,
+            });
+        }
+
+        row.Children.Add(new TextBlock { Text = text, FontWeight = FontWeights.Bold, FontSize = 15, VerticalAlignment = VerticalAlignment.Center });
+        Panel.Children.Add(row);
+    }
+
     public Func<string> AddText(string label, string value, bool multiline = false, string? help = null)
     {
         var box = new TextBox

@@ -40,7 +40,7 @@ public partial class App : Application
 
         // Keep working: tell the user, keep the project. The autosave copy protects their work.
         MessageBox.Show(MainWindow!, "Something went wrong: " + e.Exception.Message + "\n\nYour project is still open. Please save it. Details are in the log file.",
-            "Accessible Video Editor", MessageBoxButton.OK, MessageBoxImage.Error);
+            "ClipScribe", MessageBoxButton.OK, MessageBoxImage.Error);
         e.Handled = true;
     }
 }

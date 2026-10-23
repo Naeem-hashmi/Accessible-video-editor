@@ -62,6 +62,15 @@ public sealed class ProgressWindow : Window
         }
     }
 
+    /// <summary>Shows and speaks what is happening now, for jobs with several steps.</summary>
+    public void SetStatus(string text)
+    {
+        Title = text;
+        _status.Text = text;
+        _lastSpoken = -1;
+        _speak(text);
+    }
+
     public void Finish()
     {
         _finished = true;

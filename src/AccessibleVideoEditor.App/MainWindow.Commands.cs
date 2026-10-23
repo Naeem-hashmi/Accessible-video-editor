@@ -22,14 +22,15 @@ namespace AccessibleVideoEditor.App;
 
 public partial class MainWindow
 {
-    private const string ProjectFilter = "Accessible Video Editor projects (*.avproj)|*.avproj|All files|*.*";
+    private const string ProjectFilter = "ClipScribe projects (*.avproj)|*.avproj|All files|*.*";
 
     // ------------------------------------------------------------------ menu
 
     private static readonly (string Category, string Header)[] MenuHeaders =
     [
         ("File", "_File"), ("Edit", "_Edit"), ("Add", "_Add"), ("Move around", "_Navigate"), ("Arrange", "A_rrange"),
-        ("Cut and mark", "_Cut and mark"), ("Play and listen", "_Play"), ("Information", "_Information"),
+        ("Cut and mark", "_Cut and mark"), ("Play and listen", "_Play"), ("Picture", "Pict_ure"), ("Smart tools", "_Smart tools"),
+        ("Information", "_Information"),
     ];
 
     private void BuildMenu()
@@ -155,6 +156,14 @@ public partial class MainWindow
             case CommandId.TransitionHere: await TransitionHereAsync(); return true;
             case CommandId.ProjectCheck: await ShowProjectCheckAsync(); return true;
             case CommandId.KeyboardHelp: ShowKeyboardHelp(); return true;
+            case CommandId.QuickVideo: await QuickVideoAsync(); return true;
+            case CommandId.Transcribe: await TranscribeAsync(); return true;
+            case CommandId.TranscriptEditor: await TranscriptEditorAsync(); return true;
+            case CommandId.MakeCaptions: await MakeCaptionsAsync(); return true;
+            case CommandId.ShortenPauses: await ShortenPausesAsync(); return true;
+            case CommandId.FindBeats: await FindBeatsAsync(); return true;
+            case CommandId.CutToBeats: await CutToBeatsAsync(); return true;
+            case CommandId.AutoDuck: await AutoDuckAsync(); return true;
             default: return false;
         }
     }
@@ -169,7 +178,7 @@ public partial class MainWindow
         }
 
         var name = _editor.Session.FilePath is { } p ? Path.GetFileName(p) : _editor.Project.Title;
-        var answer = MessageBox.Show(this, $"Save changes to {name} before {action}?", "Accessible Video Editor",
+        var answer = MessageBox.Show(this, $"Save changes to {name} before {action}?", "ClipScribe",
             MessageBoxButton.YesNoCancel, MessageBoxImage.Question);
         return answer switch
         {
@@ -322,7 +331,7 @@ public partial class MainWindow
     private bool OfferRecovery()
     {
         var answer = MessageBox.Show(this,
-            "Accessible Video Editor did not close normally last time. Recover the unsaved project?",
+            "ClipScribe did not close normally last time. Recover the unsaved project?",
             "Recover project", MessageBoxButton.YesNo, MessageBoxImage.Question);
         try
         {
@@ -447,7 +456,7 @@ public partial class MainWindow
 
         using var player = new SoundPreviewPlayer(() => _preview.Tools);
         var dialog = new ListDialog(this, "Add sound effect or music", "Sounds", entries, searchable: true,
-            intro: "Real recordings and built-in sounds are all public domain and free to use in any video. Your own sounds come from Documents, Accessible Video Editor, Sound Effects. Press Enter to add at the playhead, or use Preview to listen.");
+            intro: "Real recordings and built-in sounds are all public domain and free to use in any video. Your own sounds come from Documents, ClipScribe, Sound Effects. Press Enter to add at the playhead, or use Preview to listen.");
         dialog.AddAction("_Add at playhead");
         dialog.AddAction("_Preview", entry =>
         {
@@ -1423,7 +1432,7 @@ public partial class MainWindow
         var version = typeof(MainWindow).Assembly.GetName().Version?.ToString(3) ?? "";
         var ffmpeg = Tools?.VersionText ?? "FFmpeg not found";
         MessageBox.Show(this,
-            $"Accessible Video Editor {version}\nA screen-reader-first video editor.\nSpeech: {_announcer.ChannelName}.\n{ffmpeg}.\nLicensed under the GNU General Public License version 3 or later.",
+            $"ClipScribe {version}\nA screen-reader-first video editor.\nSpeech: {_announcer.ChannelName}.\n{ffmpeg}.\nLicensed under the GNU General Public License version 3 or later.",
             "About", MessageBoxButton.OK, MessageBoxImage.Information);
     }
 

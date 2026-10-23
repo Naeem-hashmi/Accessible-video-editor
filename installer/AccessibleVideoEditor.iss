@@ -1,11 +1,11 @@
-; Inno Setup script for Accessible Video Editor.
+; Inno Setup script for ClipScribe.
 ; The Inno Setup wizard uses standard Windows dialogs, so NVDA, JAWS and Narrator read every page.
 ; Build: iscc /DSourceDir=<publish folder> /DAppVersion=0.1.0 AccessibleVideoEditor.iss
 
-#define AppName "Accessible Video Editor"
-#define AppExe "AccessibleVideoEditor.exe"
+#define AppName "ClipScribe"
+#define AppExe "ClipScribe.exe"
 #ifndef AppVersion
-  #define AppVersion "0.2.1"
+  #define AppVersion "0.3.0"
 #endif
 #ifndef SourceDir
   #define SourceDir "..\build\app"
@@ -16,13 +16,13 @@ AppId={{6F1C2B9E-5A4D-4C1E-9B7A-3E2D1C0B9A87}
 AppName={#AppName}
 AppVersion={#AppVersion}
 AppVerName={#AppName} {#AppVersion}
-AppPublisher=Accessible Video Editor contributors
+AppPublisher=ClipScribe contributors
 AppPublisherURL=https://github.com/Naeem-hashmi/Accessible-video-editor
 DefaultDirName={autopf}\{#AppName}
 DefaultGroupName={#AppName}
 DisableProgramGroupPage=yes
 OutputDir=..\build\installer
-OutputBaseFilename=AccessibleVideoEditor-Setup-{#AppVersion}
+OutputBaseFilename=ClipScribe-Setup-{#AppVersion}
 Compression=lzma2/max
 SolidCompression=yes
 ArchitecturesAllowed=x64compatible
@@ -53,7 +53,7 @@ Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExe}"; Tasks: desktopico
 
 [Registry]
 Root: HKA; Subkey: "Software\Classes\.avproj"; ValueType: string; ValueName: ""; ValueData: "AccessibleVideoEditor.Project"; Flags: uninsdeletevalue; Tasks: associate
-Root: HKA; Subkey: "Software\Classes\AccessibleVideoEditor.Project"; ValueType: string; ValueName: ""; ValueData: "Accessible Video Editor project"; Flags: uninsdeletekey; Tasks: associate
+Root: HKA; Subkey: "Software\Classes\AccessibleVideoEditor.Project"; ValueType: string; ValueName: ""; ValueData: "ClipScribe project"; Flags: uninsdeletekey; Tasks: associate
 Root: HKA; Subkey: "Software\Classes\AccessibleVideoEditor.Project\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\{#AppExe},0"; Tasks: associate
 Root: HKA; Subkey: "Software\Classes\AccessibleVideoEditor.Project\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#AppExe}"" ""%1"""; Tasks: associate
 

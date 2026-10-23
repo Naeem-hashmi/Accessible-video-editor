@@ -5,7 +5,7 @@ Automated tests cover the editing logic, rendering and the UI Automation names. 
 ## Setup
 
 1. Install from the setup program. The installer pages should all be read.
-2. Start the program. You should hear: "Accessible Video Editor. New basic project. Layer 1, Video, empty..." and "Press F1 for keyboard help."
+2. Start the program. You should hear: "ClipScribe. New basic project. Layer 1, Video, empty..." and "Press F1 for keyboard help."
 
 ## Core tasks
 

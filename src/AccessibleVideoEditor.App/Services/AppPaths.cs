@@ -15,9 +15,9 @@ public static class AppPaths
 
     public static string LogFile => Path.Combine(AppData, "log.txt");
 
-    /// <summary>Documents\Accessible Video Editor.</summary>
+    /// <summary>Documents\ClipScribe.</summary>
     public static string Documents =>
-        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Accessible Video Editor");
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "ClipScribe");
 
     public static string Projects => Path.Combine(Documents, "Projects");
 
@@ -27,7 +27,11 @@ public static class AppPaths
     /// <summary>Each sub-folder is a user earcon theme of WAV files named like the built-in ones.</summary>
     public static string UserSoundThemes => Path.Combine(Documents, "Sound Themes");
 
-    public static string PreviewFolder => Path.Combine(Path.GetTempPath(), "AccessibleVideoEditor");
+    public static string PreviewFolder => Path.Combine(Path.GetTempPath(), "ClipScribe");
+
+    /// <summary>Downloaded speech recognition models (hundreds of megabytes, so not in roaming data).</summary>
+    public static string WhisperModels => Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ClipScribe", "Speech models");
 
     /// <summary>Real recorded sounds (CC0) installed with the program, listed in sounds.json.</summary>
     public static string Recordings => Path.Combine(AppContext.BaseDirectory, "Sounds", "Recordings");
@@ -47,7 +51,7 @@ public static class AppPaths
             }
 
             var generated = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AccessibleVideoEditor", "Sound Effects");
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ClipScribe", "Sound Effects");
             SoundEffects.WriteAll(generated);
             return generated;
         }

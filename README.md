@@ -1,4 +1,4 @@
-# Accessible Video Editor
+# ClipScribe
 
 A video editor for Windows built first for screen reader users. It works with **NVDA**, **JAWS** and **Narrator**, and everything is done from the keyboard.
 

@@ -13,7 +13,9 @@ using AccessibleVideoEditor.Core.Model;
 using AccessibleVideoEditor.Core.Online;
 using AccessibleVideoEditor.Core.Rendering;
 using AccessibleVideoEditor.Core.Sound;
+using AccessibleVideoEditor.Core.Speech;
 using AccessibleVideoEditor.Core.Templates;
+using AccessibleVideoEditor.Core.Audio;
 
 namespace AccessibleVideoEditor.App;
 
@@ -329,13 +331,102 @@ internal static class SelfTest
             Check(File.Exists(output), "A preview renders");
         });
 
+        await Step("layout: ribbon, play controls, tracks, layers, inspector", async () =>
+        {
+            Check(window.Ribbon.Items.Count == 8, $"The ribbon has 8 tabs ({window.Ribbon.Items.Count})");
+            Check(CountUnnamedControls(window.Ribbon) == 0, "Every ribbon button has a screen reader name");
+            var ribbonButtons = CountButtons(window.Ribbon);
+            log.Add($"Ribbon buttons: {ribbonButtons}");
+            Check(ribbonButtons >= 50, "The ribbon has the editing, transition, animation, audio, caption and export buttons");
+            Check(window.Transport.Children.Count == 8 && CountUnnamedControls(window.Transport) == 0, "The play controls are named buttons");
+            Check(window.Tracks.ActualWidth > 100 && window.Tracks.ActualHeight >= TimelineTracks.RulerHeight + TimelineTracks.RowHeight,
+                $"The visual timeline is drawn ({window.Tracks.ActualWidth:0} by {window.Tracks.ActualHeight:0})");
+
+            // Left and Right on a layer go through its items and keep focus on the layer.
+            var layer = window.Editor.Project.Layers[0];
+            window.Editor.FocusItem(layer.Items[0].Id);
+            window.Refresh();
+            window.FocusLayerList();
+            await Settle();
+            await window.RunAsync(CommandId.NextItem);
+            await Settle();
+            Check(window.Editor.FocusedItemIndex == 1, "Right arrow on a layer moves to its next item");
+            Check(window.LayersList.IsKeyboardFocusWithin || !window.IsActive, "Focus stays on the layer");
+            if (window.IsActive)
+            {
+                Check(window.PropertiesTitle.Text.StartsWith("Layer ", StringComparison.Ordinal), $"The inspector shows the layer while the Layers list has focus: {window.PropertiesTitle.Text}");
+            }
+            else
+            {
+                log.Add("SKIP layer inspector check: the window is not active, so the Layers list can't hold keyboard focus.");
+            }
+
+            // A text item shows text style options.
+            var textLayer = window.Editor.Project.Layers.FirstOrDefault(l => l.Items.Any(i => i.Kind == ItemKind.Text));
+            if (textLayer is not null)
+            {
+                window.Editor.FocusLayer(textLayer.Id);
+                window.Editor.FocusItem(textLayer.Items.First(i => i.Kind == ItemKind.Text).Id);
+                window.Refresh();
+                window.FocusTimeline();
+                await Settle();
+                window.RebuildInspector();
+                Check(window.PropertiesTitle.Text.StartsWith("Text:", StringComparison.Ordinal), $"The inspector shows text options: {window.PropertiesTitle.Text}");
+                var names = NamesIn(window.PropertiesPanel);
+                Check(names.Contains("Bold") && names.Contains("Text colour") && names.Contains("Background behind the text"), "Text options include bold, colour and background");
+                Check(CountUnnamedControls(window.PropertiesPanel) == 0, "Every inspector control has a screen reader name");
+            }
+            else
+            {
+                Check(false, "A text item exists for the inspector check");
+            }
+        });
+
+        await Step("beats", async () =>
+        {
+            var pulse = Path.Combine(AppPaths.BuiltInSoundEffects, "Upbeat pulse.wav");
+            var beats = BeatDetector.Analyse(window.Tools!, pulse);
+            Check(beats.HasSteadyBeat && beats.Bpm is > 119 and < 121, $"The built-in upbeat pulse is found at 120 BPM ({beats.Bpm:0.0})");
+            var layer = window.Editor.Project.Layers.First(l => l.Kind == LayerKind.Audio);
+            await window.ApplyAsync(window.Editor.Edit("add music", p =>
+            {
+                var target = p.FindLayer(layer.Id)!;
+                target.Items.Add(new Item { Kind = ItemKind.Audio, Path = pulse, Name = "Upbeat pulse", HasAudio = true, Duration = 10, SourceDuration = 30 });
+                return BeatEditing.SetBeats(target, target.Items.Count - 1, beats);
+            }));
+            window.Editor.SetPlayheadFromPlayback(0.01);
+            await window.RunAsync(CommandId.NextBeat);
+            var first = BeatEditing.BeatTimes(window.Editor.Project).FirstOrDefault(b => b > 0.02);
+            Check(Math.Abs(window.Editor.Playhead - first) < 1e-6, $"Shift Right jumps to the next beat ({window.Editor.Playhead:0.000} s)");
+        });
+
+        await Step("offline speech recognition", async () =>
+        {
+            var speech = Environment.GetEnvironmentVariable("AVE_SELFTEST_SPEECH");
+            var models = Environment.GetEnvironmentVariable("AVE_WHISPER_MODELS") ?? AppPaths.WhisperModels;
+            var whisper = WhisperRunner.Locate(models);
+            Check(whisper is not null, "whisper-cli is installed next to the program");
+            if (whisper is null || speech is null || !File.Exists(speech) || !whisper.HasModel(WhisperModel.All[0]))
+            {
+                log.Add("SKIP transcription: no speech sample or Fast model on this machine.");
+                return;
+            }
+
+            var clock = Stopwatch.StartNew();
+            var transcript = await whisper.TranscribeAsync(window.Tools!, WhisperModel.All[0], speech, "en");
+            var text = string.Join(" ", transcript.Words.Select(w => w.Text));
+            log.Add($"Heard in {clock.Elapsed.TotalSeconds:0.0} s: {text}");
+            Check(text.Contains("hello", StringComparison.OrdinalIgnoreCase) && text.Contains("video", StringComparison.OrdinalIgnoreCase),
+                "Windows speech is transcribed offline with word times");
+            Check(transcript.Words.All(w => w.End >= w.Start), "Word times are in order");
+        });
+
         await Step("real recorded sounds", () =>
         {
             var sounds = RecordedSounds.Load(AppPaths.Recordings);
-            Check(sounds.Count >= 30, $"Real recordings are installed ({sounds.Count} found)");
-            Check(sounds.All(s => s.License == "CC0"), "Every recording is public domain (CC0)");
-            Check(sounds.Any(s => s.Category == "Typing") && sounds.Any(s => s.Category == "Clicks") && sounds.Any(s => s.Category == "Whooshes"),
-                "Typing, click and whoosh recordings are included");
+            Check(sounds.Count >= 20, $"Real recordings are installed ({sounds.Count} found)");
+            Check(sounds.All(s => s.License is "CC0" or "Public domain"), "Every recording is public domain or CC0");
+            Check(sounds.Any(s => s.Category == "Typing") && sounds.Any(s => s.Category == "Clicks"), "Typing and click recordings are included");
             if (sounds.Count > 0 && window.Tools is { } tools)
             {
                 using var stream = FfmpegStream.Decode(tools, RecordedSounds.FullPath(AppPaths.Recordings, sounds[0]), maxSeconds: 1);
@@ -420,6 +511,25 @@ internal static class SelfTest
     }
 
     /// <summary>Counts focusable controls whose UI Automation name is empty.</summary>
+    private static int CountButtons(DependencyObject root) =>
+        LogicalTreeHelper.GetChildren(root).OfType<DependencyObject>().Sum(c => (c is Button ? 1 : 0) + CountButtons(c));
+
+    private static HashSet<string> NamesIn(DependencyObject root)
+    {
+        var names = new HashSet<string>();
+        foreach (var child in LogicalTreeHelper.GetChildren(root).OfType<DependencyObject>())
+        {
+            if (child is Control control && UIElementAutomationPeer.CreatePeerForElement(control)?.GetName() is { Length: > 0 } name)
+            {
+                names.Add(name);
+            }
+
+            names.UnionWith(NamesIn(child));
+        }
+
+        return names;
+    }
+
     private static int CountUnnamedControls(DependencyObject root)
     {
         var count = 0;

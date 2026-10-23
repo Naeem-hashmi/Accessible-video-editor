@@ -15,7 +15,7 @@ public sealed record TemplateInfo(string Name, string Category, string Descripti
 
 /// <summary>
 /// User templates kept as files in folders (each folder is a category) under one root, usually
-/// Documents\Accessible Video Editor\Templates. A template is a project saved without, or with, its media.
+/// Documents\ClipScribe\Templates. A template is a project saved without, or with, its media.
 /// Text items and colour cards are always kept, because they need no files: a template can hold a
 /// ready-made title sequence.
 /// </summary>

@@ -25,6 +25,25 @@ internal static class Icons
     public const string Mute = "";
     public const string ColorCard = "";
     public const string Templates = "";
+    public const string Microphone = "\uE720";
+    public const string Captions = "\uE7F0";
+    public const string Volume = "\uE767";
+    public const string Stopwatch = "\uE916";
+    public const string Lightning = "\uE945";
+    public const string Transition = "\uE8AB";
+    public const string Animation = "\uE7F4";
+    public const string Cut = "\uE8C6";
+    public const string Copy = "\uE8C8";
+    public const string Paste = "\uE77F";
+    public const string Add = "\uE710";
+    public const string Settings = "\uE713";
+    public const string Previous = "\uE892";
+    public const string Next = "\uE893";
+    public const string Pause = "\uE769";
+    public const string Edit = "\uE70F";
+    public const string Layers = "\uE81E";
+    public const string Check = "\uE73E";
+    public const string Search = "\uE721";
 
     public static string ForItem(ItemKind kind, LayerKind layer) => kind switch
     {

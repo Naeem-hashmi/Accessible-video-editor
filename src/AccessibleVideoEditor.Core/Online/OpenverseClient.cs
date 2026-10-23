@@ -69,7 +69,7 @@ public sealed class OpenverseClient
         _http = http;
         if (!_http.DefaultRequestHeaders.UserAgent.Any())
         {
-            _http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("AccessibleVideoEditor", "0.2"));
+            _http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("ClipScribe", "0.3"));
             _http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("(+https://github.com/Naeem-hashmi/Accessible-video-editor)"));
         }
     }

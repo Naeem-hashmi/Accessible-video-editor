@@ -175,6 +175,8 @@ public sealed partial class EditorController
             case CommandId.ListenAllLayers: return ToggleListenAll();
             case CommandId.PreviousMarker: return StepMarker(-1);
             case CommandId.NextMarker: return StepMarker(1);
+            case CommandId.PreviousBeat: return StepBeat(-1);
+            case CommandId.NextBeat: return StepBeat(1);
             case CommandId.GoToStart: return MovePlayheadTo(0);
             case CommandId.GoToEnd: return MovePlayheadTo(ProjectDuration);
 
@@ -605,6 +607,22 @@ public sealed partial class EditorController
         return MarkerFeedback(time.Value);
     }
 
+    private Feedback StepBeat(int direction)
+    {
+        var time = BeatEditing.NeighbourBeat(Project, Playhead, direction);
+        if (time is null)
+        {
+            return Edge(BeatEditing.BeatTimes(Project).Count == 0
+                ? "No beats yet. Select the music and use Find beats, Control Shift B."
+                : direction > 0 ? "No more beats after the playhead." : "No more beats before the playhead.");
+        }
+
+        Playhead = time.Value;
+        var beats = BeatEditing.BeatTimes(Project);
+        var number = beats.Count(b => b <= time.Value + 1e-6);
+        return new Feedback { Speech = $"Beat {number}, {Describer.Time(time.Value)}.", Earcon = EarconEvent.Navigate, Playback = PlaybackRequest.Seek };
+    }
+
     private Feedback MarkerFeedback(double time)
     {
         Playhead = time;
@@ -891,6 +909,21 @@ public sealed partial class EditorController
 
         EnsureFocus();
         return Changed(result.Message, EarconEvent.Undo);
+    }
+
+    /// <summary>
+    /// Runs an edit from a tool (transcript, captions, pauses, beats, ducking) as one undoable step and
+    /// reports it like any other edit.
+    /// </summary>
+    public Feedback Edit(string label, Func<Project, EditResult> edit, EarconEvent earcon = EarconEvent.Done)
+    {
+        var result = Session.Execute(label, edit);
+        if (result.Ok && result.FocusItemId is { } item)
+        {
+            FocusedItemId = item;
+        }
+
+        return ToFeedback(result, earcon);
     }
 
     private Feedback ToFeedback(EditResult result, EarconEvent earcon, bool playback = true)

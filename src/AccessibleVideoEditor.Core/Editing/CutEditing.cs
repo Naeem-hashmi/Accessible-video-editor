@@ -111,8 +111,8 @@ public static class CutEditing
         var cuts = new List<TimeStretch>();
         foreach (var pause in analysis.Pauses)
         {
-            var atStart = pause.Start <= 1e-6;
-            var atEnd = pause.End >= analysis.Length - 1e-6;
+            var atStart = pause.Start <= analysis.Start + 1e-6;
+            var atEnd = pause.End >= analysis.End - 1e-6;
 
             // Silence at the very start or end goes whenever it is longer than what is kept.
             var threshold = atStart || atEnd ? keep : longerThan;

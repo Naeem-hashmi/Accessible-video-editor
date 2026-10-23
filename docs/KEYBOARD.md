@@ -76,6 +76,8 @@ Keys without Control or Alt (letters, arrows, Space, Enter, Delete, brackets) wo
 | `Alt+Left` | Previous marker | Jump the playhead back to the previous marker, range start or range end. |
 | `Alt+Right` | Next marker | Jump the playhead forward to the next marker, range start or range end. |
 | `Ctrl+G` | Go to time | Type a time to move the playhead, for example 1:30, 90, or +5. |
+| `Shift+Left` | Previous beat | Move the playhead to the previous beat of the music (after Find beats). |
+| `Shift+Right` | Next beat | Move the playhead to the next beat of the music (after Find beats). |
 | `Ctrl+Home` or `Ctrl+Shift+Left` | Go to start | Move the playhead to the start of the project. |
 | `Ctrl+End` or `Ctrl+Shift+Right` | Go to end | Move the playhead to the end of the project. |
 | `F6` or `Alt+.` | Next area | Move to the next area of the window: library, timeline, layers, properties, preview. |
@@ -146,6 +148,19 @@ Keys without Control or Alt (letters, arrows, Space, Enter, Delete, brackets) wo
 |---|---|---|
 | `P` | Position mode | Move, resize, crop, fill and fade the focused picture or text with the keyboard. Arrows move, plus and minus resize, number keys 1 to 9 snap to a place, 0 fills the frame, Control arrows crop, F fills, O changes opacity, D describes, Enter keeps, Escape undoes. |
 | `Shift+W` | Describe the picture | Say what is visible at the playhead: every picture and text, where it is, its size and what it covers. |
+
+## Smart tools
+
+| Keys | Command | What it does |
+|---|---|---|
+| `Ctrl+Shift+Q` | Quick video | Make a finished video in three steps: choose files, a style (Reel, YouTube, Slideshow or Talking video) and a title. Silences, timing, transitions, music, captions and loudness are done for you, and everything can still be changed. |
+| `Ctrl+Shift+W` | Transcribe speech | Write down the words spoken on the focused layer, on this computer with no upload. Works in English, Urdu, Hindi and many more languages. |
+| `Ctrl+Shift+X` | Edit by transcript | Open the words of the focused layer as a document. Delete words or sentences to cut them out of the video, or correct the words for captions. |
+| `Ctrl+Shift+G` | Make captions | Turn the transcript of the focused layer into captions on a Captions layer at the top. |
+| `Ctrl+Shift+H` | Shorten pauses | Find long pauses in the focused clip and shorten or remove them. Says how many and how long before changing anything. |
+| `Ctrl+Shift+B` | Find beats | Find the tempo and beats of the focused music. Then Shift Left and Shift Right jump from beat to beat. |
+| `Ctrl+Shift+U` | Cut to the beat | Make every picture and clip on the focused layer end on a beat of the music. |
+| `Ctrl+Shift+D` | Lower music under speech | Make the focused music layer quieter wherever someone speaks on the other layers (auto-ducking), or remove that. |
 
 ## Information
 

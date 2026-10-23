@@ -63,7 +63,7 @@ public sealed class Announcer : IDisposable
                 AutomationNotificationKind.Other,
                 interrupt ? AutomationNotificationProcessing.ImportantMostRecent : AutomationNotificationProcessing.ImportantAll,
                 text,
-                "AccessibleVideoEditor");
+                "ClipScribe");
         }
         catch (InvalidOperationException ex)
         {

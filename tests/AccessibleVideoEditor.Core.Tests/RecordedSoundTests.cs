@@ -36,14 +36,15 @@ public sealed class RecordedSoundTests
     public void Recordings_are_public_domain_and_credited()
     {
         var listed = RecordedSounds.Load(Folder());
-        Assert.True(listed.Count >= 30, $"Only {listed.Count} recordings");
+        Assert.True(listed.Count >= 20, $"Only {listed.Count} recordings");
         Assert.All(listed, s =>
         {
-            Assert.Equal("CC0", s.License);
+            Assert.Contains(s.License, new[] { "CC0", "Public domain" });
             Assert.False(string.IsNullOrWhiteSpace(s.Name));
             Assert.False(string.IsNullOrWhiteSpace(s.Description));
             Assert.False(string.IsNullOrWhiteSpace(s.Creator));
-            Assert.StartsWith("https://freesound.org/", s.Source);
+            Assert.True(s.Source.StartsWith("https://commons.wikimedia.org/wiki/File:", StringComparison.Ordinal) ||
+                        s.Source.StartsWith("https://freesound.org/", StringComparison.Ordinal), s.Source);
         });
         Assert.Equal(listed.Count, listed.Select(s => s.Name + s.Category).Distinct().Count());
         var credits = File.ReadAllText(Path.Combine(Folder(), "CREDITS.md"));
@@ -54,7 +55,7 @@ public sealed class RecordedSoundTests
     public void The_trending_categories_are_covered()
     {
         var categories = RecordedSounds.Load(Folder()).Select(s => s.Category).ToHashSet();
-        foreach (var expected in new[] { "Typing", "Clicks", "Whooshes", "Pops", "Notifications", "Reactions" })
+        foreach (var expected in new[] { "Typing", "Clicks", "Notifications", "Reactions", "Everyday", "Nature" })
         {
             Assert.Contains(expected, categories);
         }

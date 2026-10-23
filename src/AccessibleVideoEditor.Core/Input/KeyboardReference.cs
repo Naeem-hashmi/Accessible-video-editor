@@ -50,7 +50,7 @@ public static class KeyboardReference
         var text = new StringBuilder();
         text.AppendLine("<!DOCTYPE html>");
         text.AppendLine("<html lang=\"en\">");
-        text.AppendLine("<head><meta charset=\"utf-8\"><title>Keyboard reference - Accessible Video Editor</title>");
+        text.AppendLine("<head><meta charset=\"utf-8\"><title>Keyboard reference - ClipScribe</title>");
         text.AppendLine("<style>body{font-family:Segoe UI,sans-serif;max-width:60em;margin:1em auto;padding:0 1em;line-height:1.5}table{border-collapse:collapse;width:100%}th,td{border:1px solid #888;padding:.3em .5em;text-align:left;vertical-align:top}kbd{font-family:inherit;font-weight:bold}</style></head>");
         text.AppendLine("<body>");
         text.AppendLine("<h1>Keyboard reference</h1>");

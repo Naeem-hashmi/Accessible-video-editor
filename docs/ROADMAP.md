@@ -66,7 +66,7 @@ Built into the program:
 
   Licences that forbid commercial use (NC), forbid changes (ND) or force your video to use the same licence (SA) are left out on purpose, because trimming or monetising would break them.
 
-Elsewhere (download, then put the files in Documents, Accessible Video Editor, Sound Effects, and they appear in the library):
+Elsewhere (download, then put the files in Documents, ClipScribe, Sound Effects, and they appear in the library):
 
 | Source | Licence | Notes |
 |---|---|---|

@@ -61,6 +61,8 @@ public enum CommandId
     PreviousMarker,
     NextMarker,
     GoToTime,
+    PreviousBeat,
+    NextBeat,
     GoToStart,
     GoToEnd,
     SwitchPane,
@@ -119,6 +121,16 @@ public enum CommandId
     // Picture
     PositionMode,
     DescribePicture,
+
+    // Smart tools
+    QuickVideo,
+    Transcribe,
+    TranscriptEditor,
+    MakeCaptions,
+    ShortenPauses,
+    FindBeats,
+    CutToBeats,
+    AutoDuck,
 
     // Information
     SpeakTime,
@@ -213,6 +225,8 @@ public static class CommandCatalog
         Add(CommandId.PreviousMarker, nav, "Previous marker", "Jump the playhead back to the previous marker, range start or range end.", "Alt+Left");
         Add(CommandId.NextMarker, nav, "Next marker", "Jump the playhead forward to the next marker, range start or range end.", "Alt+Right");
         Add(CommandId.GoToTime, nav, "Go to time", "Type a time to move the playhead, for example 1:30, 90, or +5.", "Ctrl+G");
+        Add(CommandId.PreviousBeat, nav, "Previous beat", "Move the playhead to the previous beat of the music (after Find beats).", "Shift+Left");
+        Add(CommandId.NextBeat, nav, "Next beat", "Move the playhead to the next beat of the music (after Find beats).", "Shift+Right");
         Add(CommandId.GoToStart, nav, "Go to start", "Move the playhead to the start of the project.", "Ctrl+Home", "Ctrl+Shift+Left");
         Add(CommandId.GoToEnd, nav, "Go to end", "Move the playhead to the end of the project.", "Ctrl+End", "Ctrl+Shift+Right");
         Add(CommandId.SwitchPane, nav, "Next area", "Move to the next area of the window: library, timeline, layers, properties, preview.", "F6", "Alt+OemPeriod");
@@ -271,6 +285,16 @@ public static class CommandCatalog
         const string picture = "Picture";
         Add(CommandId.PositionMode, picture, "Position mode", "Move, resize, crop, fill and fade the focused picture or text with the keyboard. Arrows move, plus and minus resize, number keys 1 to 9 snap to a place, 0 fills the frame, Control arrows crop, F fills, O changes opacity, D describes, Enter keeps, Escape undoes.", "P");
         Add(CommandId.DescribePicture, picture, "Describe the picture", "Say what is visible at the playhead: every picture and text, where it is, its size and what it covers.", "Shift+W");
+
+        const string smart = "Smart tools";
+        Add(CommandId.QuickVideo, smart, "Quick video", "Make a finished video in three steps: choose files, a style (Reel, YouTube, Slideshow or Talking video) and a title. Silences, timing, transitions, music, captions and loudness are done for you, and everything can still be changed.", "Ctrl+Shift+Q");
+        Add(CommandId.Transcribe, smart, "Transcribe speech", "Write down the words spoken on the focused layer, on this computer with no upload. Works in English, Urdu, Hindi and many more languages.", "Ctrl+Shift+W");
+        Add(CommandId.TranscriptEditor, smart, "Edit by transcript", "Open the words of the focused layer as a document. Delete words or sentences to cut them out of the video, or correct the words for captions.", "Ctrl+Shift+X");
+        Add(CommandId.MakeCaptions, smart, "Make captions", "Turn the transcript of the focused layer into captions on a Captions layer at the top.", "Ctrl+Shift+G");
+        Add(CommandId.ShortenPauses, smart, "Shorten pauses", "Find long pauses in the focused clip and shorten or remove them. Says how many and how long before changing anything.", "Ctrl+Shift+H");
+        Add(CommandId.FindBeats, smart, "Find beats", "Find the tempo and beats of the focused music. Then Shift Left and Shift Right jump from beat to beat.", "Ctrl+Shift+B");
+        Add(CommandId.CutToBeats, smart, "Cut to the beat", "Make every picture and clip on the focused layer end on a beat of the music.", "Ctrl+Shift+U");
+        Add(CommandId.AutoDuck, smart, "Lower music under speech", "Make the focused music layer quieter wherever someone speaks on the other layers (auto-ducking), or remove that.", "Ctrl+Shift+D");
 
         const string info = "Information";
         Add(CommandId.SpeakTime, info, "Say playhead time", "Say where the playhead is.", "T");

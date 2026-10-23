@@ -16,7 +16,9 @@ jobs:
   core-linux:
     name: Core tests (Linux, system FFmpeg)
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 40
+    env:
+      WHISPER_VERSION: v1.9.5
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
@@ -24,9 +26,48 @@ jobs:
           dotnet-version: 8.0.x
       - name: Install FFmpeg
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg
+
+      - name: Build whisper.cpp (offline speech recognition)
+        run: |
+          git clone --depth 1 --branch "$WHISPER_VERSION" https://github.com/ggml-org/whisper.cpp "$RUNNER_TEMP/whisper.cpp"
+          cmake -S "$RUNNER_TEMP/whisper.cpp" -B "$RUNNER_TEMP/whisper.cpp/build" -DCMAKE_BUILD_TYPE=Release -DWHISPER_BUILD_TESTS=OFF
+          cmake --build "$RUNNER_TEMP/whisper.cpp/build" -j 4 --target whisper-cli
+          echo "WHISPER_CLI=$RUNNER_TEMP/whisper.cpp/build/bin/whisper-cli" >> "$GITHUB_ENV"
+
+      - name: Cache speech models and voices
+        uses: actions/cache@v4
+        with:
+          path: ~/speech-cache
+          key: speech-models-base-turbo-q5-piper-en-hi-ur-1
+
+      - name: Download speech models and make test speech
+        run: |
+          mkdir -p ~/speech-cache/models ~/speech-cache/voices ~/speech
+          cd ~/speech-cache/models
+          for m in ggml-base.bin ggml-large-v3-turbo-q5_0.bin; do
+            [ -s "$m" ] || curl -sSL --retry 3 -o "$m" "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/$m"
+          done
+          ls -la
+          # Real speech for the tests from Piper, an offline neural voice (en, hi, ur).
+          python3 -m venv ~/piper && ~/piper/bin/pip install -q piper-tts
+          cd ~/speech-cache/voices
+          for v in en/en_US/lessac/medium/en_US-lessac-medium hi/hi_IN/pratham/medium/hi_IN-pratham-medium ur/ur_PK/fasih/medium/ur_PK-fasih-medium; do
+            n=$(basename $v)
+            for ext in onnx onnx.json; do
+              [ -s "$n.$ext" ] || curl -sSL --retry 3 -o "$n.$ext" "https://huggingface.co/rhasspy/piper-voices/resolve/main/$v.$ext"
+            done
+          done
+          echo "Hello and welcome to my channel. Today I will show you how to cook rice. First, wash the rice in cold water." | ~/piper/bin/piper -m en_US-lessac-medium.onnx --sentence-silence 1.2 -f ~/speech/english.wav
+          echo "नमस्ते, मेरे चैनल में आपका स्वागत है। आज हम चावल बनाना सीखेंगे।" | ~/piper/bin/piper -m hi_IN-pratham-medium.onnx --sentence-silence 0.8 -f ~/speech/hindi.wav
+          echo "السلام علیکم، میرے چینل میں خوش آمدید۔ آج ہم چاول بنانا سیکھیں گے۔" | ~/piper/bin/piper -m ur_PK-fasih-medium.onnx --sentence-silence 0.8 -f ~/speech/urdu.wav
+          ls -la ~/speech
+          echo "WHISPER_MODELS=$HOME/speech-cache/models" >> "$GITHUB_ENV"
+          echo "AVE_SPEECH=$HOME/speech" >> "$GITHUB_ENV"
+
       - name: Test
         env:
           AVE_REQUIRE_TEXT: "1"
+          AVE_REQUIRE_WHISPER: "1"
         run: dotnet test tests/AccessibleVideoEditor.Core.Tests -c Release --logger "console;verbosity=normal"
 
   windows:
@@ -34,7 +75,7 @@ jobs:
     runs-on: windows-latest
     permissions:
       contents: write
-    timeout-minutes: 45
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
@@ -98,6 +139,43 @@ jobs:
           Copy-Item docs/*.html build/app/docs
           Copy-Item LICENSE build/app/LICENSE.txt
 
+      - name: Add whisper.cpp for offline speech recognition
+        shell: pwsh
+        run: |
+          $headers = @{ Authorization = "Bearer ${{ github.token }}" }
+          $release = Invoke-RestMethod "https://api.github.com/repos/ggml-org/whisper.cpp/releases/tags/v1.9.5" -Headers $headers
+          $asset = $release.assets | Where-Object { $_.name -eq "whisper-bin-x64.zip" } | Select-Object -First 1
+          if (-not $asset) { throw "whisper-bin-x64.zip not found in whisper.cpp $($release.tag_name): $($release.assets.name -join ', ')" }
+          Invoke-WebRequest $asset.browser_download_url -OutFile whisper.zip -UseBasicParsing
+          Expand-Archive whisper.zip -DestinationPath whisper-download
+          $cli = Get-ChildItem whisper-download -Recurse -Filter whisper-cli.exe | Select-Object -First 1
+          if (-not $cli) { throw "whisper-cli.exe not found in $($asset.name)." }
+          New-Item -ItemType Directory -Force build/app/whisper | Out-Null
+          Copy-Item (Join-Path $cli.DirectoryName "*") build/app/whisper -Recurse
+          Invoke-WebRequest "https://raw.githubusercontent.com/ggml-org/whisper.cpp/v1.9.5/LICENSE" -OutFile build/app/whisper/WHISPER-LICENSE.txt -UseBasicParsing
+          Get-ChildItem build/app/whisper | Select-Object Name, Length | Format-Table | Out-String | Write-Host
+          & build/app/whisper/whisper-cli.exe -h 2>&1 | Select-Object -First 3
+
+      - name: Speech model and a spoken sample for the self-test
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force speech-models | Out-Null
+          Invoke-WebRequest "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.bin" -OutFile speech-models/ggml-base.bin -UseBasicParsing
+          "AVE_WHISPER_MODELS=$((Resolve-Path speech-models).Path)" >> $env:GITHUB_ENV
+          try {
+            Add-Type -AssemblyName System.Speech
+            $voice = New-Object System.Speech.Synthesis.SpeechSynthesizer
+            $wav = Join-Path $pwd "selftest-speech.wav"
+            $voice.SetOutputToWaveFile($wav)
+            $voice.Speak("Hello and welcome. This video shows how to cook rice.")
+            $name = $voice.Voice.Name
+            $voice.Dispose()
+            "AVE_SELFTEST_SPEECH=$wav" >> $env:GITHUB_ENV
+            Write-Host "Made a speech sample with $name."
+          } catch {
+            Write-Host "No Windows voice on this machine: $_"
+          }
+
       - name: Add NVDA controller client (optional, for direct NVDA speech)
         continue-on-error: true
         shell: pwsh
@@ -114,10 +192,10 @@ jobs:
         shell: pwsh
         run: |
           $log = Join-Path $pwd "self-test.log"
-          $p = Start-Process -FilePath build/app/AccessibleVideoEditor.exe -ArgumentList "--self-test", "`"$log`"" -PassThru
+          $p = Start-Process -FilePath build/app/ClipScribe.exe -ArgumentList "--self-test", "`"$log`"" -PassThru
           if (-not $p.WaitForExit(600000)) { $p.Kill(); throw "Self-test timed out." }
           if (Test-Path $log) { Get-Content $log } else { Write-Host "No self-test log was written." }
-          $appLog = Join-Path $env:APPDATA "AccessibleVideoEditor/log.txt"
+          $appLog = Join-Path $env:APPDATA "ClipScribe/log.txt"
           if (Test-Path $appLog) { Write-Host "--- application log ---"; Get-Content $appLog }
           if ($p.ExitCode -ne 0) { throw "Self-test failed with exit code $($p.ExitCode)." }
 
@@ -130,12 +208,12 @@ jobs:
           }
           $iscc = (Get-Command iscc -ErrorAction SilentlyContinue).Source
           if (-not $iscc) { $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" }
-          & $iscc "/DSourceDir=$((Resolve-Path build/app).Path)" "/DAppVersion=0.2.1" installer/AccessibleVideoEditor.iss
+          & $iscc "/DSourceDir=$((Resolve-Path build/app).Path)" "/DAppVersion=0.3.0" installer/AccessibleVideoEditor.iss
           if ($LASTEXITCODE -ne 0) { throw "Installer build failed." }
 
       - name: Make the portable zip
         shell: pwsh
-        run: Compress-Archive -Path build/app/* -DestinationPath build/installer/AccessibleVideoEditor-portable-0.2.1.zip
+        run: Compress-Archive -Path build/app/* -DestinationPath build/installer/ClipScribe-portable-0.3.0.zip
 
       - uses: actions/upload-artifact@v4
         with:
@@ -147,17 +225,17 @@ jobs:
         if: github.event_name == 'push'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v0.2.1
+          tag_name: v0.3.0
           target_commitish: ${{ github.sha }}
-          name: Accessible Video Editor 0.2.1 (test build)
+          name: ClipScribe 0.3.0 (test build)
           prerelease: true
           body: |
             Test build from commit ${{ github.sha }}.
-            Download AccessibleVideoEditor-Setup-0.2.1.exe to install, or the portable zip to run without installing.
+            Download ClipScribe-Setup-0.3.0.exe to install, or the portable zip to run without installing.
             Windows may warn that the installer is from an unknown publisher because it is not code-signed: choose More info, then Run anyway.
           files: |
-            build/installer/AccessibleVideoEditor-Setup-0.2.1.exe
-            build/installer/AccessibleVideoEditor-portable-0.2.1.zip
+            build/installer/ClipScribe-Setup-0.3.0.exe
+            build/installer/ClipScribe-portable-0.3.0.zip
           fail_on_unmatched_files: true
 
       - uses: actions/upload-artifact@v4

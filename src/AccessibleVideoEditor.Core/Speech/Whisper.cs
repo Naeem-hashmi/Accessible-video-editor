@@ -139,7 +139,8 @@ public sealed partial class WhisperRunner
     /// Whisper code such as en, hi or ur, or "auto".
     /// </summary>
     public async Task<Transcript> TranscribeAsync(FfmpegTools ffmpeg, WhisperModel model, string mediaPath, string language,
-        double start = 0, double? length = null, IProgress<double>? progress = null, WhisperOptions? options = null, CancellationToken token = default)
+        double start = 0, double? length = null, IProgress<double>? progress = null, WhisperOptions? options = null, double audioOffset = 0,
+        CancellationToken token = default)
     {
         options ??= Options;
         if (!HasModel(model))
@@ -160,6 +161,11 @@ public sealed partial class WhisperRunner
             }
 
             extract.AddRange(["-i", mediaPath, "-vn"]);
+            if (Rendering.AudioAlignment.Align(audioOffset, start) is { } delay)
+            {
+                // Sound stored later than the picture: keep word times in picture time.
+                extract.AddRange(["-af", delay]);
+            }
             if (length is { } l)
             {
                 extract.AddRange(["-t", Num(l)]);
@@ -216,7 +222,7 @@ public sealed partial class WhisperRunner
             if ((code != 0 || !File.Exists(json)) && options.UseGpu)
             {
                 // A graphics driver problem must never stop transcription: try again on the processor.
-                return await TranscribeAsync(ffmpeg, model, mediaPath, language, start, length, progress, options with { UseGpu = false }, token)
+                return await TranscribeAsync(ffmpeg, model, mediaPath, language, start, length, progress, options with { UseGpu = false }, audioOffset, token)
                     .ConfigureAwait(false);
             }
 

@@ -210,6 +210,9 @@ public sealed class Item
 
     public int SourceHeight { get; set; }
 
+    /// <summary>How much later the file's sound starts than its picture (from <see cref="Media.MediaInfo.AudioOffset"/>).</summary>
+    public double AudioOffset { get; set; }
+
     /// <summary>Silence (black or transparent) before this item starts, in seconds.</summary>
     public double GapBefore { get; set; }
 

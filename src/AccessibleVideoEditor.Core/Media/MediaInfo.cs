@@ -23,6 +23,12 @@ public sealed record MediaInfo
     public int Width { get; init; }
 
     public int Height { get; init; }
+
+    /// <summary>
+    /// How much later the sound starts than the picture inside the file, in seconds (negative: earlier).
+    /// Some phones and cameras store it like this; playback must delay the sound by this much.
+    /// </summary>
+    public double AudioOffset { get; init; }
 }
 
 public sealed class MediaProbeException(string message) : Exception(message);
@@ -96,6 +102,7 @@ public static class MediaProbe
         int width = 0, height = 0;
         double streamDuration = 0;
         long videoFrames = 0;
+        double? videoStart = null, audioStart = null;
 
         if (root.TryGetProperty("streams", out var streams))
         {
@@ -113,6 +120,7 @@ public static class MediaProbe
                     }
 
                     hasVideo = true;
+                    videoStart = StartTime(stream);
                     width = GetInt(stream, "width");
                     height = GetInt(stream, "height");
                     streamDuration = Math.Max(streamDuration, GetDouble(stream, "duration"));
@@ -120,6 +128,7 @@ public static class MediaProbe
                 }
                 else if (type == "audio")
                 {
+                    audioStart ??= StartTime(stream);
                     hasAudio = true;
                     streamDuration = Math.Max(streamDuration, GetDouble(stream, "duration"));
                 }
@@ -177,8 +186,16 @@ public static class MediaProbe
             HasAudio = hasAudio,
             Width = width,
             Height = height,
+            // Small differences (under a millisecond, or the usual AAC start padding reported as 0) are ignored.
+            AudioOffset = kind == ItemKind.Video && videoStart is { } v && audioStart is { } a && Math.Abs(a - v) > 0.001 ? Math.Round(a - v, 6) : 0,
         };
     }
+
+    private static double? StartTime(JsonElement stream) =>
+        stream.TryGetProperty("start_time", out var value) && value.ValueKind == JsonValueKind.String &&
+        double.TryParse(value.GetString(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var t)
+            ? t
+            : null;
 
     /// <summary>Makes a timeline item for a probed file, using the layer's defaults.</summary>
     public static Item CreateItem(MediaInfo info, LayerDefaults defaults, LayerKind layerKind)
@@ -194,6 +211,7 @@ public static class MediaProbe
             HasAudio = info.HasAudio,
             SourceWidth = info.Width,
             SourceHeight = info.Height,
+            AudioOffset = info.AudioOffset,
             Volume = defaults.Volume,
             TransitionIn = defaults.Transition.Clone(),
             Placement = defaults.Placement.Clone(),

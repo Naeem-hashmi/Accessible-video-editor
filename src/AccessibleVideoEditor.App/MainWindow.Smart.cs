@@ -179,7 +179,8 @@ public partial class MainWindow
             for (var i = 0; i < files.Count; i++)
             {
                 progress.SetStatus($"Transcribing {i + 1} of {files.Count}: {Path.GetFileName(files[i])}");
-                done.Add(await whisper.TranscribeAsync(tools, model, files[i], code, progress: new Progress<double>(progress.Report), token: token));
+                var offset = layer.Items.First(x => string.Equals(x.Path, files[i], StringComparison.OrdinalIgnoreCase)).AudioOffset;
+                done.Add(await whisper.TranscribeAsync(tools, model, files[i], code, progress: new Progress<double>(progress.Report), audioOffset: offset, token: token));
             }
 
             return done;
@@ -383,7 +384,7 @@ public partial class MainWindow
         }
 
         var analysis = await WithProgressAsync("Finding pauses", (_, token) =>
-            Task.Run(() => SpeechDetector.Analyse(tools, item.Path, item.SourceIn, item.Duration, minimumPause: 0.4).Shift(item.SourceIn), token));
+            Task.Run(() => SpeechDetector.Analyse(tools, item.Path, item.SourceIn, item.Duration, minimumPause: 0.4, audioOffset: item.AudioOffset).Shift(item.SourceIn), token));
         if (analysis is null)
         {
             return;
@@ -605,7 +606,8 @@ public partial class MainWindow
                 for (var i = 0; i < speaking.Count; i++)
                 {
                     progress.SetStatus($"Writing captions, {i + 1} of {speaking.Count}");
-                    transcripts.Add(await whisper.TranscribeAsync(tools, model, speaking[i].Path, _settings.SpeechLanguage, progress: new Progress<double>(progress.Report), token: token));
+                    transcripts.Add(await whisper.TranscribeAsync(tools, model, speaking[i].Path, _settings.SpeechLanguage, progress: new Progress<double>(progress.Report),
+                        audioOffset: speaking[i].AudioOffset, token: token));
                 }
             }
 

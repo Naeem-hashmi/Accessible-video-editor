@@ -44,8 +44,10 @@ public static class SpeechDetector
     private const double Step = 0.02;
     private const double Hangover = 0.08;
 
-    public static SpeechAnalysis Analyse(FfmpegTools tools, string path, double start, double length, double minimumPause = 0.5, double? thresholdDb = null) =>
-        Analyse(FfmpegStream.DecodeMono(tools, path, SampleRate, start, length), minimumPause, thresholdDb);
+    /// <param name="audioOffset">How much later the file's sound starts than its picture (see MediaInfo.AudioOffset).</param>
+    public static SpeechAnalysis Analyse(FfmpegTools tools, string path, double start, double length, double minimumPause = 0.5, double? thresholdDb = null,
+        double audioOffset = 0) =>
+        Analyse(FfmpegStream.DecodeMono(tools, path, SampleRate, start, length, audioOffset), minimumPause, thresholdDb);
 
     public static SpeechAnalysis Analyse(float[] samples, double minimumPause = 0.5, double? thresholdDb = null)
     {

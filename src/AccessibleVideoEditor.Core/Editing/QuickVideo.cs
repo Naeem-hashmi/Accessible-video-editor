@@ -295,7 +295,7 @@ public static class QuickVideo
         foreach (var file in request.Files.Where(f => f.Kind == ItemKind.Video && f.HasAudio))
         {
             token.ThrowIfCancellationRequested();
-            speech[file.Path] = SpeechDetector.Analyse(tools, file.Path, 0, file.Duration);
+            speech[file.Path] = SpeechDetector.Analyse(tools, file.Path, 0, file.Duration, audioOffset: file.AudioOffset);
         }
 
         var beats = request.Music is { } music ? BeatDetector.Analyse(tools, music.Path, 0, Math.Min(600, music.Duration)) : null;

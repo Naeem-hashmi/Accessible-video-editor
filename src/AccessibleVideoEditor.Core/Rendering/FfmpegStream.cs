@@ -79,7 +79,8 @@ public sealed class FfmpegStream : IDisposable
     /// Decodes the sound of one file or web address to raw 16-bit stereo 48 kHz, for listening to a sound
     /// before adding it. Plays at most <paramref name="maxSeconds"/>.
     /// </summary>
-    public static FfmpegStream Decode(FfmpegTools tools, string source, double maxSeconds = 300, double start = 0, int sampleRate = 48000, int channels = 2)
+    public static FfmpegStream Decode(FfmpegTools tools, string source, double maxSeconds = 300, double start = 0, int sampleRate = 48000, int channels = 2,
+        double audioOffset = 0)
     {
         var workFolder = Path.Combine(Path.GetTempPath(), $"ave-stream-{Guid.NewGuid():N}");
         Directory.CreateDirectory(workFolder);
@@ -90,18 +91,24 @@ public sealed class FfmpegStream : IDisposable
             args.AddRange(["-ss", start.ToString("0.######", inv)]);
         }
 
+        args.AddRange(["-i", source, "-vn"]);
+        if (AudioAlignment.Align(audioOffset, start) is { } delay)
+        {
+            args.AddRange(["-af", delay]);
+        }
+
         args.AddRange(
         [
-            "-i", source, "-vn", "-t", maxSeconds.ToString("0.######", inv),
+            "-t", maxSeconds.ToString("0.######", inv),
             "-ac", channels.ToString(inv), "-ar", sampleRate.ToString(inv), "-c:a", "pcm_s16le", "-f", "s16le", "pipe:1",
         ]);
         return Launch(tools, args, workFolder);
     }
 
     /// <summary>Decodes a stretch of sound to mono samples between -1 and 1, for analysis (beats, speech, levels).</summary>
-    public static float[] DecodeMono(FfmpegTools tools, string source, int sampleRate, double start = 0, double maxSeconds = 3600)
+    public static float[] DecodeMono(FfmpegTools tools, string source, int sampleRate, double start = 0, double maxSeconds = 3600, double audioOffset = 0)
     {
-        using var stream = Decode(tools, source, maxSeconds, start, sampleRate, 1);
+        using var stream = Decode(tools, source, maxSeconds, start, sampleRate, 1, audioOffset);
         using var memory = new MemoryStream();
         stream.Output.CopyTo(memory);
         var bytes = memory.GetBuffer();

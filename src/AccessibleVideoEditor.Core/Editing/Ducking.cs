@@ -33,7 +33,7 @@ public static class Ducking
                     continue;
                 }
 
-                var analysis = SpeechDetector.Analyse(tools, item.Path, item.SourceIn, item.Duration, minimumPause: 0.4);
+                var analysis = SpeechDetector.Analyse(tools, item.Path, item.SourceIn, item.Duration, minimumPause: 0.4, audioOffset: item.AudioOffset);
                 stretches.AddRange(analysis.Sound.Select(s => new TimeStretch(spans[i].Start + s.Start, Math.Min(spans[i].End, spans[i].Start + s.End))));
             }
         }

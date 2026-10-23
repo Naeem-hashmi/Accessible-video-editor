@@ -560,6 +560,10 @@ public sealed class GraphBuilder
         var input = AddInput(item, forVideo: false);
         var chain = new StringBuilder();
         chain.Append(CultureInfo.InvariantCulture, $"[{input}:a:0]asetpts=PTS-STARTPTS,aresample={SampleRate},{AudioFormat}");
+        if (AudioAlignment.Align(item.AudioOffset, item.SourceIn) is { } delay)
+        {
+            chain.Append(',').Append(delay);
+        }
         foreach (var filter in AudioFilters.For(item.Audio))
         {
             chain.Append(',').Append(filter);

@@ -25,7 +25,7 @@ jobs:
         with:
           dotnet-version: 10.0.x
       - name: Install FFmpeg, and Vulkan with Mesa's software device (to test the graphics-chip path)
-        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg libvulkan-dev glslc mesa-vulkan-drivers
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg libvulkan-dev spirv-headers glslc mesa-vulkan-drivers
 
       - name: Build whisper.cpp with Vulkan and loadable processor backends (as shipped on Windows)
         run: |

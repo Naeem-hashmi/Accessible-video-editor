@@ -332,6 +332,12 @@ public sealed class Placement
 
     public double CropBottom { get; set; }
 
+    /// <summary>Space between the picture and the frame edge for corner and side positions, percent of the shorter side.</summary>
+    public double MarginPercent { get; set; } = 4;
+
+    /// <summary>Rounded corners: radius as a percent of the picture's shorter side (0 square, 50 fully round).</summary>
+    public double CornerRadiusPercent { get; set; }
+
     [JsonIgnore]
     public bool HasCrop => CropLeft > 0.01 || CropRight > 0.01 || CropTop > 0.01 || CropBottom > 0.01;
 

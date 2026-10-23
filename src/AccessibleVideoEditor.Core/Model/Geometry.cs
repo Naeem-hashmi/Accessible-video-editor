@@ -33,7 +33,8 @@ public static class Geometry
     /// <summary>Gap between a corner-placed picture and the frame edge, as a share of the shorter side.</summary>
     public const double MarginShare = 0.04;
 
-    public static double Margin(int width, int height) => Math.Round(Math.Min(width, height) * MarginShare / 2) * 2;
+    public static double Margin(int width, int height, double percent = MarginShare * 100) =>
+        Math.Round(Math.Min(width, height) * Math.Clamp(percent, 0, 40) / 100 / 2) * 2;
 
     public static FrameRect RectOf(Item item, int width, int height)
     {
@@ -95,7 +96,7 @@ public static class Geometry
 
     private static (double X, double Y) Position(Placement placement, int width, int height, double w, double h, bool isText)
     {
-        var m = Margin(width, height);
+        var m = Margin(width, height, placement.MarginPercent);
         var center = (width - w) / 2;
         var middle = (height - h) / 2;
         var preset = placement.Position == PositionPreset.FullFrame && isText ? PositionPreset.Center : placement.Position;

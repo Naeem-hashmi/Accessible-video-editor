@@ -510,6 +510,15 @@ public sealed class GraphBuilder
             chain.Append(CultureInfo.InvariantCulture,
                 $",scale={boxW}:{boxH}:force_original_aspect_ratio=decrease:force_divisible_by=2,setsar=1,format=yuva420p");
         }
+        if (placement.CornerRadiusPercent > 0.01)
+        {
+            // Rounded corners: pixels outside a quarter circle at each corner become transparent.
+            var k = Num(Math.Clamp(placement.CornerRadiusPercent, 0, 50) / 100);
+            var r = $"(min(W,H)*{k})";
+            chain.Append(CultureInfo.InvariantCulture,
+                $",geq=lum='lum(X,Y)':cb='cb(X,Y)':cr='cr(X,Y)':a='alpha(X,Y)*lte(pow(max(0,max({r}-X,X-(W-1-{r}))),2)+pow(max(0,max({r}-Y,Y-(H-1-{r}))),2),{r}*{r})'");
+        }
+
         if (item.Placement.OpacityPercent < 99.95)
         {
             chain.Append(CultureInfo.InvariantCulture,
@@ -742,7 +751,7 @@ public sealed class GraphBuilder
     /// <summary>The resting position, as drawtext expressions of the text's own size.</summary>
     private (string X, string Y) TextBasePosition(Placement placement)
     {
-        var m = Geometry.Margin(_width, _height).ToString(Inv);
+        var m = Geometry.Margin(_width, _height, placement.MarginPercent).ToString(Inv);
         const string center = "(w-text_w)/2";
         const string middle = "(h-text_h)/2";
         var right = $"w-text_w-{m}";
@@ -860,8 +869,7 @@ public sealed class GraphBuilder
     /// <summary>FFmpeg pad expressions placing the scaled picture; always kept inside the frame.</summary>
     private (string X, string Y) PadPosition(Placement placement)
     {
-        var margin = Even(Math.Min(_width, _height) * 0.04);
-        var m = margin.ToString(Inv);
+        var m = Geometry.Margin(_width, _height, placement.MarginPercent).ToString(Inv);
         const string center = "(ow-iw)/2";
         const string middle = "(oh-ih)/2";
         var right = $"ow-iw-{m}";

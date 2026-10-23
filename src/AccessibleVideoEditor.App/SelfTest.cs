@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Automation.Peers;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 using AccessibleVideoEditor.App.Services;
 using AccessibleVideoEditor.App.ViewModels;
 using AccessibleVideoEditor.Core.Editing;
@@ -569,6 +570,36 @@ internal static class SelfTest
             var back = Timeline.Span(window.Editor.FocusedLayer!, window.Editor.FocusedItemIndex).Start;
             Check(Math.Abs(back - start) < 0.01, "One undo takes back the whole held slide");
             Check(focused.Id == window.Editor.FocusedItem!.Id, "Focus stays on the item");
+        });
+
+        await Step("timeline follows focus and shows pictures", async () =>
+        {
+            var main = window.Editor.Project.Layers.First(l => l.Items.Any(i => i.Kind == ItemKind.Video && File.Exists(i.Path)));
+            var video = main.Items.First(i => i.Kind == ItemKind.Video && File.Exists(i.Path));
+            ImageSource? picture = null;
+            for (var i = 0; i < 100 && picture is null; i++)
+            {
+                picture = window.Tracks.Thumbnails!.Get(video.Path, 0.5);
+                await Task.Delay(100);
+            }
+
+            Check(picture is { Width: > 0 }, "Timeline pictures are made for video clips");
+
+            window.Tracks.PixelsPerSecond = 400;
+            window.Editor.FocusLayer(main.Id);
+            window.Editor.FocusItem(main.Items[0].Id);
+            window.Refresh();
+            await Settle();
+            window.TracksScroll.ScrollToHorizontalOffset(0);
+            window.Editor.FocusItem(main.Items[^1].Id);
+            window.Refresh();
+            await Settle();
+            var span = Timeline.Span(window.Editor.FocusedLayer!, window.Editor.FocusedItemIndex);
+            var x = window.Tracks.XOf(span.Start);
+            var offset = window.TracksScroll.HorizontalOffset;
+            Check(x >= offset && x <= offset + window.TracksScroll.ViewportWidth,
+                $"The timeline scrolls to the focused item (item at {x:0} px, view {offset:0} to {offset + window.TracksScroll.ViewportWidth:0})");
+            window.Tracks.PixelsPerSecond = 40;
         });
 
         await Step("every command runs without crashing", async () =>

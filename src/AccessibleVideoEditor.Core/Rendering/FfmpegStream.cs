@@ -105,6 +105,34 @@ public sealed class FfmpegStream : IDisposable
         return Launch(tools, args, workFolder);
     }
 
+    /// <summary>
+    /// One small picture from a video or picture file at <paramref name="time"/> seconds, as BGRA pixels of
+    /// exactly <paramref name="width"/> by <paramref name="height"/> (letterboxed), for timeline thumbnails.
+    /// Null when the file has no picture there.
+    /// </summary>
+    public static byte[]? Frame(FfmpegTools tools, string source, double time, int width, int height)
+    {
+        var workFolder = Path.Combine(Path.GetTempPath(), $"ave-frame-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(workFolder);
+        var inv = System.Globalization.CultureInfo.InvariantCulture;
+        var args = new List<string> { "-hide_banner", "-nostdin", "-loglevel", "error" };
+        if (time > 0)
+        {
+            args.AddRange(["-ss", time.ToString("0.###", inv)]);
+        }
+
+        args.AddRange(
+        [
+            "-i", source, "-an", "-frames:v", "1",
+            "-vf", $"scale={width}:{height}:force_original_aspect_ratio=decrease,pad={width}:{height}:(ow-iw)/2:(oh-ih)/2:black,format=bgra",
+            "-f", "rawvideo", "pipe:1",
+        ]);
+        using var stream = Launch(tools, args, workFolder);
+        using var memory = new MemoryStream();
+        stream.Output.CopyTo(memory);
+        return memory.Length == width * height * 4 ? memory.ToArray() : null;
+    }
+
     /// <summary>Decodes a stretch of sound to mono samples between -1 and 1, for analysis (beats, speech, levels).</summary>
     public static float[] DecodeMono(FfmpegTools tools, string source, int sampleRate, double start = 0, double maxSeconds = 3600, double audioOffset = 0)
     {

@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Windows;
 using System.Windows.Automation.Peers;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using AccessibleVideoEditor.Core.Editing;
@@ -26,6 +27,9 @@ public sealed class TimelineTracks : FrameworkElement
     private Guid? _focusedItem;
     private double _playhead;
     private double _pixelsPerSecond = 40;
+    private IReadOnlySet<Guid> _selected = new HashSet<Guid>();
+    private Guid? _scrolledToItem;
+    private ScrollViewer? _scroller;
 
     private (Guid Layer, Guid Item, bool Trim, Point Start, double ItemStart, double ItemEnd)? _drag;
     private double _dragOffset;
@@ -63,20 +67,94 @@ public sealed class TimelineTracks : FrameworkElement
         }
     }
 
-    public void Update(Project project, Guid? focusedLayer, Guid? focusedItem, double playhead)
+    /// <summary>Small pictures along video and picture items; null draws none.</summary>
+    public Services.ThumbnailCache? Thumbnails { get; set; }
+
+    public void Update(Project project, Guid? focusedLayer, Guid? focusedItem, double playhead, IReadOnlySet<Guid>? selected = null)
     {
         _project = project;
         _focusedLayer = focusedLayer;
         _focusedItem = focusedItem;
         _playhead = playhead;
+        _selected = selected ?? new HashSet<Guid>();
         InvalidateMeasure();
         InvalidateVisual();
+        Dispatcher.BeginInvoke(() => KeepInView(playing: false), System.Windows.Threading.DispatcherPriority.Loaded);
     }
 
-    public void SetPlayhead(double time)
+    /// <summary>Moves the playhead line; while playing, the view turns a page when the line nears the edge.</summary>
+    public void SetPlayhead(double time, bool playing = false)
     {
         _playhead = time;
         InvalidateVisual();
+        KeepInView(playing);
+    }
+
+    /// <summary>
+    /// Scrolls so the focused item (when focus moved to another item) and the playhead are on screen, and the
+    /// focused layer's row too. While playing it jumps ahead a page instead of creeping, which is easier to watch.
+    /// </summary>
+    private void KeepInView(bool playing)
+    {
+        _scroller ??= FindScroller();
+        if (_scroller is not { ViewportWidth: > 0 } scroller || _project is null)
+        {
+            return;
+        }
+
+        var view = scroller.ViewportWidth;
+        var left = scroller.HorizontalOffset;
+        var playX = XOf(_playhead);
+        if (!playing && _focusedItem != _scrolledToItem && FocusedSpan() is { } span)
+        {
+            _scrolledToItem = _focusedItem;
+            var start = XOf(span.Start);
+            var end = Math.Min(XOf(span.End), start + view * 0.8);
+            if (start < left || end > left + view)
+            {
+                scroller.ScrollToHorizontalOffset(Math.Max(0, start - view * 0.1));
+            }
+        }
+        else if (playX < left || playX > left + view * (playing ? 0.9 : 1) - 4)
+        {
+            scroller.ScrollToHorizontalOffset(Math.Max(0, playX - view * (playing ? 0.1 : 0.4)));
+        }
+
+        if (_focusedLayer is { } layerId && _project.LayerIndexOf(layerId) is var index and >= 0)
+        {
+            var top = RulerHeight + RowOf(index) * RowHeight;
+            if (top < scroller.VerticalOffset + RulerHeight || top + RowHeight > scroller.VerticalOffset + scroller.ViewportHeight)
+            {
+                scroller.ScrollToVerticalOffset(Math.Max(0, top - RulerHeight));
+            }
+        }
+    }
+
+    private ItemSpan? FocusedSpan()
+    {
+        if (_project is null || _focusedLayer is not { } layerId || _focusedItem is not { } itemId || _project.FindLayer(layerId) is not { } layer)
+        {
+            return null;
+        }
+
+        var index = layer.IndexOf(itemId);
+        return index < 0 ? null : Timeline.Span(layer, index);
+    }
+
+    private ScrollViewer? FindScroller()
+    {
+        DependencyObject? node = this;
+        while (node is not null and not ScrollViewer)
+        {
+            node = VisualTreeHelper.GetParent(node) ?? LogicalTreeHelper.GetParent(node);
+        }
+
+        if (node is ScrollViewer found)
+        {
+            found.ScrollChanged += (_, _) => InvalidateVisual();
+        }
+
+        return node as ScrollViewer;
     }
 
     /// <summary>The x position of a time, for scrolling the playhead into view.</summary>
@@ -156,9 +234,14 @@ public sealed class TimelineTracks : FrameworkElement
 
                 var rect = new Rect(start * _pixelsPerSecond, top + 3, Math.Max(2, (end - start) * _pixelsPerSecond), RowHeight - 6);
                 var focused = item.Id == _focusedItem;
+                var selected = _selected.Contains(item.Id);
                 var fill = hc ? SystemColors.ControlBrush : KindBrush(item.Kind, layer.Muted, dark);
-                var border = new Pen(focused ? accent : hc ? SystemColors.ControlDarkBrush : grid.Brush, focused ? 3 : 1);
+                var border = new Pen(focused || selected ? accent : hc ? SystemColors.ControlDarkBrush : grid.Brush, focused ? 3 : selected ? 2 : 1)
+                {
+                    DashStyle = selected && !focused ? DashStyles.Dash : DashStyles.Solid,
+                };
                 dc.DrawRoundedRectangle(fill, border, rect, 4, 4);
+                var hasPictures = !hc && Thumbnails is not null && DrawThumbnails(dc, item, rect);
                 if (item.VolumeDips.Count > 0)
                 {
                     // Ducked stretches as a darker band at the bottom.
@@ -181,6 +264,12 @@ public sealed class TimelineTracks : FrameworkElement
                 label.MaxTextHeight = RowHeight - 10;
                 label.Trimming = TextTrimming.CharacterEllipsis;
                 dc.PushClip(new RectangleGeometry(rect));
+                if (hasPictures)
+                {
+                    // A plate behind the name keeps it readable over the pictures.
+                    dc.DrawRectangle(fill, null, new Rect(rect.Left + 2, rect.Top + 2, Math.Min(rect.Width - 4, label.Width + 6), label.Height + 3));
+                }
+
                 dc.DrawText(label, new Point(rect.Left + 4, rect.Top + 4));
                 dc.Pop();
             }
@@ -201,6 +290,34 @@ public sealed class TimelineTracks : FrameworkElement
 
         var playX = _playhead * _pixelsPerSecond;
         dc.DrawLine(new Pen(hc ? SystemColors.HighlightBrush : dark ? Brushes.OrangeRed : Brushes.Red, 2), new Point(playX, 0), new Point(playX, RenderSize.Height));
+    }
+
+    /// <summary>Draws pictures along a video or picture item, only where they are on screen. True if any were drawn.</summary>
+    private bool DrawThumbnails(DrawingContext dc, Item item, Rect rect)
+    {
+        var height = rect.Height - 4;
+        var width = height * Services.ThumbnailCache.Width / Services.ThumbnailCache.Height;
+        var left = _scroller?.HorizontalOffset ?? 0;
+        var right = left + (_scroller?.ViewportWidth ?? RenderSize.Width);
+        var slots = Core.Rendering.Thumbnails.Layout(item, rect.Left, rect.Right, _pixelsPerSecond, width, left, right);
+        if (slots.Count == 0)
+        {
+            return false;
+        }
+
+        dc.PushClip(new RectangleGeometry(new Rect(rect.Left + 1, rect.Top + 1, Math.Max(0, rect.Width - 2), Math.Max(0, rect.Height - 2)), 4, 4));
+        dc.PushOpacity(item.AudioMuted && !item.HasVideo ? 0.4 : 0.85);
+        foreach (var slot in slots)
+        {
+            if (Thumbnails!.Get(item.Path, slot.SourceTime) is { } image)
+            {
+                dc.DrawImage(image, new Rect(slot.X, rect.Top + 2, width, height));
+            }
+        }
+
+        dc.Pop();
+        dc.Pop();
+        return true;
     }
 
     private static Brush KindBrush(ItemKind kind, bool muted, bool dark)

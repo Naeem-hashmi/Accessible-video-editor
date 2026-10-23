@@ -553,7 +553,8 @@ public partial class MainWindow : Window
             }
 
             UpdatePlayheadText();
-            Tracks.Update(_editor.Project, _editor.FocusedLayerId, _editor.FocusedItemId, _editor.Playhead);
+            Tracks.Update(_editor.Project, _editor.FocusedLayerId, _editor.FocusedItemId, _editor.Playhead,
+                _editor.SelectedIndexes.Select(i => _editor.FocusedLayer!.Items[i].Id).ToHashSet());
             RebuildProperties();
             RefreshLibraryMedia();
         }
@@ -734,7 +735,7 @@ public partial class MainWindow : Window
     private void UpdatePlayheadText()
     {
         TransportTime.Text = $"{TimeFormat.Clock(_editor.Playhead)} / {TimeFormat.Clock(_editor.ProjectDuration)}";
-        Tracks.SetPlayhead(_editor.Playhead);
+        Tracks.SetPlayhead(_editor.Playhead, _preview.IsPlaying);
         if (!_preview.IsPlaying && !SelfTestMode)
         {
             // Paused: show the picture at the playhead, like a video player.

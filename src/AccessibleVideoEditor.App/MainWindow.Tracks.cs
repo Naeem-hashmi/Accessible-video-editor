@@ -11,6 +11,9 @@ public partial class MainWindow
 {
     private void WireTracks()
     {
+        var thumbnails = new Services.ThumbnailCache(() => Tools);
+        thumbnails.Ready += Tracks.InvalidateVisual;
+        Tracks.Thumbnails = thumbnails;
         Tracks.Clicked += (layerId, itemId, time) =>
         {
             _editor.FocusLayer(layerId);

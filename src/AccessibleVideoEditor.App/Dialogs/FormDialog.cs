@@ -88,7 +88,19 @@ public sealed class FormDialog : Window
         var box = new TextBox { Text = value, MinWidth = 260 };
         Add(label, box, help);
         box.GotKeyboardFocus += (_, _) => box.SelectAll();
+        LastText = box;
         return () => box.Text;
+    }
+
+    /// <summary>The text box added last, so other fields can fill it in.</summary>
+    public TextBox? LastText { get; private set; }
+
+    /// <summary>A hidden-text box for a password or key. Screen readers say "protected" instead of the letters.</summary>
+    public Func<string> AddPassword(string label, string value, string? help = null)
+    {
+        var box = new PasswordBox { Password = value, MinWidth = 260 };
+        Add(label, box, help);
+        return () => box.Password;
     }
 
     /// <summary>A text box for several lines. Enter starts a new line; Tab moves to the next control.</summary>

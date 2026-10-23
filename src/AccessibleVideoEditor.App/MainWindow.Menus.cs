@@ -122,6 +122,11 @@ public partial class MainWindow
             {
                 audio.Items.Add(new Separator());
                 audio.Items.Add(Command(CommandId.Transcribe, "_Transcribe speech..."));
+                audio.Items.Add(Command(CommandId.TranscriptEditor, "_Edit by transcript..."));
+                audio.Items.Add(Command(CommandId.FindRepeats, "Find _repeats and fillers..."));
+                audio.Items.Add(Command(CommandId.AiCleanup, "Clean up with _AI..."));
+                audio.Items.Add(Command(CommandId.ExportTranscript, "E_xport transcript..."));
+                audio.Items.Add(Command(CommandId.ImportTranscript, "_Import edited transcript..."));
                 audio.Items.Add(Command(CommandId.ShortenPauses, "Shorten _pauses..."));
                 audio.Items.Add(Command(CommandId.FindBeats, "Find _beats"));
             }
@@ -182,6 +187,8 @@ public partial class MainWindow
             menu.Items.Add(Command(CommandId.SelectAll, "Select all its _items"));
             menu.Items.Add(Command(CommandId.Transcribe, "T_ranscribe speech...", toLayers: true));
             menu.Items.Add(Command(CommandId.MakeCaptions, "Make _captions", toLayers: true));
+            menu.Items.Add(Command(CommandId.FindRepeats, "Find re_peats and fillers...", toLayers: true));
+            menu.Items.Add(Command(CommandId.AiCleanup, "Clean up with A_I...", toLayers: true));
             menu.Items.Add(Command(CommandId.AutoDuck, "Lower this music under speec_h...", toLayers: true));
             menu.Items.Add(Command(CommandId.CutToBeats, "Cut to the _beat", toLayers: true));
         }

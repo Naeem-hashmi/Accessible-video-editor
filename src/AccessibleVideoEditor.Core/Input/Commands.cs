@@ -139,6 +139,10 @@ public enum CommandId
     Transcribe,
     TranscriptEditor,
     MakeCaptions,
+    ExportTranscript,
+    ImportTranscript,
+    FindRepeats,
+    AiCleanup,
     ShortenPauses,
     FindBeats,
     CutToBeats,
@@ -316,6 +320,10 @@ public static class CommandCatalog
         Add(CommandId.Transcribe, smart, "Transcribe speech", "Write down the words spoken on the focused layer, on this computer with no upload. Works in English, Urdu, Hindi and many more languages.", "Ctrl+Shift+W");
         Add(CommandId.TranscriptEditor, smart, "Edit by transcript", "Open the words of the focused layer as a document. Delete words or sentences to cut them out of the video, or correct the words for captions.", "Ctrl+Shift+X");
         Add(CommandId.MakeCaptions, smart, "Make captions", "Turn the transcript of the focused layer into captions on a Captions layer at the top.", "Ctrl+Shift+G");
+        Add(CommandId.ExportTranscript, smart, "Export transcript", "Save the words of the focused layer as plain text (to edit anywhere, even in an AI chat) or as SRT or VTT captions.", "Alt+Shift+E");
+        Add(CommandId.ImportTranscript, smart, "Import edited transcript", "Read back a transcript you edited outside ClipScribe. Deleted words become cuts and corrected words fix the transcript; you check the list first.", "Alt+Shift+I");
+        Add(CommandId.FindRepeats, smart, "Find repeats and fillers", "List repeated phrases, false starts, filler sounds and stray symbols on the focused layer, on this computer. Tick the ones to cut.", "Alt+Shift+R");
+        Add(CommandId.AiCleanup, smart, "Clean up with AI", "Send the transcript words to your AI service (OpenRouter, Ollama, OpenAI or another) to suggest repeats, fillers and mistakes to cut. You check every suggestion first.", "Alt+Shift+A");
         Add(CommandId.ShortenPauses, smart, "Shorten pauses", "Find long pauses in the focused clip and shorten or remove them. Says how many and how long before changing anything.", "Ctrl+Shift+H");
         Add(CommandId.FindBeats, smart, "Find beats", "Find the tempo and beats of the focused music. Then Alt B and Alt Shift B jump from beat to beat.", "Ctrl+Shift+B");
         Add(CommandId.CutToBeats, smart, "Cut to the beat", "Make every picture and clip on the focused layer end on a beat of the music.", "Ctrl+Shift+U");

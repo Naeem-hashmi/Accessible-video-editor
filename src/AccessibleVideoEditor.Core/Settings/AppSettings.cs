@@ -72,6 +72,18 @@ public sealed class AppSettings
     /// <summary>Use the graphics chip for speech recognition when possible.</summary>
     public bool WhisperGpu { get; set; } = true;
 
+    /// <summary>The AI assistant service, an <see cref="Ai.AiProvider"/> id.</summary>
+    public string AiProvider { get; set; } = "openrouter";
+
+    /// <summary>The service address (ending in /v1). Empty uses the provider's own.</summary>
+    public string AiBaseUrl { get; set; } = "";
+
+    /// <summary>The model name. Empty uses the provider's suggestion.</summary>
+    public string AiModel { get; set; } = "";
+
+    /// <summary>The API key, encrypted for this Windows user (never stored as plain text).</summary>
+    public string AiKeyProtected { get; set; } = "";
+
     /// <summary>Transcribe a quick draft with the Fast model first, then improve it in the background.</summary>
     public bool WhisperDraftFirst { get; set; } = true;
 

@@ -169,6 +169,10 @@ Keys without Control or Alt (letters, arrows, Space, Enter, Delete, brackets) wo
 | `Ctrl+Shift+W` | Transcribe speech | Write down the words spoken on the focused layer, on this computer with no upload. Works in English, Urdu, Hindi and many more languages. |
 | `Ctrl+Shift+X` | Edit by transcript | Open the words of the focused layer as a document. Delete words or sentences to cut them out of the video, or correct the words for captions. |
 | `Ctrl+Shift+G` | Make captions | Turn the transcript of the focused layer into captions on a Captions layer at the top. |
+| `Alt+Shift+E` | Export transcript | Save the words of the focused layer as plain text (to edit anywhere, even in an AI chat) or as SRT or VTT captions. |
+| `Alt+Shift+I` | Import edited transcript | Read back a transcript you edited outside ClipScribe. Deleted words become cuts and corrected words fix the transcript; you check the list first. |
+| `Alt+Shift+R` | Find repeats and fillers | List repeated phrases, false starts, filler sounds and stray symbols on the focused layer, on this computer. Tick the ones to cut. |
+| `Alt+Shift+A` | Clean up with AI | Send the transcript words to your AI service (OpenRouter, Ollama, OpenAI or another) to suggest repeats, fillers and mistakes to cut. You check every suggestion first. |
 | `Ctrl+Shift+H` | Shorten pauses | Find long pauses in the focused clip and shorten or remove them. Says how many and how long before changing anything. |
 | `Ctrl+Shift+B` | Find beats | Find the tempo and beats of the focused music. Then Alt B and Alt Shift B jump from beat to beat. |
 | `Ctrl+Shift+U` | Cut to the beat | Make every picture and clip on the focused layer end on a beat of the music. |

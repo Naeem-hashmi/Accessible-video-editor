@@ -162,6 +162,10 @@ public partial class MainWindow
             case CommandId.Transcribe: await TranscribeAsync(); return true;
             case CommandId.TranscriptEditor: await TranscriptEditorAsync(); return true;
             case CommandId.MakeCaptions: await MakeCaptionsAsync(); return true;
+            case CommandId.ExportTranscript: await ExportTranscriptAsync(); return true;
+            case CommandId.ImportTranscript: await ImportTranscriptAsync(); return true;
+            case CommandId.FindRepeats: await FindRepeatsAsync(); return true;
+            case CommandId.AiCleanup: await AiCleanupAsync(); return true;
             case CommandId.ShortenPauses: await ShortenPausesAsync(); return true;
             case CommandId.FindBeats: await FindBeatsAsync(); return true;
             case CommandId.CutToBeats: await CutToBeatsAsync(); return true;
@@ -1065,6 +1069,46 @@ public partial class MainWindow
             gpuBox.IsChecked = best.Options.UseGpu;
         };
 
+        form.AddPage("AI assistant");
+        form.AddIntro("The AI assistant reads the words of a transcript (never the video or sound) and suggests repeated phrases, fillers and false starts to cut. You review every suggestion before anything changes. With Ollama it all stays on this computer.");
+        var providers = Core.Ai.AiProvider.All;
+        var providerIndex = Math.Max(0, providers.ToList().FindIndex(p => p.Id == s.AiProvider));
+        TextBox? addressBox = null, modelBox = null;
+        var provider = form.AddChoice("Service", providers.Select(p => p.Name).ToList(), providerIndex, providers[providerIndex].Help, index =>
+        {
+            addressBox!.Text = providers[index].BaseUrl;
+            modelBox!.Text = providers[index].DefaultModel;
+            Say(providers[index].Help, interrupt: false);
+        });
+        var address = form.AddText("Address", s.AiBaseUrl.Length > 0 ? s.AiBaseUrl : providers[providerIndex].BaseUrl, "Ends in /v1.");
+        addressBox = form.LastText;
+        var aiModel = form.AddText("Model", s.AiModel.Length > 0 ? s.AiModel : providers[providerIndex].DefaultModel,
+            "Cheap open models work well, for example meta-llama/llama-3.3-70b-instruct on OpenRouter or llama3.1 on Ollama.");
+        modelBox = form.LastText;
+        var key = form.AddPassword("API key", SecretStore.Unprotect(s.AiKeyProtected), "Kept encrypted for your Windows account. Not needed for Ollama.");
+        var testAi = form.AddButton("_Test the AI service");
+        testAi.Click += async (_, _) =>
+        {
+            testAi.IsEnabled = false;
+            Say("Asking the AI service.", interrupt: false);
+            try
+            {
+                using var cancel = new CancellationTokenSource(TimeSpan.FromSeconds(40));
+                var reply = await Core.Ai.AiAssistant.TestAsync(Http, new Core.Ai.AiConnection(address().Trim(), aiModel().Trim(), key()), cancel.Token);
+                _earcons.Play(EarconEvent.Done);
+                Say($"The AI service works. It answered: {reply.Trim()}");
+            }
+            catch (Exception ex) when (ex is Core.Ai.AiException or OperationCanceledException)
+            {
+                _earcons.Play(EarconEvent.Error);
+                Say(ex is OperationCanceledException ? "The AI service did not answer within 40 seconds." : ex.Message);
+            }
+            finally
+            {
+                testAi.IsEnabled = true;
+            }
+        };
+
         form.AddPage("Playback and files");
         var previewLength = form.AddTime("Preview length rendered at a time", s.PreviewSeconds, "Longer previews take more time to prepare.", 10);
         var ffmpeg = form.AddText("FFmpeg folder (leave empty to use the built-in copy)", s.FfmpegFolder);
@@ -1088,6 +1132,10 @@ public partial class MainWindow
             s.WhisperCareful = careful();
             s.WhisperSkipSilence = skipSilence();
             s.WhisperGpu = gpu();
+            s.AiProvider = providers[provider()].Id;
+            s.AiBaseUrl = address().Trim();
+            s.AiModel = aiModel().Trim();
+            s.AiKeyProtected = SecretStore.Protect(key().Trim());
             s.Clamp();
             ThemeService.Apply(Application.Current, s.Theme);
             ApplySettings();

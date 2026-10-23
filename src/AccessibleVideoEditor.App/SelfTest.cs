@@ -602,6 +602,40 @@ internal static class SelfTest
             window.Tracks.PixelsPerSecond = 40;
         });
 
+        await Step("transcript clean-up and the AI key", async () =>
+        {
+            var secret = SecretStore.Protect("sk-or-test-123");
+            Check(secret.Length > 0 && !secret.Contains("sk-or", StringComparison.Ordinal) && SecretStore.Unprotect(secret) == "sk-or-test-123",
+                "The AI key is stored encrypted with Windows DPAPI and reads back");
+
+            var layer = window.Editor.Project.Layers.First(l => l.Items.Any(i => i.Kind == ItemKind.Video && i.HasAudio));
+            var clip = layer.Items.First(i => i.Kind == ItemKind.Video && i.HasAudio);
+            var words = "so um I went to the I went to the shop".Split(' ');
+            var gap = Math.Max(0.1, clip.SourceLength / (words.Length + 2));
+            window.Editor.Edit("test transcript", project =>
+            {
+                project.Transcripts.RemoveAll(t => t.MediaPath == clip.Path);
+                project.Transcripts.Add(new Transcript
+                {
+                    MediaPath = clip.Path,
+                    Language = "en",
+                    Words = words.Select((w, i) => new TranscriptWord { Text = w, Start = clip.SourceIn + gap * (i + 1), End = clip.SourceIn + gap * (i + 1) + gap * 0.8 }).ToList(),
+                });
+                return Core.Editing.EditResult.Success("Test transcript.");
+            });
+            window.Editor.FocusLayer(layer.Id);
+            window.Refresh();
+            var before = window.Editor.FocusedLayer!.Items.Sum(i => i.Duration);
+            await window.RunAsync(CommandId.FindRepeats);
+            var after = window.Editor.FocusedLayer!.Items.Sum(i => i.Duration);
+            var text = TranscriptEditing.Build(window.Editor.Project, window.Editor.FocusedLayer!).Text;
+            log.Add($"After clean-up: {text}");
+            Check(after < before && text.StartsWith("so I went to the shop", StringComparison.Ordinal),
+                $"Find repeats and fillers cuts \"um\" and the restarted phrase ({before:0.00} s to {after:0.00} s)");
+            await window.RunAsync(CommandId.Undo);
+            Check(Math.Abs(window.Editor.FocusedLayer!.Items.Sum(i => i.Duration) - before) < 0.01, "Undo puts the clean-up back");
+        });
+
         await Step("every command runs without crashing", async () =>
         {
             foreach (var command in Enum.GetValues<CommandId>())

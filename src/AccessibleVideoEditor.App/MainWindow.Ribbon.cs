@@ -30,6 +30,9 @@ public partial class MainWindow
                 Cmd(Icons.Copy, CommandId.Copy, "Copy"), Cmd(Icons.Paste, CommandId.Paste, "Paste")]),
             ("Edit", [Cmd(Icons.Split, CommandId.Split), Cmd(Icons.Delete, CommandId.Delete, "Delete"), Cmd(Icons.Edit, CommandId.EditTextOrRename, "Rename or edit text"),
                 Cmd(Icons.Settings, CommandId.ItemProperties, "All options")]),
+            ("Length and speed", [Cmd(Icons.Add, CommandId.Longer, "Longer"), Cmd(Icons.Stopwatch, CommandId.Shorter, "Shorter"),
+                Cmd(Icons.Next, CommandId.Faster, "Faster"), Cmd(Icons.Previous, CommandId.Slower, "Slower")]),
+            ("Select", [Cmd(Icons.Check, CommandId.SelectAll, "Select all"), Cmd(Icons.Check, CommandId.ToggleSelect, "Select item")]),
             ("Make", [Cmd(Icons.Lightning, CommandId.QuickVideo), Cmd(Icons.Import, CommandId.ImportToEnd, "Import"), Cmd(Icons.Save, CommandId.SaveProject, "Save"),
                 Cmd(Icons.Export, CommandId.Export, "Export")]),
         ]);
@@ -64,6 +67,7 @@ public partial class MainWindow
         AddRibbonTab("Captions", Icons.Captions,
         [
             ("Speech to text", [Cmd(Icons.Microphone, CommandId.Transcribe), Cmd(Icons.Edit, CommandId.TranscriptEditor), Cmd(Icons.Captions, CommandId.MakeCaptions)]),
+            ("Clean up words", [Cmd(Icons.Search, CommandId.FindRepeats), Cmd(Icons.Lightning, CommandId.AiCleanup), Cmd(Icons.Export, CommandId.ExportTranscript), Cmd(Icons.Import, CommandId.ImportTranscript)]),
         ]);
         AddRibbonTab("Picture", Icons.Picture,
         [

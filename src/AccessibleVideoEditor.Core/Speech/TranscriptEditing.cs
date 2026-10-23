@@ -73,36 +73,13 @@ public static class TranscriptEditing
     /// </summary>
     public static EditResult Apply(Project project, Layer layer, TranscriptDocument before, string edited, TranscriptMode mode)
     {
-        var oldWords = before.Entries.Select(e => Normalize(e.Word.Text)).ToList();
-        var newTokens = Tokenize(edited);
-        var newWords = newTokens.Select(Normalize).ToList();
-        var matches = Lcs(oldWords, newWords);
-
         if (mode == TranscriptMode.FixText)
         {
-            return FixText(project, before, newTokens, matches);
+            var tokens = Tokenize(edited);
+            return FixText(project, before, tokens, Lcs(before.Entries.Select(e => Normalize(e.Word.Text)).ToList(), tokens.Select(Normalize).ToList()));
         }
 
-        // Between matched words, old words with nothing in their place were deleted. Old words with new
-        // words in their place were changed (a spelling fix), which never cuts the video.
-        var deleted = new List<int>();
-        var changed = 0;
-        var oldCursor = 0;
-        var newCursor = 0;
-        foreach (var (o, n) in matches.Append((oldWords.Count, newWords.Count)))
-        {
-            if (n == newCursor)
-            {
-                deleted.AddRange(Enumerable.Range(oldCursor, o - oldCursor));
-            }
-            else
-            {
-                changed += Math.Max(o - oldCursor, n - newCursor);
-            }
-
-            oldCursor = o + 1;
-            newCursor = n + 1;
-        }
+        var (deleted, changed) = Compare(before, edited);
 
         if (deleted.Count == 0)
         {
@@ -241,6 +218,67 @@ public static class TranscriptEditing
         return changes == 0
             ? EditResult.Fail("Nothing changed in the transcript.")
             : EditResult.Success($"Corrected {changes} {(changes == 1 ? "word" : "words")} in the transcript. The video is unchanged; update the captions to use them.");
+    }
+
+    /// <summary>
+    /// What an edited text does to a transcript: the indexes of words taken out, and how many words were
+    /// changed instead (spelling fixes, which never cut the video).
+    /// </summary>
+    public static (IReadOnlyList<int> Deleted, int Changed) Compare(TranscriptDocument before, string edited)
+    {
+        var oldWords = before.Entries.Select(e => Normalize(e.Word.Text)).ToList();
+        var newWords = Tokenize(edited).Select(Normalize).ToList();
+        var matches = Lcs(oldWords, newWords);
+
+        // Between matched words, old words with nothing in their place were deleted. Old words with new
+        // words in their place were changed.
+        var deleted = new List<int>();
+        var changed = 0;
+        var oldCursor = 0;
+        var newCursor = 0;
+        foreach (var (o, n) in matches.Append((oldWords.Count, newWords.Count)))
+        {
+            if (n == newCursor)
+            {
+                deleted.AddRange(Enumerable.Range(oldCursor, o - oldCursor));
+            }
+            else
+            {
+                changed += Math.Max(o - oldCursor, n - newCursor);
+            }
+
+            oldCursor = o + 1;
+            newCursor = n + 1;
+        }
+
+        return (deleted, changed);
+    }
+
+    /// <summary>The document's text with the words at <paramref name="remove"/> taken out, keeping line breaks.</summary>
+    public static string Without(TranscriptDocument document, IEnumerable<int> remove)
+    {
+        var skip = remove.ToHashSet();
+        var text = new StringBuilder();
+        for (var i = 0; i < document.Entries.Count; i++)
+        {
+            if (skip.Contains(i))
+            {
+                continue;
+            }
+
+            if (text.Length > 0 && text[^1] != '\n')
+            {
+                text.Append(' ');
+            }
+
+            text.Append(document.Entries[i].Word.Text);
+            if (EndsSentence(document.Entries[i].Word.Text))
+            {
+                text.Append('\n');
+            }
+        }
+
+        return text.ToString().TrimEnd();
     }
 
     public static IReadOnlyList<string> Tokenize(string text) =>

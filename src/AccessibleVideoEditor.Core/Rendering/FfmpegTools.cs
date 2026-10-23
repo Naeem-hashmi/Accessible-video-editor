@@ -8,8 +8,11 @@ public sealed class FfmpegNotFoundException(string message) : Exception(message)
 /// <summary>Locations and abilities of the ffmpeg and ffprobe programs.</summary>
 public sealed partial class FfmpegTools
 {
-    private FfmpegTools(string ffmpegPath, string ffprobePath, int majorVersion, string versionText, IReadOnlySet<string> encoders)
+    private FfmpegTools(string ffmpegPath, string ffprobePath, int majorVersion, string versionText, IReadOnlySet<string> encoders,
+        IReadOnlySet<string> filters, bool drawtextAlign)
     {
+        Filters = filters;
+        DrawtextSupportsAlign = drawtextAlign;
         FfmpegPath = ffmpegPath;
         FfprobePath = ffprobePath;
         MajorVersion = majorVersion;
@@ -27,6 +30,17 @@ public sealed partial class FfmpegTools
     public string VersionText { get; }
 
     public IReadOnlySet<string> Encoders { get; }
+
+    public IReadOnlySet<string> Filters { get; }
+
+    public bool DrawtextSupportsAlign { get; }
+
+    public bool HasFilter(string name) => Filters.Contains(name);
+
+    /// <summary>Text drawing support for <see cref="GraphBuilder"/>.</summary>
+    public TextRendering Text => HasFilter("drawtext")
+        ? new TextRendering(true, DrawtextSupportsAlign, Model.FontCatalog.Resolve)
+        : TextRendering.Unavailable;
 
     /// <summary>
     /// FFmpeg 7 reads a filter graph from a file with "-/filter_complex"; older versions use
@@ -80,10 +94,14 @@ public sealed partial class FfmpegTools
     {
         var version = await RunAsync(ffmpegPath, ["-hide_banner", "-version"], token).ConfigureAwait(false);
         var encoderList = await RunAsync(ffmpegPath, ["-hide_banner", "-encoders"], token).ConfigureAwait(false);
+        var filterList = await RunAsync(ffmpegPath, ["-hide_banner", "-filters"], token).ConfigureAwait(false);
+        var filters = ParseFilters(filterList);
+        var align = filters.Contains("drawtext") &&
+                    (await RunAsync(ffmpegPath, ["-hide_banner", "-h", "filter=drawtext"], token).ConfigureAwait(false)).Contains("text_align", StringComparison.Ordinal);
         var firstLine = version.Split('\n').FirstOrDefault()?.Trim() ?? "";
         var match = VersionPattern().Match(firstLine);
         var major = match.Success ? int.Parse(match.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture) : 0;
-        return new FfmpegTools(ffmpegPath, ffprobePath, major, firstLine, ParseEncoders(encoderList));
+        return new FfmpegTools(ffmpegPath, ffprobePath, major, firstLine, ParseEncoders(encoderList), filters, align);
     }
 
     internal static HashSet<string> ParseEncoders(string text)
@@ -93,6 +111,22 @@ public sealed partial class FfmpegTools
         {
             // Lines look like " V....D libx264              libx264 H.264 ...".
             var m = EncoderLine().Match(line);
+            if (m.Success)
+            {
+                set.Add(m.Groups[1].Value);
+            }
+        }
+
+        return set;
+    }
+
+    internal static HashSet<string> ParseFilters(string text)
+    {
+        var set = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var line in text.Split('\n'))
+        {
+            // Lines look like " TSC drawtext          V->V       Draw text on top of video frames.".
+            var m = FilterLine().Match(line);
             if (m.Success)
             {
                 set.Add(m.Groups[1].Value);
@@ -128,4 +162,7 @@ public sealed partial class FfmpegTools
 
     [GeneratedRegex(@"^\s[VAS][\.F][\.S][\.X][\.B][\.D]\s+(\S+)")]
     private static partial Regex EncoderLine();
+
+    [GeneratedRegex(@"^\s[T\.][S\.][C\.]\s+(\w+)\s+\S+->\S+")]
+    private static partial Regex FilterLine();
 }

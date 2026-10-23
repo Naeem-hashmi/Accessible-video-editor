@@ -77,7 +77,7 @@ public sealed class MediaFixture : IAsyncLifetime
     public async Task<(string Path, RenderPlan Plan)> Render(RenderRequest request)
     {
         Directory.CreateDirectory(Path.GetDirectoryName(request.OutputPath)!);
-        var plan = new GraphBuilder(Tools.HasEncoder).Build(request);
+        var plan = new GraphBuilder(Tools.HasEncoder, Tools.Text).Build(request);
         await RenderRunner.RunAsync(Tools, plan, request.OutputPath);
         Assert.True(File.Exists(request.OutputPath), "Output file was not created.");
         return (request.OutputPath, plan);

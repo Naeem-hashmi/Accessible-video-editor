@@ -6,6 +6,18 @@ namespace AccessibleVideoEditor.Core.Rendering;
 
 public sealed class RenderException(string message) : Exception(message);
 
+/// <summary>A file FFmpeg needs next to the filter graph: text to draw, or a font to copy.</summary>
+public sealed record AuxiliaryFile(string? Content, string? CopyFrom);
+
+/// <summary>Whether this FFmpeg can draw text, and how to find fonts.</summary>
+/// <param name="Available">FFmpeg has the drawtext filter.</param>
+/// <param name="SupportsAlign">drawtext has the text_align option (FFmpeg 6.1 and later).</param>
+/// <param name="ResolveFont">Font name and bold flag to a font file path.</param>
+public sealed record TextRendering(bool Available, bool SupportsAlign, Func<string, bool, string?> ResolveFont)
+{
+    public static TextRendering Unavailable { get; } = new(false, false, (_, _) => null);
+}
+
 /// <summary>Which layers to render.</summary>
 public sealed record RenderScope(Guid? LayerId)
 {
@@ -43,8 +55,10 @@ public sealed class RenderRequest
 /// <summary>A ready-to-run FFmpeg job.</summary>
 public sealed class RenderPlan
 {
-    internal RenderPlan(List<string> inputArguments, string filterGraph, List<string> outputArguments, double duration, bool hasVideo)
+    internal RenderPlan(List<string> inputArguments, string filterGraph, List<string> outputArguments, double duration, bool hasVideo,
+        IReadOnlyDictionary<string, AuxiliaryFile> auxiliaryFiles)
     {
+        AuxiliaryFiles = auxiliaryFiles;
         InputArguments = inputArguments;
         FilterGraph = filterGraph;
         OutputArguments = outputArguments;
@@ -62,6 +76,9 @@ public sealed class RenderPlan
     public double Duration { get; }
 
     public bool HasVideo { get; }
+
+    /// <summary>Files (by name) that must sit in FFmpeg's working folder: text to draw and fonts.</summary>
+    public IReadOnlyDictionary<string, AuxiliaryFile> AuxiliaryFiles { get; }
 
     /// <summary>The full ffmpeg command line, reading the filter graph from <paramref name="filterScriptPath"/>.</summary>
     public IReadOnlyList<string> BuildArguments(string filterScriptPath, string filterScriptOption)
@@ -97,9 +114,14 @@ public sealed class GraphBuilder
     private int _width;
     private int _height;
 
-    public GraphBuilder(Func<string, bool> hasEncoder)
+    private readonly TextRendering _text;
+    private readonly Dictionary<string, AuxiliaryFile> _aux = new();
+    private readonly Dictionary<string, string> _fontNames = new();
+
+    public GraphBuilder(Func<string, bool> hasEncoder, TextRendering? text = null)
     {
         _hasEncoder = hasEncoder;
+        _text = text ?? TextRendering.Unavailable;
     }
 
     public static bool ScopeHasVideo(Project project, RenderScope scope) =>
@@ -108,7 +130,7 @@ public sealed class GraphBuilder
     /// <summary>Media files the project needs that can't be found.</summary>
     public static IReadOnlyList<string> MissingFiles(IEnumerable<Layer> layers) => layers
         .SelectMany(l => l.Items)
-        .Where(i => i.Kind != ItemKind.Color && !File.Exists(i.Path))
+        .Where(i => i.Kind is not (ItemKind.Color or ItemKind.Text) && !File.Exists(i.Path))
         .Select(i => i.Path)
         .Distinct()
         .ToList();
@@ -117,6 +139,8 @@ public sealed class GraphBuilder
     {
         _inputs.Clear();
         _chains.Clear();
+        _aux.Clear();
+        _fontNames.Clear();
         _inputCount = 0;
         _labelCount = 0;
 
@@ -133,6 +157,11 @@ public sealed class GraphBuilder
             throw new RenderException(request.Scope.LayerId is null
                 ? "There is nothing to play here. All layers are empty or muted."
                 : "This layer has nothing to play from here.");
+        }
+
+        if (request.Profile.HasVideo && !_text.Available && layers.Any(l => l.Kind == LayerKind.Video && l.Items.Any(i => i.Kind == ItemKind.Text)))
+        {
+            throw new RenderException("This copy of FFmpeg can't draw text. Reinstall the program, or mute the text layer.");
         }
 
         var missing = MissingFiles(layers);
@@ -222,8 +251,9 @@ public sealed class GraphBuilder
             outputArgs.AddRange(["-movflags", "+faststart"]);
         }
 
-        outputArgs.AddRange(["-t", Num(seconds), "-progress", "pipe:1", "-nostats", request.OutputPath]);
-        return new RenderPlan(new List<string>(_inputs), string.Join(";\n", _chains), outputArgs, seconds, outputVideo);
+        outputArgs.AddRange(["-t", Num(seconds), "-progress", "pipe:1", "-nostats", Path.GetFullPath(request.OutputPath)]);
+        return new RenderPlan(new List<string>(_inputs), string.Join(";\n", _chains), outputArgs, seconds, outputVideo,
+            new Dictionary<string, AuxiliaryFile>(_aux));
     }
 
     // ------------------------------------------------------------------ layers
@@ -376,6 +406,11 @@ public sealed class GraphBuilder
 
     private string ItemVideo(Item item, long frames)
     {
+        if (item.Kind == ItemKind.Text)
+        {
+            return TextVideo(item, frames);
+        }
+
         var label = Label("iv");
         var chain = new StringBuilder();
         if (item.Kind == ItemKind.Color)
@@ -389,10 +424,29 @@ public sealed class GraphBuilder
             chain.Append(CultureInfo.InvariantCulture, $"[{input}:v:0]setpts=PTS-STARTPTS,fps={Num(_fps)}");
         }
 
-        var (boxW, boxH) = BoxSize(item.Placement);
-        var (x, y) = PadPosition(item.Placement);
-        chain.Append(CultureInfo.InvariantCulture,
-            $",scale={boxW}:{boxH}:force_original_aspect_ratio=decrease:force_divisible_by=2,setsar=1,format=yuva420p");
+        var placement = item.Placement;
+        if (placement.HasCrop && item.Kind != ItemKind.Color)
+        {
+            var left = Math.Clamp(placement.CropLeft, 0, 90) / 100;
+            var right = Math.Clamp(placement.CropRight, 0, 90 - left * 100) / 100;
+            var top = Math.Clamp(placement.CropTop, 0, 90) / 100;
+            var bottom = Math.Clamp(placement.CropBottom, 0, 90 - top * 100) / 100;
+            chain.Append(CultureInfo.InvariantCulture,
+                $",crop=w=iw*{Num(1 - left - right)}:h=ih*{Num(1 - top - bottom)}:x=iw*{Num(left)}:y=ih*{Num(top)}");
+        }
+
+        var (boxW, boxH) = BoxSize(placement);
+        var (x, y) = PadPosition(placement);
+        if (placement.Position == PositionPreset.FullFrame && placement.Fill)
+        {
+            chain.Append(CultureInfo.InvariantCulture,
+                $",scale={_width}:{_height}:force_original_aspect_ratio=increase,crop={_width}:{_height},setsar=1,format=yuva420p");
+        }
+        else
+        {
+            chain.Append(CultureInfo.InvariantCulture,
+                $",scale={boxW}:{boxH}:force_original_aspect_ratio=decrease:force_divisible_by=2,setsar=1,format=yuva420p");
+        }
         if (item.Placement.OpacityPercent < 99.95)
         {
             chain.Append(CultureInfo.InvariantCulture,
@@ -465,6 +519,211 @@ public sealed class GraphBuilder
         return label;
     }
 
+    /// <summary>
+    /// Text drawn on a transparent frame. The words go through a text file and the font is copied into
+    /// FFmpeg's working folder, so no text or path ever needs escaping in the filter graph.
+    /// </summary>
+    private string TextVideo(Item item, long frames)
+    {
+        var style = item.Text;
+        var label = Label("tv");
+        var length = frames / _fps;
+        var font = FontFile(style.Font, style.Bold);
+        var size = (int)Geometry.TextPixelSize(style, _height);
+        var content = string.IsNullOrWhiteSpace(style.Content) ? " " : style.Content.Replace("\r\n", "\n").Replace('\r', '\n');
+        var anim = Math.Min(Math.Max(0.05, style.AnimationDuration), length / 2);
+
+        var common = new StringBuilder();
+        common.Append(CultureInfo.InvariantCulture, $"fontfile={font}:expansion=none:fontsize={size}:fontcolor=0x{ColorCatalog.HexFor(style.ColorName)}");
+        common.Append(CultureInfo.InvariantCulture, $":line_spacing={Math.Max(1, size / 5)}");
+        if (_text.SupportsAlign)
+        {
+            common.Append(":text_align=C");
+        }
+
+        if (style.Outline)
+        {
+            common.Append(CultureInfo.InvariantCulture, $":borderw={Math.Max(1, size / 16)}:bordercolor=0x000000@0.85");
+        }
+
+        if (style.Background != TextBackground.None)
+        {
+            // drawtext on a transparent frame applies the box opacity three times over, so ask for the
+            // cube root to end up with the intended strength (60 percent dark, 75 percent light).
+            var box = style.Background == TextBackground.DarkBox
+                ? $"0x000000@{Num(Math.Round(Math.Cbrt(0.6), 3))}"
+                : $"0xFFFFFF@{Num(Math.Round(Math.Cbrt(0.75), 3))}";
+            common.Append(CultureInfo.InvariantCulture, $":box=1:boxcolor={box}:boxborderw={Math.Max(2, size * 3 / 10)}");
+        }
+
+        var (x, y, alpha) = TextMotion(item, length, anim);
+        var chain = new StringBuilder();
+        chain.Append(CultureInfo.InvariantCulture, $"color=c=black@0.0:s={_width}x{_height}:r={Num(_fps)},format=rgba");
+
+        if (style.AnimationIn == TextAnimation.Typewriter)
+        {
+            var steps = TypewriterSteps(content);
+            var stepTime = anim / steps.Count;
+            for (var i = 0; i < steps.Count; i++)
+            {
+                var file = TextFile(steps[i]);
+                var enable = i == steps.Count - 1
+                    ? $"gte(t,{Num(i * stepTime)})"
+                    : $"between(t,{Num(i * stepTime)},{Num((i + 1) * stepTime - 0.0001)})";
+                // Keep the left edge where the finished line will start, so the words don't drift.
+                var typeX = TypewriterX(item);
+                chain.Append(CultureInfo.InvariantCulture, $",drawtext={common}:textfile={file}:x='{typeX}':y='{y}':alpha='{alpha}':enable='{enable}'");
+            }
+        }
+        else
+        {
+            chain.Append(CultureInfo.InvariantCulture, $",drawtext={common}:textfile={TextFile(content)}:x='{x}':y='{y}':alpha='{alpha}'");
+        }
+
+        chain.Append(",format=yuva420p");
+        if (item.Placement.OpacityPercent < 99.95)
+        {
+            chain.Append(CultureInfo.InvariantCulture,
+                $",format=rgba,colorchannelmixer=aa={Num(Math.Clamp(item.Placement.OpacityPercent, 0, 100) / 100)},format=yuva420p");
+        }
+
+        chain.Append(CultureInfo.InvariantCulture,
+            $",trim=end_frame={frames},setpts=PTS-STARTPTS,fps={Num(_fps)}");
+        var fadeIn = Math.Min(item.FadeIn, length / 2);
+        var fadeOut = Math.Min(item.FadeOut, length / 2);
+        if (fadeIn > 0.01)
+        {
+            chain.Append(CultureInfo.InvariantCulture, $",fade=t=in:st=0:d={Num(fadeIn)}:alpha=1");
+        }
+
+        if (fadeOut > 0.01)
+        {
+            chain.Append(CultureInfo.InvariantCulture, $",fade=t=out:st={Num(length - fadeOut)}:d={Num(fadeOut)}:alpha=1");
+        }
+
+        chain.Append(CultureInfo.InvariantCulture, $"[{label}]");
+        _chains.Add(chain.ToString());
+        return label;
+    }
+
+    /// <summary>drawtext x, y and alpha expressions for the resting place plus the in and out animations.</summary>
+    private (string X, string Y, string Alpha) TextMotion(Item item, double length, double anim)
+    {
+        var (baseX, baseY) = TextBasePosition(item.Placement);
+        var a = Num(anim);
+        var d = Num(length);
+        var half = Num(length / 2);
+        // Eased progress: 0 at the start of the animation, 1 when the text is at rest.
+        var pin = $"(1-pow(1-min(t/{a},1),2))";
+        var pout = $"(1-pow(1-min(({d}-t)/{a},1),2))";
+
+        string Move(TextAnimation animation, string p, bool vertical)
+        {
+            var rest = vertical ? baseY : baseX;
+            return (animation, vertical) switch
+            {
+                (TextAnimation.SlideFromLeft, false) => $"({rest})-(1-{p})*(({rest})+text_w)",
+                (TextAnimation.SlideFromRight, false) => $"({rest})+(1-{p})*(w-({rest}))",
+                (TextAnimation.SlideFromTop, true) => $"({rest})-(1-{p})*(({rest})+text_h)",
+                (TextAnimation.SlideFromBottom, true) => $"({rest})+(1-{p})*(h-({rest}))",
+                (TextAnimation.Rise, true) => $"({rest})+(1-{p})*h*0.06",
+                _ => rest,
+            };
+        }
+
+        string Phase(Func<string, string, string> inPart, Func<string, string, string> outPart) =>
+            $"if(lt(t,{half}),{inPart(pin, "in")},{outPart(pout, "out")})";
+
+        var outAnimation = item.Text.AnimationOut == TextAnimation.Typewriter ? TextAnimation.Fade : item.Text.AnimationOut;
+        var inAnimation = item.Text.AnimationIn;
+        var x = Phase((p, _) => Move(inAnimation, p, false), (p, _) => Move(outAnimation, p, false));
+        var y = Phase((p, _) => Move(inAnimation, p, true), (p, _) => Move(outAnimation, p, true));
+
+        static bool Fades(TextAnimation animation) => animation is TextAnimation.Fade or TextAnimation.Rise;
+        var alphaIn = Fades(inAnimation) ? $"min(t/{a},1)" : "1";
+        var alphaOut = Fades(outAnimation) ? $"min(({d}-t)/{a},1)" : "1";
+        var alpha = $"max(0,min(1,{alphaIn}*{alphaOut}))";
+        return (x, y, alpha);
+    }
+
+    /// <summary>The resting position, as drawtext expressions of the text's own size.</summary>
+    private (string X, string Y) TextBasePosition(Placement placement)
+    {
+        var m = Geometry.Margin(_width, _height).ToString(Inv);
+        const string center = "(w-text_w)/2";
+        const string middle = "(h-text_h)/2";
+        var right = $"w-text_w-{m}";
+        var bottom = $"h-text_h-{m}";
+        var (x, y) = placement.Position switch
+        {
+            PositionPreset.TopLeft => (m, m),
+            PositionPreset.TopCenter => (center, m),
+            PositionPreset.TopRight => (right, m),
+            PositionPreset.MiddleLeft => (m, middle),
+            PositionPreset.MiddleRight => (right, middle),
+            PositionPreset.BottomLeft => (m, bottom),
+            PositionPreset.BottomCenter => (center, bottom),
+            PositionPreset.BottomRight => (right, bottom),
+            PositionPreset.Custom => (Num(_width * Math.Clamp(placement.CustomXPercent, 0, 100) / 100),
+                Num(_height * Math.Clamp(placement.CustomYPercent, 0, 100) / 100)),
+            _ => (center, middle),
+        };
+
+        return ($"max(0,min(w-text_w,{x}))", $"max(0,min(h-text_h,{y}))");
+    }
+
+    /// <summary>Left edge for typewriter text: where the whole text will sit, estimated from its length.</summary>
+    private string TypewriterX(Item item) => Num(Math.Round(Geometry.RectOf(item, _width, _height).X));
+
+    /// <summary>The text revealed step by step: one letter at a time for short text, then by words.</summary>
+    private static List<string> TypewriterSteps(string content)
+    {
+        var elements = new List<string>();
+        var enumerator = StringInfo.GetTextElementEnumerator(content);
+        while (enumerator.MoveNext())
+        {
+            elements.Add((string)enumerator.Current);
+        }
+
+        var steps = new List<string>();
+        var maxSteps = 60;
+        var stride = Math.Max(1, (int)Math.Ceiling(elements.Count / (double)maxSteps));
+        for (var end = stride; end < elements.Count; end += stride)
+        {
+            var prefix = string.Concat(elements.Take(end));
+            if (prefix.Trim().Length > 0)
+            {
+                steps.Add(prefix);
+            }
+        }
+
+        steps.Add(content);
+        return steps;
+    }
+
+    private string TextFile(string content)
+    {
+        var name = $"text{_aux.Count}.txt";
+        _aux[name] = new AuxiliaryFile(content, null);
+        return name;
+    }
+
+    private string FontFile(string fontName, bool bold)
+    {
+        var key = $"{fontName}|{bold}";
+        if (_fontNames.TryGetValue(key, out var existing))
+        {
+            return existing;
+        }
+
+        var path = _text.ResolveFont(fontName, bold)
+                   ?? throw new RenderException($"No font file was found for {fontName}.");
+        var name = $"font{_fontNames.Count}{Path.GetExtension(path).ToLowerInvariant()}";
+        _aux[name] = new AuxiliaryFile(null, path);
+        _fontNames[key] = name;
+        return name;
+    }
+
     private static string Silence(long samples, string label) =>
         $"anullsrc=r={SampleRate}:cl=stereo,{AudioFormat},atrim=end_sample={samples},asetpts=PTS-STARTPTS[{label}]";
 
@@ -473,7 +732,7 @@ public sealed class GraphBuilder
     {
         if (item.Kind == ItemKind.Image)
         {
-            _inputs.AddRange(["-loop", "1", "-framerate", Num(_fps), "-t", Num(item.Duration + 1), "-i", item.Path]);
+            _inputs.AddRange(["-loop", "1", "-framerate", Num(_fps), "-t", Num(item.Duration + 1), "-i", Path.GetFullPath(item.Path)]);
         }
         else
         {
@@ -486,7 +745,7 @@ public sealed class GraphBuilder
             // Each input feeds either picture or sound; skip decoding the other.
             _inputs.Add(forVideo ? "-an" : "-vn");
 
-            _inputs.AddRange(["-i", item.Path]);
+            _inputs.AddRange(["-i", Path.GetFullPath(item.Path)]);
         }
 
         return _inputCount++;

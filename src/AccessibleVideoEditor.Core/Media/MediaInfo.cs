@@ -221,6 +221,31 @@ public static class MediaProbe
         Placement = defaults.Placement.Clone(),
     };
 
+    /// <summary>A text item: a title, caption or credit on a transparent background.</summary>
+    public static Item CreateTextItem(TextStyle style, double duration, LayerDefaults defaults, Placement? placement = null) => new()
+    {
+        Kind = ItemKind.Text,
+        Name = TextItemName(style.Content),
+        Duration = Math.Max(Timeline.MinItemDuration, duration),
+        HasVideo = true,
+        Text = style.Clone(),
+        Placement = (placement ?? (defaults.Placement.Position == PositionPreset.FullFrame
+            ? new Placement { Position = PositionPreset.Center }
+            : defaults.Placement)).Clone(),
+        TransitionIn = new TransitionSpec(),
+    };
+
+    public static string TextItemName(string content)
+    {
+        var words = (content ?? "").Replace("\r", "").Replace('\n', ' ').Trim();
+        if (words.Length > 30)
+        {
+            words = words[..30].TrimEnd() + "...";
+        }
+
+        return words.Length == 0 ? "Text" : $"Text: {words}";
+    }
+
     /// <summary>Which kind of layer a file belongs on.</summary>
     public static LayerKind PreferredLayer(MediaInfo info) => info.Kind == ItemKind.Audio ? LayerKind.Audio : LayerKind.Video;
 

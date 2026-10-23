@@ -31,6 +31,7 @@ public sealed class Describer(Verbosity verbosity = Verbosity.Normal, TimeStyle 
         ItemKind.Image => "picture",
         ItemKind.Audio => "audio",
         ItemKind.Color => "colour card",
+        ItemKind.Text => "text",
         _ => "item",
     };
 

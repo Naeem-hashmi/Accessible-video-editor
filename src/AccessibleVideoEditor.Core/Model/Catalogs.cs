@@ -114,3 +114,130 @@ public static class ColorCatalog
     public static bool IsKnown(string name) =>
         Colors.Any(c => string.Equals(c.Name, name, StringComparison.OrdinalIgnoreCase));
 }
+
+/// <summary>
+/// Fonts for text items. All of them ship with Windows 10 and 11. Elsewhere (development and tests) a
+/// common free font is used instead.
+/// </summary>
+public static class FontCatalog
+{
+    public sealed record FontEntry(string Name, string Description, string File, string BoldFile);
+
+    public static IReadOnlyList<FontEntry> Fonts { get; } = new FontEntry[]
+    {
+        new("Segoe UI", "Clean and modern, the Windows font. Good default.", "segoeui.ttf", "segoeuib.ttf"),
+        new("Arial", "Plain and very readable.", "arial.ttf", "arialbd.ttf"),
+        new("Calibri", "Soft and rounded.", "calibri.ttf", "calibrib.ttf"),
+        new("Verdana", "Wide letters, readable at small sizes.", "verdana.ttf", "verdanab.ttf"),
+        new("Trebuchet MS", "Friendly and informal.", "trebuc.ttf", "trebucbd.ttf"),
+        new("Georgia", "Classic serif, like a book.", "georgia.ttf", "georgiab.ttf"),
+        new("Times New Roman", "Traditional newspaper serif.", "times.ttf", "timesbd.ttf"),
+        new("Impact", "Tall and heavy, for bold titles and memes.", "impact.ttf", "impact.ttf"),
+        new("Comic Sans MS", "Playful handwriting style.", "comic.ttf", "comicbd.ttf"),
+        new("Consolas", "Typewriter-like, every letter the same width.", "consola.ttf", "consolab.ttf"),
+        new("Segoe Script", "Joined-up handwriting.", "segoesc.ttf", "segoescb.ttf"),
+        new("Nirmala UI", "Supports Hindi and other Indian scripts.", "Nirmala.ttc", "NirmalaB.ttc"),
+    };
+
+    public static FontEntry Find(string name) =>
+        Fonts.FirstOrDefault(f => string.Equals(f.Name, name, StringComparison.OrdinalIgnoreCase)) ?? Fonts[0];
+
+    /// <summary>
+    /// The font file to draw with, or null if no usable font exists. Looks in the Windows font folders,
+    /// then AVE_FONT_DIR, then common Linux and macOS font folders.
+    /// </summary>
+    public static string? Resolve(string name, bool bold)
+    {
+        var entry = Find(name);
+        var file = bold ? entry.BoldFile : entry.File;
+        var folders = new List<string>();
+        var windows = Environment.GetFolderPath(Environment.SpecialFolder.Fonts);
+        if (!string.IsNullOrEmpty(windows))
+        {
+            folders.Add(windows);
+        }
+
+        var local = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        if (!string.IsNullOrEmpty(local))
+        {
+            folders.Add(Path.Combine(local, "Microsoft", "Windows", "Fonts"));
+        }
+
+        foreach (var folder in folders)
+        {
+            var path = Path.Combine(folder, file);
+            if (File.Exists(path))
+            {
+                return path;
+            }
+
+            var regular = Path.Combine(folder, entry.File);
+            if (File.Exists(regular))
+            {
+                return regular;
+            }
+        }
+
+        var fallbacks = new List<string>();
+        var custom = Environment.GetEnvironmentVariable("AVE_FONT_DIR");
+        if (!string.IsNullOrWhiteSpace(custom))
+        {
+            fallbacks.Add(custom);
+        }
+
+        fallbacks.AddRange(["/usr/share/fonts", "/usr/local/share/fonts", "/Library/Fonts", "/System/Library/Fonts"]);
+        foreach (var folder in fallbacks.Where(Directory.Exists))
+        {
+            var candidates = Directory.EnumerateFiles(folder, "*.ttf", SearchOption.AllDirectories).ToList();
+            var preferred = bold ? "DejaVuSans-Bold.ttf" : "DejaVuSans.ttf";
+            var match = candidates.FirstOrDefault(c => Path.GetFileName(c).Equals(preferred, StringComparison.OrdinalIgnoreCase))
+                        ?? candidates.FirstOrDefault(c => Path.GetFileName(c).Equals(file, StringComparison.OrdinalIgnoreCase))
+                        ?? candidates.FirstOrDefault();
+            if (match is not null)
+            {
+                return match;
+            }
+        }
+
+        return null;
+    }
+}
+
+/// <summary>Plain-language names for text animations.</summary>
+public static class TextAnimationCatalog
+{
+    public static string InName(TextAnimation a) => a switch
+    {
+        TextAnimation.None => "Appear at once",
+        TextAnimation.Fade => "Fade in",
+        TextAnimation.SlideFromLeft => "Slide in from the left",
+        TextAnimation.SlideFromRight => "Slide in from the right",
+        TextAnimation.SlideFromTop => "Drop in from the top",
+        TextAnimation.SlideFromBottom => "Rise in from the bottom",
+        TextAnimation.Rise => "Float up gently while fading in",
+        TextAnimation.Typewriter => "Typewriter, letter by letter",
+        _ => a.ToString(),
+    };
+
+    public static string OutName(TextAnimation a) => a switch
+    {
+        TextAnimation.None => "Disappear at once",
+        TextAnimation.Fade => "Fade out",
+        TextAnimation.SlideFromLeft => "Slide out to the left",
+        TextAnimation.SlideFromRight => "Slide out to the right",
+        TextAnimation.SlideFromTop => "Fly out to the top",
+        TextAnimation.SlideFromBottom => "Drop out to the bottom",
+        TextAnimation.Rise => "Float up gently while fading out",
+        TextAnimation.Typewriter => "Fade out",
+        _ => a.ToString(),
+    };
+
+    public static IReadOnlyList<TextAnimation> All { get; } = Enum.GetValues<TextAnimation>();
+
+    public static string BackgroundName(TextBackground b) => b switch
+    {
+        TextBackground.DarkBox => "Dark box behind the text",
+        TextBackground.LightBox => "Light box behind the text",
+        _ => "No box",
+    };
+}

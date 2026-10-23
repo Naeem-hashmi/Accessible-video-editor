@@ -15,8 +15,25 @@ public static class RenderRunner
     public static async Task RunAsync(FfmpegTools tools, RenderPlan plan, string outputPath, IProgress<double>? progress = null,
         CancellationToken token = default)
     {
-        var scriptPath = Path.Combine(Path.GetTempPath(), $"ave-graph-{Guid.NewGuid():N}.txt");
-        await File.WriteAllTextAsync(scriptPath, plan.FilterGraph, new UTF8Encoding(false), token).ConfigureAwait(false);
+        // Each render gets its own working folder for the filter graph, text files and fonts.
+        var workFolder = Path.Combine(Path.GetTempPath(), $"ave-render-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(workFolder);
+        var scriptPath = Path.Combine(workFolder, "graph.txt");
+        var utf8 = new UTF8Encoding(false);
+        await File.WriteAllTextAsync(scriptPath, plan.FilterGraph, utf8, token).ConfigureAwait(false);
+        foreach (var (name, file) in plan.AuxiliaryFiles)
+        {
+            var target = Path.Combine(workFolder, name);
+            if (file.CopyFrom is { } source)
+            {
+                File.Copy(source, target, overwrite: true);
+            }
+            else
+            {
+                await File.WriteAllTextAsync(target, file.Content ?? "", utf8, token).ConfigureAwait(false);
+            }
+        }
+
         try
         {
             var psi = new ProcessStartInfo(tools.FfmpegPath)
@@ -25,6 +42,7 @@ public static class RenderRunner
                 RedirectStandardError = true,
                 UseShellExecute = false,
                 CreateNoWindow = true,
+                WorkingDirectory = workFolder,
             };
             foreach (var arg in plan.BuildArguments(scriptPath, tools.FilterScriptOption))
             {
@@ -95,7 +113,16 @@ public static class RenderRunner
         }
         finally
         {
-            TryDelete(scriptPath);
+            try
+            {
+                Directory.Delete(workFolder, recursive: true);
+            }
+            catch (IOException)
+            {
+            }
+            catch (UnauthorizedAccessException)
+            {
+            }
         }
     }
 

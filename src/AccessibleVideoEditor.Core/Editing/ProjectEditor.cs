@@ -1,3 +1,4 @@
+using AccessibleVideoEditor.Core.Media;
 using AccessibleVideoEditor.Core.Model;
 using AccessibleVideoEditor.Core.Text;
 
@@ -581,17 +582,50 @@ public static class ProjectEditor
             Duration = Math.Clamp(edited.TransitionIn.Duration, 0.1, 10),
         };
         item.Placement = ClampPlacement(edited.Placement);
+        if (item.Kind == ItemKind.Text)
+        {
+            item.Text = ClampText(edited.Text);
+            if (string.IsNullOrWhiteSpace(edited.Name) || edited.Name == layer.Items[index].Name)
+            {
+                item.Name = MediaProbe.TextItemName(item.Text.Content);
+            }
+        }
+
         item.Audio = ClampAudio(edited.Audio);
         return EditResult.Success($"Updated {item.Name}.", item.Id);
     }
 
-    public static Placement ClampPlacement(Placement p) => new()
+    public static Placement ClampPlacement(Placement p)
     {
-        Position = p.Position,
-        SizePercent = Math.Clamp(p.SizePercent, 5, 100),
-        OpacityPercent = Math.Clamp(p.OpacityPercent, 0, 100),
-        CustomXPercent = Math.Clamp(p.CustomXPercent, 0, 100),
-        CustomYPercent = Math.Clamp(p.CustomYPercent, 0, 100),
+        var left = Math.Clamp(p.CropLeft, 0, 90);
+        var top = Math.Clamp(p.CropTop, 0, 90);
+        return new Placement
+        {
+            Position = p.Position,
+            SizePercent = Math.Clamp(p.SizePercent, 5, 100),
+            OpacityPercent = Math.Clamp(p.OpacityPercent, 0, 100),
+            CustomXPercent = Math.Clamp(p.CustomXPercent, 0, 100),
+            CustomYPercent = Math.Clamp(p.CustomYPercent, 0, 100),
+            Fill = p.Fill,
+            CropLeft = left,
+            CropRight = Math.Clamp(p.CropRight, 0, 90 - left),
+            CropTop = top,
+            CropBottom = Math.Clamp(p.CropBottom, 0, 90 - top),
+        };
+    }
+
+    public static TextStyle ClampText(TextStyle t) => new()
+    {
+        Content = t.Content ?? "",
+        Font = FontCatalog.Find(t.Font).Name,
+        SizePercent = Math.Clamp(t.SizePercent, 1, 50),
+        ColorName = ColorCatalog.IsKnown(t.ColorName) ? t.ColorName : "White",
+        Bold = t.Bold,
+        Outline = t.Outline,
+        Background = t.Background,
+        AnimationIn = t.AnimationIn,
+        AnimationOut = t.AnimationOut,
+        AnimationDuration = Math.Clamp(t.AnimationDuration, 0.05, 10),
     };
 
     public static AudioCleanup ClampAudio(AudioCleanup a) => new()

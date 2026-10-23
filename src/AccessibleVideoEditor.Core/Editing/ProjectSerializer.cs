@@ -83,6 +83,7 @@ public static class ProjectSerializer
     {
         project.Layers ??= new();
         project.Markers ??= new();
+        project.Credits ??= new();
         if (project.Width <= 0 || project.Height <= 0)
         {
             project.Width = 1920;
@@ -103,6 +104,10 @@ public static class ProjectSerializer
                 item.TransitionIn ??= new();
                 item.Placement ??= new();
                 item.Audio ??= new();
+                item.Text ??= new();
+                item.Text.Content ??= "";
+                item.Text.Font ??= "Segoe UI";
+                item.Text.ColorName ??= "White";
                 item.Name ??= "";
                 item.Path ??= "";
                 item.ColorName ??= "Black";

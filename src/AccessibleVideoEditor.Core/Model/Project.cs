@@ -23,6 +23,30 @@ public enum ItemKind
 
     /// <summary>A solid colour card, generated, no file needed.</summary>
     Color,
+
+    /// <summary>Words on screen: a title, caption or credit, drawn on a transparent background.</summary>
+    Text,
+}
+
+/// <summary>How text arrives on screen and how it leaves.</summary>
+public enum TextAnimation
+{
+    None,
+    Fade,
+    SlideFromLeft,
+    SlideFromRight,
+    SlideFromTop,
+    SlideFromBottom,
+    Rise,
+    Typewriter,
+}
+
+/// <summary>The backing behind text, for readability over busy pictures.</summary>
+public enum TextBackground
+{
+    None,
+    DarkBox,
+    LightBox,
 }
 
 /// <summary>Where a picture sits in the frame. Plain-language presets instead of pixel dragging.</summary>
@@ -89,6 +113,9 @@ public sealed class Project
 
     /// <summary>Range end, set with the right bracket key.</summary>
     public double? RangeEnd { get; set; }
+
+    /// <summary>Credits for music and sounds that need attribution (for example CC BY), written next to exports.</summary>
+    public List<string> Credits { get; set; } = new();
 
     public Layer? FindLayer(Guid id) => Layers.FirstOrDefault(l => l.Id == id);
 
@@ -190,6 +217,9 @@ public sealed class Item
 
     public AudioCleanup Audio { get; set; } = new();
 
+    /// <summary>Words and style for text items.</summary>
+    public TextStyle Text { get; set; } = new();
+
     /// <summary>The maximum duration the source allows from <see cref="SourceIn"/>, or infinity.</summary>
     [JsonIgnore]
     public double AvailableDuration =>
@@ -209,6 +239,7 @@ public sealed class Item
         copy.TransitionIn = TransitionIn.Clone();
         copy.Placement = Placement.Clone();
         copy.Audio = Audio.Clone();
+        copy.Text = Text.Clone();
         return copy;
     }
 }
@@ -241,6 +272,21 @@ public sealed class Placement
 
     /// <summary>Custom top edge, percent of frame height.</summary>
     public double CustomYPercent { get; set; }
+
+    /// <summary>Full frame only: fill the frame and cut off what spills over, instead of leaving black bars.</summary>
+    public bool Fill { get; set; }
+
+    /// <summary>Percent cut off the left edge of the source picture before placing it.</summary>
+    public double CropLeft { get; set; }
+
+    public double CropRight { get; set; }
+
+    public double CropTop { get; set; }
+
+    public double CropBottom { get; set; }
+
+    [JsonIgnore]
+    public bool HasCrop => CropLeft > 0.01 || CropRight > 0.01 || CropTop > 0.01 || CropBottom > 0.01;
 
     public Placement Clone() => (Placement)MemberwiseClone();
 }
@@ -283,4 +329,34 @@ public sealed class Marker
     public double Time { get; set; }
 
     public string Name { get; set; } = "";
+}
+
+/// <summary>The words of a text item and how they look.</summary>
+public sealed class TextStyle
+{
+    public string Content { get; set; } = "";
+
+    /// <summary>A font name from <see cref="FontCatalog"/>.</summary>
+    public string Font { get; set; } = "Segoe UI";
+
+    /// <summary>Letter height as a percentage of the frame height.</summary>
+    public double SizePercent { get; set; } = 8;
+
+    public string ColorName { get; set; } = "White";
+
+    public bool Bold { get; set; }
+
+    /// <summary>A dark outline around the letters, readable over any picture.</summary>
+    public bool Outline { get; set; } = true;
+
+    public TextBackground Background { get; set; }
+
+    public TextAnimation AnimationIn { get; set; } = TextAnimation.Fade;
+
+    public TextAnimation AnimationOut { get; set; } = TextAnimation.Fade;
+
+    /// <summary>Seconds each animation takes.</summary>
+    public double AnimationDuration { get; set; } = 0.5;
+
+    public TextStyle Clone() => (TextStyle)MemberwiseClone();
 }

@@ -22,6 +22,30 @@ public sealed class SoundTests(MediaFixture media)
     }
 
     [Fact]
+    public void Position_tone_pans_and_rises()
+    {
+        static (double Left, double Right) Levels(byte[] wav)
+        {
+            double l = 0, r = 0;
+            for (var i = 44; i + 3 < wav.Length; i += 4)
+            {
+                l += Math.Abs(BitConverter.ToInt16(wav, i));
+                r += Math.Abs(BitConverter.ToInt16(wav, i + 2));
+            }
+
+            return (l, r);
+        }
+
+        var left = Levels(WavWriter.PositionTone(0, 0.5));
+        var right = Levels(WavWriter.PositionTone(1, 0.5));
+        var centre = Levels(WavWriter.PositionTone(0.5, 0.5));
+        Assert.True(left.Left > left.Right * 50, "Far left is heard on the left.");
+        Assert.True(right.Right > right.Left * 50, "Far right is heard on the right.");
+        Assert.InRange(centre.Left / centre.Right, 0.95, 1.05);
+        Assert.Equal(2, BitConverter.ToInt16(WavWriter.PositionTone(0, 0), 22));
+    }
+
+    [Fact]
     public void Every_built_in_theme_has_every_sound_except_off()
     {
         foreach (var theme in EarconTheme.BuiltIn)

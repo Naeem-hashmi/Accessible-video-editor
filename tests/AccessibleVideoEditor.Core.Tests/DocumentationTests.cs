@@ -33,7 +33,7 @@ public sealed class DocumentationTests
     {
         var html = KeyboardReference.Html(Keymap.Default());
         Assert.Contains("<html lang=\"en\">", html);
-        Assert.Equal(CommandCatalog.Categories.Count, html.Split("<h2>").Length - 1);
+        Assert.Equal(CommandCatalog.Categories.Count + 1, html.Split("<h2>").Length - 1);
         Assert.Equal(html.Split("<table>").Length, html.Split("</table>").Length);
         Assert.Contains("<th scope=\"col\">Keys</th>", html);
         Assert.Contains("Alt 1", html);

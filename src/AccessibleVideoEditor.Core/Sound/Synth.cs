@@ -249,6 +249,51 @@ public static class WavWriter
         return stream.ToArray();
     }
 
+    /// <summary>A stereo WAV from separate left and right channels (same length).</summary>
+    public static byte[] ToWavStereo(float[] left, float[] right, int sampleRate = Synth.SampleRate)
+    {
+        var frames = Math.Min(left.Length, right.Length);
+        var dataBytes = frames * 4;
+        using var stream = new MemoryStream(44 + dataBytes);
+        using var writer = new BinaryWriter(stream);
+        writer.Write("RIFF"u8);
+        writer.Write(36 + dataBytes);
+        writer.Write("WAVE"u8);
+        writer.Write("fmt "u8);
+        writer.Write(16);
+        writer.Write((short)1);
+        writer.Write((short)2);
+        writer.Write(sampleRate);
+        writer.Write(sampleRate * 4);
+        writer.Write((short)4);
+        writer.Write((short)16);
+        writer.Write("data"u8);
+        writer.Write(dataBytes);
+        for (var i = 0; i < frames; i++)
+        {
+            writer.Write((short)Math.Round(Math.Clamp(left[i], -1f, 1f) * short.MaxValue));
+            writer.Write((short)Math.Round(Math.Clamp(right[i], -1f, 1f) * short.MaxValue));
+        }
+
+        writer.Flush();
+        return stream.ToArray();
+    }
+
+    /// <summary>
+    /// A short tone that pictures a position: panned from left (x 0) to right (x 1), and higher in pitch
+    /// the nearer the top (y 0).
+    /// </summary>
+    public static byte[] PositionTone(double x, double y, double gain = 0.4)
+    {
+        var pitch = 300 + (1 - Math.Clamp(y, 0, 1)) * 900;
+        var tone = Synth.Tone(pitch, 0.08, Wave.Sine, gain, 0.004, 0.04);
+        var pan = Math.Clamp(x, 0, 1);
+        // Constant-power panning keeps the loudness even across the frame.
+        var leftGain = (float)Math.Cos(pan * Math.PI / 2);
+        var rightGain = (float)Math.Sin(pan * Math.PI / 2);
+        return ToWavStereo(tone.Select(v => v * leftGain).ToArray(), tone.Select(v => v * rightGain).ToArray());
+    }
+
     public static void Write(string path, float[] mono, bool stereo = true)
     {
         var directory = Path.GetDirectoryName(Path.GetFullPath(path));

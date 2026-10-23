@@ -115,7 +115,7 @@ public sealed class Project
     public double? RangeEnd { get; set; }
 
     /// <summary>Credits for music and sounds that need attribution (for example CC BY), written next to exports.</summary>
-    public List<string> Credits { get; set; } = new();
+    public List<ProjectCredit> Credits { get; set; } = new();
 
     public Layer? FindLayer(Guid id) => Layers.FirstOrDefault(l => l.Id == id);
 
@@ -359,4 +359,13 @@ public sealed class TextStyle
     public double AnimationDuration { get; set; } = 0.5;
 
     public TextStyle Clone() => (TextStyle)MemberwiseClone();
+}
+
+/// <summary>A credit line owed for a piece of media (for example a CC BY song).</summary>
+public sealed class ProjectCredit
+{
+    public string Text { get; set; } = "";
+
+    /// <summary>The media file it belongs to; the credit is only needed while that file is used.</summary>
+    public string MediaPath { get; set; } = "";
 }

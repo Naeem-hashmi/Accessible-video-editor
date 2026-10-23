@@ -101,6 +101,13 @@ public static class ProjectChecker
             findings.Add(new CheckFinding(Severity.Note, "Range start and range end are at the same place.", rs));
         }
 
+        var credits = Editing.Credits.InUse(project);
+        if (credits.Count > 0)
+        {
+            findings.Add(new CheckFinding(Severity.Note,
+                $"This project uses {(credits.Count == 1 ? "1 sound that needs" : $"{credits.Count} sounds that need")} credit. A credits file is written next to the export: {string.Join(" ", credits)}"));
+        }
+
         if (findings.Count == 0)
         {
             findings.Add(new CheckFinding(Severity.Note, $"No problems found. The project is {TimeFormat.Words(total)} long."));

@@ -43,6 +43,12 @@ public sealed record Feedback
     public bool ProjectChanged { get; init; }
 
     public bool IsError => Earcon is EarconEvent.Error or EarconEvent.Edge;
+
+    /// <summary>
+    /// Where the focused picture now sits (centre, 0 to 1 across and down), so the window can play a tone
+    /// panned left or right and pitched by height: a sound picture of the position.
+    /// </summary>
+    public (double X, double Y)? Position { get; init; }
 }
 
 /// <summary>
@@ -50,7 +56,7 @@ public sealed record Feedback
 /// is, what is being listened to, and what every keyboard command does. The window only moves focus,
 /// speaks, plays sounds and shows dialogs.
 /// </summary>
-public sealed class EditorController
+public sealed partial class EditorController
 {
     private Item? _clipboard;
     private LayerKind _clipboardLayerKind;
@@ -103,6 +109,7 @@ public sealed class EditorController
     public void ReplaceSession(ProjectSession session)
     {
         Session = session;
+        ResetPositionMode();
         Playhead = 0;
         ListenAll = true;
         FocusedLayerId = null;
@@ -215,7 +222,7 @@ public sealed class EditorController
                 Describer.Verbosity = Settings.Verbosity;
                 return Say($"Verbosity {Settings.Verbosity.ToString().ToLowerInvariant()}.", EarconEvent.Done);
             default:
-                return null;
+                return ExecuteMore(command);
         }
     }
 
@@ -262,6 +269,11 @@ public sealed class EditorController
                 if (atPlayhead)
                 {
                     time += item.Duration;
+                }
+
+                if (Credits.ForMediaFile(info.Path) is { } credit)
+                {
+                    Credits.Add(project, credit, info.Path);
                 }
 
                 firstItem ??= item.Id;

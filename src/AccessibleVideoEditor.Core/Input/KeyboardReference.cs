@@ -28,6 +28,18 @@ public static class KeyboardReference
             }
         }
 
+        text.AppendLine();
+        text.AppendLine("## Keys inside position mode");
+        text.AppendLine();
+        text.AppendLine("Press `P` on a picture, video or text to enter position mode. A short tone plays after each move: it is panned left or right by where the picture is across the frame, and higher the nearer it is to the top.");
+        text.AppendLine();
+        text.AppendLine("| Keys | What it does |");
+        text.AppendLine("|---|---|");
+        foreach (var (keys, what) in PositionKeys)
+        {
+            text.AppendLine($"| {keys} | {what} |");
+        }
+
         return text.ToString();
     }
 
@@ -54,9 +66,36 @@ public static class KeyboardReference
             text.AppendLine("</tbody></table>");
         }
 
+        text.AppendLine("<h2>Keys inside position mode</h2>");
+        text.AppendLine("<p>Press P on a picture, video or text to enter position mode. A short tone plays after each move: it is panned left or right by where the picture is across the frame, and higher the nearer it is to the top.</p>");
+        text.AppendLine("<table><caption>Position mode keys</caption><thead><tr><th scope=\"col\">Keys</th><th scope=\"col\">What it does</th></tr></thead><tbody>");
+        foreach (var (keys, what) in PositionKeys)
+        {
+            text.AppendLine($"<tr><td><kbd>{Encode(keys)}</kbd></td><td>{Encode(what)}</td></tr>");
+        }
+
+        text.AppendLine("</tbody></table>");
+
         text.AppendLine("</body></html>");
         return text.ToString();
     }
 
     private static string Encode(string text) => WebUtility.HtmlEncode(text);
+
+    /// <summary>The keys of position mode, shared by the documents and the in-program help.</summary>
+    public static IReadOnlyList<(string Keys, string What)> PositionKeys { get; } =
+    [
+        ("Arrows", "Move 5 percent of the frame. With Shift, 1 percent."),
+        ("Plus and minus", "Bigger and smaller. With Shift, in small steps."),
+        ("1 to 9", "Snap to a place laid out like a number pad: 7 top left, 8 top centre, 9 top right, 4 middle left, 5 centre, 6 middle right, 1 bottom left, 2 bottom centre, 3 bottom right."),
+        ("0", "Full frame (maximise)."),
+        ("F", "Full frame only: switch between fit (whole picture, maybe with bars) and fill (covers the frame, edges cut off)."),
+        ("Control and an arrow", "Crop 5 percent more from that edge."),
+        ("Control Shift and an arrow", "Give back 5 percent of that edge."),
+        ("R", "Remove all cropping."),
+        ("O and Shift O", "More and less opacity, in steps of 10 percent."),
+        ("D or W", "Describe where it is and everything else in the picture."),
+        ("Enter", "Keep the changes and leave position mode."),
+        ("Escape", "Undo every change made in position mode and leave."),
+    ];
 }

@@ -5,6 +5,8 @@ public enum CommandId
 {
     // File
     NewProject,
+    SaveAsTemplate,
+    TemplateManager,
     OpenProject,
     SaveProject,
     SaveProjectAs,
@@ -24,12 +26,15 @@ public enum CommandId
     DeleteRange,
     ToggleRipple,
     ItemProperties,
+    EditTextOrRename,
 
     // Add
     ImportToEnd,
     ImportAtPlayhead,
     AddSoundEffect,
     AddColorCard,
+    AddText,
+    OnlineMusic,
     NewVideoLayer,
     NewAudioLayer,
     DeleteLayer,
@@ -59,6 +64,12 @@ public enum CommandId
     GoToStart,
     GoToEnd,
     SwitchPane,
+    PreviousPane,
+    FocusLibrary,
+    FocusTimelineRegion,
+    FocusProperties,
+    FocusPreview,
+    FocusLayers,
 
     // Arrange
     MoveItemEarlier,
@@ -99,6 +110,15 @@ public enum CommandId
     ToggleMute,
     ToggleSolo,
     UnmuteAll,
+    ItemVolumeUp,
+    ItemVolumeDown,
+    ToggleItemMute,
+    LayerVolumeUp,
+    LayerVolumeDown,
+
+    // Picture
+    PositionMode,
+    DescribePicture,
 
     // Information
     SpeakTime,
@@ -116,7 +136,11 @@ public sealed record CommandInfo(CommandId Id, string Category, string Title, st
     /// True for keys without Ctrl or Alt (letters, arrows, Space, Delete...). These only work while the
     /// timeline or layer list has focus, never inside a text box.
     /// </summary>
-    public bool IsTimelineOnly => DefaultKeys.Count > 0 && DefaultKeys.All(k => !k.Contains("Ctrl+") && !k.Contains("Alt+") && !k.StartsWith('F'));
+    public bool IsTimelineOnly => DefaultKeys.Count > 0 && DefaultKeys.All(k =>
+        KeyChord.TryParse(k, out var chord) && !chord.Ctrl && !chord.Alt && !IsFunctionKey(chord.Key));
+
+    private static bool IsFunctionKey(string key) =>
+        key.Length is 2 or 3 && key[0] == 'F' && int.TryParse(key[1..], out var n) && n is >= 1 and <= 12;
 }
 
 /// <summary>The command table: names, help text and default keys. Key names are Windows key names.</summary>
@@ -136,7 +160,9 @@ public static class CommandCatalog
             list.Add(new CommandInfo(id, category, title, help, keys));
 
         const string file = "File";
-        Add(CommandId.NewProject, file, "New project from template", "Start a new project from a template.", "Ctrl+N");
+        Add(CommandId.NewProject, file, "New project from template", "Start a new project from a built-in or saved template.", "Ctrl+N");
+        Add(CommandId.SaveAsTemplate, file, "Save as template", "Save this project as a template in a folder of your choice, with or without its media.", "Ctrl+Shift+N");
+        Add(CommandId.TemplateManager, file, "Manage templates", "List templates by folder: create a project, rename, move, delete, import or open the folder.", "Ctrl+Shift+K");
         Add(CommandId.OpenProject, file, "Open project", "Open a saved project.", "Ctrl+O");
         Add(CommandId.SaveProject, file, "Save project", "Save the project.", "Ctrl+S");
         Add(CommandId.SaveProjectAs, file, "Save project as", "Save the project under a new name.", "Ctrl+Shift+S");
@@ -155,12 +181,15 @@ public static class CommandCatalog
         Add(CommandId.DeleteKeepTiming, edit, "Delete item, keep timing", "Delete the focused item and leave silence in its place, so later items do not move.", "Ctrl+Delete");
         Add(CommandId.DeleteRange, edit, "Delete range on this layer", "Remove everything between range start and range end on the focused layer.", "Shift+Delete");
         Add(CommandId.ToggleRipple, edit, "Ripple editing on or off", "With ripple on, deleting, trimming and sliding move later items too. With ripple off, later items keep their time.", "Ctrl+R");
+        Add(CommandId.EditTextOrRename, edit, "Edit text or rename", "Change the words of a text item, or rename any other item.", "F2");
         Add(CommandId.ItemProperties, edit, "Item options", "Open all options for the focused item: length, volume, fades, transition, position, sound clean-up and equaliser.", "Enter");
 
         const string add = "Add";
         Add(CommandId.ImportToEnd, add, "Add files to end of layer", "Choose video, picture or audio files and add them after the last item of the focused layer. Sound files go to an audio layer automatically.", "Ctrl+I");
         Add(CommandId.ImportAtPlayhead, add, "Add files at playhead", "Add files at the playhead time without moving anything; a free layer is used or created.", "Ctrl+Shift+I");
         Add(CommandId.AddSoundEffect, add, "Add sound effect or music", "Choose a built-in or your own sound and add it at the playhead.", "Ctrl+Shift+E");
+        Add(CommandId.AddText, add, "Add text", "Add a title, caption or credit at the playhead, with style, position and animation.", "Ctrl+Shift+T");
+        Add(CommandId.OnlineMusic, add, "Find free music online", "Search Openverse for music and sound effects you may use freely (public domain or credit required). Credits are added to the project.", "Ctrl+Shift+O");
         Add(CommandId.AddColorCard, add, "Add colour card", "Add a solid colour picture, for a title background or a pause.", "Ctrl+Shift+C");
         Add(CommandId.NewVideoLayer, add, "New video layer", "Add a video layer above the others.", "Ctrl+Shift+V");
         Add(CommandId.NewAudioLayer, add, "New audio layer", "Add an audio layer.", "Ctrl+Shift+A");
@@ -186,7 +215,13 @@ public static class CommandCatalog
         Add(CommandId.GoToTime, nav, "Go to time", "Type a time to move the playhead, for example 1:30, 90, or +5.", "Ctrl+G");
         Add(CommandId.GoToStart, nav, "Go to start", "Move the playhead to the start of the project.", "Ctrl+Home");
         Add(CommandId.GoToEnd, nav, "Go to end", "Move the playhead to the end of the project.", "Ctrl+End");
-        Add(CommandId.SwitchPane, nav, "Switch between timeline and layer list", "Move between the items of the focused layer and the list of all layers.", "F6");
+        Add(CommandId.SwitchPane, nav, "Next area", "Move to the next area of the window: library, timeline, layers, properties, preview.", "F6");
+        Add(CommandId.PreviousPane, nav, "Previous area", "Move to the previous area of the window.", "Shift+F6");
+        Add(CommandId.FocusLibrary, nav, "Go to library", "The left area: media, sounds, online music, text styles, templates, import and export.", "Ctrl+D1");
+        Add(CommandId.FocusTimelineRegion, nav, "Go to timeline", "The items of the focused layer.", "Ctrl+D2");
+        Add(CommandId.FocusProperties, nav, "Go to properties", "The right area: quick settings for the focused item.", "Ctrl+D3");
+        Add(CommandId.FocusPreview, nav, "Go to preview", "The picture area. It describes what is on screen at the playhead.", "Ctrl+D4");
+        Add(CommandId.FocusLayers, nav, "Go to layer list", "The list of all layers.", "Ctrl+D5");
 
         const string arrange = "Arrange";
         Add(CommandId.MoveItemEarlier, arrange, "Move item earlier in order", "Swap the focused item with the one before it.", "Alt+Shift+Left");
@@ -227,6 +262,15 @@ public static class CommandCatalog
         Add(CommandId.ToggleMute, play, "Mute or unmute layer", "Mute the focused layer. Muted layers are left out of playback and export.", "M");
         Add(CommandId.ToggleSolo, play, "Solo layer", "Mute all other layers. Press again to unmute them.", "Shift+M");
         Add(CommandId.UnmuteAll, play, "Unmute all layers", "Unmute every layer.", "Ctrl+Shift+M");
+        Add(CommandId.ItemVolumeUp, play, "Item louder", "Raise the focused item's volume by 10 percent.", "Ctrl+Up");
+        Add(CommandId.ItemVolumeDown, play, "Item quieter", "Lower the focused item's volume by 10 percent.", "Ctrl+Down");
+        Add(CommandId.ToggleItemMute, play, "Mute or unmute item", "Mute or unmute only the focused item's sound.", "Ctrl+M");
+        Add(CommandId.LayerVolumeUp, play, "Layer louder", "Raise the focused layer's volume by 10 percent.", "Ctrl+Shift+Up");
+        Add(CommandId.LayerVolumeDown, play, "Layer quieter", "Lower the focused layer's volume by 10 percent.", "Ctrl+Shift+Down");
+
+        const string picture = "Picture";
+        Add(CommandId.PositionMode, picture, "Position mode", "Move, resize, crop, fill and fade the focused picture or text with the keyboard. Arrows move, plus and minus resize, number keys 1 to 9 snap to a place, 0 fills the frame, Control arrows crop, F fills, O changes opacity, D describes, Enter keeps, Escape undoes.", "P");
+        Add(CommandId.DescribePicture, picture, "Describe the picture", "Say what is visible at the playhead: every picture and text, where it is, its size and what it covers.", "Shift+W");
 
         const string info = "Information";
         Add(CommandId.SpeakTime, info, "Say playhead time", "Say where the playhead is.", "T");

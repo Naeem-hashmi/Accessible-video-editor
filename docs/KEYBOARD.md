@@ -8,7 +8,9 @@ Keys without Control or Alt (letters, arrows, Space, Enter, Delete, brackets) wo
 
 | Keys | Command | What it does |
 |---|---|---|
-| `Ctrl+N` | New project from template | Start a new project from a template. |
+| `Ctrl+N` | New project from template | Start a new project from a built-in or saved template. |
+| `Ctrl+Shift+N` | Save as template | Save this project as a template in a folder of your choice, with or without its media. |
+| `Ctrl+Shift+K` | Manage templates | List templates by folder: create a project, rename, move, delete, import or open the folder. |
 | `Ctrl+O` | Open project | Open a saved project. |
 | `Ctrl+S` | Save project | Save the project. |
 | `Ctrl+Shift+S` | Save project as | Save the project under a new name. |
@@ -30,6 +32,7 @@ Keys without Control or Alt (letters, arrows, Space, Enter, Delete, brackets) wo
 | `Ctrl+Delete` | Delete item, keep timing | Delete the focused item and leave silence in its place, so later items do not move. |
 | `Shift+Delete` | Delete range on this layer | Remove everything between range start and range end on the focused layer. |
 | `Ctrl+R` | Ripple editing on or off | With ripple on, deleting, trimming and sliding move later items too. With ripple off, later items keep their time. |
+| `F2` | Edit text or rename | Change the words of a text item, or rename any other item. |
 | `Enter` | Item options | Open all options for the focused item: length, volume, fades, transition, position, sound clean-up and equaliser. |
 
 ## Add
@@ -39,6 +42,8 @@ Keys without Control or Alt (letters, arrows, Space, Enter, Delete, brackets) wo
 | `Ctrl+I` | Add files to end of layer | Choose video, picture or audio files and add them after the last item of the focused layer. Sound files go to an audio layer automatically. |
 | `Ctrl+Shift+I` | Add files at playhead | Add files at the playhead time without moving anything; a free layer is used or created. |
 | `Ctrl+Shift+E` | Add sound effect or music | Choose a built-in or your own sound and add it at the playhead. |
+| `Ctrl+Shift+T` | Add text | Add a title, caption or credit at the playhead, with style, position and animation. |
+| `Ctrl+Shift+O` | Find free music online | Search Openverse for music and sound effects you may use freely (public domain or credit required). Credits are added to the project. |
 | `Ctrl+Shift+C` | Add colour card | Add a solid colour picture, for a title background or a pause. |
 | `Ctrl+Shift+V` | New video layer | Add a video layer above the others. |
 | `Ctrl+Shift+A` | New audio layer | Add an audio layer. |
@@ -71,7 +76,13 @@ Keys without Control or Alt (letters, arrows, Space, Enter, Delete, brackets) wo
 | `Ctrl+G` | Go to time | Type a time to move the playhead, for example 1:30, 90, or +5. |
 | `Ctrl+Home` | Go to start | Move the playhead to the start of the project. |
 | `Ctrl+End` | Go to end | Move the playhead to the end of the project. |
-| `F6` | Switch between timeline and layer list | Move between the items of the focused layer and the list of all layers. |
+| `F6` | Next area | Move to the next area of the window: library, timeline, layers, properties, preview. |
+| `Shift+F6` | Previous area | Move to the previous area of the window. |
+| `Ctrl+1` | Go to library | The left area: media, sounds, online music, text styles, templates, import and export. |
+| `Ctrl+2` | Go to timeline | The items of the focused layer. |
+| `Ctrl+3` | Go to properties | The right area: quick settings for the focused item. |
+| `Ctrl+4` | Go to preview | The picture area. It describes what is on screen at the playhead. |
+| `Ctrl+5` | Go to layer list | The list of all layers. |
 
 ## Arrange
 
@@ -121,6 +132,18 @@ Keys without Control or Alt (letters, arrows, Space, Enter, Delete, brackets) wo
 | `M` | Mute or unmute layer | Mute the focused layer. Muted layers are left out of playback and export. |
 | `Shift+M` | Solo layer | Mute all other layers. Press again to unmute them. |
 | `Ctrl+Shift+M` | Unmute all layers | Unmute every layer. |
+| `Ctrl+Up` | Item louder | Raise the focused item's volume by 10 percent. |
+| `Ctrl+Down` | Item quieter | Lower the focused item's volume by 10 percent. |
+| `Ctrl+M` | Mute or unmute item | Mute or unmute only the focused item's sound. |
+| `Ctrl+Shift+Up` | Layer louder | Raise the focused layer's volume by 10 percent. |
+| `Ctrl+Shift+Down` | Layer quieter | Lower the focused layer's volume by 10 percent. |
+
+## Picture
+
+| Keys | Command | What it does |
+|---|---|---|
+| `P` | Position mode | Move, resize, crop, fill and fade the focused picture or text with the keyboard. Arrows move, plus and minus resize, number keys 1 to 9 snap to a place, 0 fills the frame, Control arrows crop, F fills, O changes opacity, D describes, Enter keeps, Escape undoes. |
+| `Shift+W` | Describe the picture | Say what is visible at the playhead: every picture and text, where it is, its size and what it covers. |
 
 ## Information
 
@@ -133,3 +156,22 @@ Keys without Control or Alt (letters, arrows, Space, Enter, Delete, brackets) wo
 | `F7` | Check project | List possible problems: missing files, black gaps, muted layers and transitions that cannot play. |
 | `Shift+V` | Change how much is spoken | Switch between brief, normal and detailed descriptions. |
 | `F1` | Keyboard help | List every command and its keys. Type to search. |
+
+## Keys inside position mode
+
+Press `P` on a picture, video or text to enter position mode. A short tone plays after each move: it is panned left or right by where the picture is across the frame, and higher the nearer it is to the top.
+
+| Keys | What it does |
+|---|---|
+| Arrows | Move 5 percent of the frame. With Shift, 1 percent. |
+| Plus and minus | Bigger and smaller. With Shift, in small steps. |
+| 1 to 9 | Snap to a place laid out like a number pad: 7 top left, 8 top centre, 9 top right, 4 middle left, 5 centre, 6 middle right, 1 bottom left, 2 bottom centre, 3 bottom right. |
+| 0 | Full frame (maximise). |
+| F | Full frame only: switch between fit (whole picture, maybe with bars) and fill (covers the frame, edges cut off). |
+| Control and an arrow | Crop 5 percent more from that edge. |
+| Control Shift and an arrow | Give back 5 percent of that edge. |
+| R | Remove all cropping. |
+| O and Shift O | More and less opacity, in steps of 10 percent. |
+| D or W | Describe where it is and everything else in the picture. |
+| Enter | Keep the changes and leave position mode. |
+| Escape | Undo every change made in position mode and leave. |

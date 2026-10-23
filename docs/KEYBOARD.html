@@ -7,7 +7,9 @@
 <p>Keys without Control or Alt (letters, arrows, Space, Enter, Delete, brackets) work while the timeline or the layer list has focus. Each section is a heading and each table has column headers, so screen readers can move by heading (H) and by table cell.</p>
 <h2>File</h2>
 <table><caption>File keys</caption><thead><tr><th scope="col">Keys</th><th scope="col">Command</th><th scope="col">What it does</th></tr></thead><tbody>
-<tr><td><kbd>Control N</kbd></td><th scope="row">New project from template</th><td>Start a new project from a template.</td></tr>
+<tr><td><kbd>Control N</kbd></td><th scope="row">New project from template</th><td>Start a new project from a built-in or saved template.</td></tr>
+<tr><td><kbd>Control Shift N</kbd></td><th scope="row">Save as template</th><td>Save this project as a template in a folder of your choice, with or without its media.</td></tr>
+<tr><td><kbd>Control Shift K</kbd></td><th scope="row">Manage templates</th><td>List templates by folder: create a project, rename, move, delete, import or open the folder.</td></tr>
 <tr><td><kbd>Control O</kbd></td><th scope="row">Open project</th><td>Open a saved project.</td></tr>
 <tr><td><kbd>Control S</kbd></td><th scope="row">Save project</th><td>Save the project.</td></tr>
 <tr><td><kbd>Control Shift S</kbd></td><th scope="row">Save project as</th><td>Save the project under a new name.</td></tr>
@@ -27,6 +29,7 @@
 <tr><td><kbd>Control Delete</kbd></td><th scope="row">Delete item, keep timing</th><td>Delete the focused item and leave silence in its place, so later items do not move.</td></tr>
 <tr><td><kbd>Shift Delete</kbd></td><th scope="row">Delete range on this layer</th><td>Remove everything between range start and range end on the focused layer.</td></tr>
 <tr><td><kbd>Control R</kbd></td><th scope="row">Ripple editing on or off</th><td>With ripple on, deleting, trimming and sliding move later items too. With ripple off, later items keep their time.</td></tr>
+<tr><td><kbd>F2</kbd></td><th scope="row">Edit text or rename</th><td>Change the words of a text item, or rename any other item.</td></tr>
 <tr><td><kbd>Enter</kbd></td><th scope="row">Item options</th><td>Open all options for the focused item: length, volume, fades, transition, position, sound clean-up and equaliser.</td></tr>
 </tbody></table>
 <h2>Add</h2>
@@ -34,6 +37,8 @@
 <tr><td><kbd>Control I</kbd></td><th scope="row">Add files to end of layer</th><td>Choose video, picture or audio files and add them after the last item of the focused layer. Sound files go to an audio layer automatically.</td></tr>
 <tr><td><kbd>Control Shift I</kbd></td><th scope="row">Add files at playhead</th><td>Add files at the playhead time without moving anything; a free layer is used or created.</td></tr>
 <tr><td><kbd>Control Shift E</kbd></td><th scope="row">Add sound effect or music</th><td>Choose a built-in or your own sound and add it at the playhead.</td></tr>
+<tr><td><kbd>Control Shift T</kbd></td><th scope="row">Add text</th><td>Add a title, caption or credit at the playhead, with style, position and animation.</td></tr>
+<tr><td><kbd>Control Shift O</kbd></td><th scope="row">Find free music online</th><td>Search Openverse for music and sound effects you may use freely (public domain or credit required). Credits are added to the project.</td></tr>
 <tr><td><kbd>Control Shift C</kbd></td><th scope="row">Add colour card</th><td>Add a solid colour picture, for a title background or a pause.</td></tr>
 <tr><td><kbd>Control Shift V</kbd></td><th scope="row">New video layer</th><td>Add a video layer above the others.</td></tr>
 <tr><td><kbd>Control Shift A</kbd></td><th scope="row">New audio layer</th><td>Add an audio layer.</td></tr>
@@ -64,7 +69,13 @@
 <tr><td><kbd>Control G</kbd></td><th scope="row">Go to time</th><td>Type a time to move the playhead, for example 1:30, 90, or +5.</td></tr>
 <tr><td><kbd>Control Home</kbd></td><th scope="row">Go to start</th><td>Move the playhead to the start of the project.</td></tr>
 <tr><td><kbd>Control End</kbd></td><th scope="row">Go to end</th><td>Move the playhead to the end of the project.</td></tr>
-<tr><td><kbd>F6</kbd></td><th scope="row">Switch between timeline and layer list</th><td>Move between the items of the focused layer and the list of all layers.</td></tr>
+<tr><td><kbd>F6</kbd></td><th scope="row">Next area</th><td>Move to the next area of the window: library, timeline, layers, properties, preview.</td></tr>
+<tr><td><kbd>Shift F6</kbd></td><th scope="row">Previous area</th><td>Move to the previous area of the window.</td></tr>
+<tr><td><kbd>Control 1</kbd></td><th scope="row">Go to library</th><td>The left area: media, sounds, online music, text styles, templates, import and export.</td></tr>
+<tr><td><kbd>Control 2</kbd></td><th scope="row">Go to timeline</th><td>The items of the focused layer.</td></tr>
+<tr><td><kbd>Control 3</kbd></td><th scope="row">Go to properties</th><td>The right area: quick settings for the focused item.</td></tr>
+<tr><td><kbd>Control 4</kbd></td><th scope="row">Go to preview</th><td>The picture area. It describes what is on screen at the playhead.</td></tr>
+<tr><td><kbd>Control 5</kbd></td><th scope="row">Go to layer list</th><td>The list of all layers.</td></tr>
 </tbody></table>
 <h2>Arrange</h2>
 <table><caption>Arrange keys</caption><thead><tr><th scope="col">Keys</th><th scope="col">Command</th><th scope="col">What it does</th></tr></thead><tbody>
@@ -108,6 +119,16 @@
 <tr><td><kbd>M</kbd></td><th scope="row">Mute or unmute layer</th><td>Mute the focused layer. Muted layers are left out of playback and export.</td></tr>
 <tr><td><kbd>Shift M</kbd></td><th scope="row">Solo layer</th><td>Mute all other layers. Press again to unmute them.</td></tr>
 <tr><td><kbd>Control Shift M</kbd></td><th scope="row">Unmute all layers</th><td>Unmute every layer.</td></tr>
+<tr><td><kbd>Control up arrow</kbd></td><th scope="row">Item louder</th><td>Raise the focused item&#39;s volume by 10 percent.</td></tr>
+<tr><td><kbd>Control down arrow</kbd></td><th scope="row">Item quieter</th><td>Lower the focused item&#39;s volume by 10 percent.</td></tr>
+<tr><td><kbd>Control M</kbd></td><th scope="row">Mute or unmute item</th><td>Mute or unmute only the focused item&#39;s sound.</td></tr>
+<tr><td><kbd>Control Shift up arrow</kbd></td><th scope="row">Layer louder</th><td>Raise the focused layer&#39;s volume by 10 percent.</td></tr>
+<tr><td><kbd>Control Shift down arrow</kbd></td><th scope="row">Layer quieter</th><td>Lower the focused layer&#39;s volume by 10 percent.</td></tr>
+</tbody></table>
+<h2>Picture</h2>
+<table><caption>Picture keys</caption><thead><tr><th scope="col">Keys</th><th scope="col">Command</th><th scope="col">What it does</th></tr></thead><tbody>
+<tr><td><kbd>P</kbd></td><th scope="row">Position mode</th><td>Move, resize, crop, fill and fade the focused picture or text with the keyboard. Arrows move, plus and minus resize, number keys 1 to 9 snap to a place, 0 fills the frame, Control arrows crop, F fills, O changes opacity, D describes, Enter keeps, Escape undoes.</td></tr>
+<tr><td><kbd>Shift W</kbd></td><th scope="row">Describe the picture</th><td>Say what is visible at the playhead: every picture and text, where it is, its size and what it covers.</td></tr>
 </tbody></table>
 <h2>Information</h2>
 <table><caption>Information keys</caption><thead><tr><th scope="col">Keys</th><th scope="col">Command</th><th scope="col">What it does</th></tr></thead><tbody>
@@ -118,5 +139,21 @@
 <tr><td><kbd>F7</kbd></td><th scope="row">Check project</th><td>List possible problems: missing files, black gaps, muted layers and transitions that cannot play.</td></tr>
 <tr><td><kbd>Shift V</kbd></td><th scope="row">Change how much is spoken</th><td>Switch between brief, normal and detailed descriptions.</td></tr>
 <tr><td><kbd>F1</kbd></td><th scope="row">Keyboard help</th><td>List every command and its keys. Type to search.</td></tr>
+</tbody></table>
+<h2>Keys inside position mode</h2>
+<p>Press P on a picture, video or text to enter position mode. A short tone plays after each move: it is panned left or right by where the picture is across the frame, and higher the nearer it is to the top.</p>
+<table><caption>Position mode keys</caption><thead><tr><th scope="col">Keys</th><th scope="col">What it does</th></tr></thead><tbody>
+<tr><td><kbd>Arrows</kbd></td><td>Move 5 percent of the frame. With Shift, 1 percent.</td></tr>
+<tr><td><kbd>Plus and minus</kbd></td><td>Bigger and smaller. With Shift, in small steps.</td></tr>
+<tr><td><kbd>1 to 9</kbd></td><td>Snap to a place laid out like a number pad: 7 top left, 8 top centre, 9 top right, 4 middle left, 5 centre, 6 middle right, 1 bottom left, 2 bottom centre, 3 bottom right.</td></tr>
+<tr><td><kbd>0</kbd></td><td>Full frame (maximise).</td></tr>
+<tr><td><kbd>F</kbd></td><td>Full frame only: switch between fit (whole picture, maybe with bars) and fill (covers the frame, edges cut off).</td></tr>
+<tr><td><kbd>Control and an arrow</kbd></td><td>Crop 5 percent more from that edge.</td></tr>
+<tr><td><kbd>Control Shift and an arrow</kbd></td><td>Give back 5 percent of that edge.</td></tr>
+<tr><td><kbd>R</kbd></td><td>Remove all cropping.</td></tr>
+<tr><td><kbd>O and Shift O</kbd></td><td>More and less opacity, in steps of 10 percent.</td></tr>
+<tr><td><kbd>D or W</kbd></td><td>Describe where it is and everything else in the picture.</td></tr>
+<tr><td><kbd>Enter</kbd></td><td>Keep the changes and leave position mode.</td></tr>
+<tr><td><kbd>Escape</kbd></td><td>Undo every change made in position mode and leave.</td></tr>
 </tbody></table>
 </body></html>

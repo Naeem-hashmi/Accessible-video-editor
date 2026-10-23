@@ -143,16 +143,20 @@ jobs:
         shell: pwsh
         run: |
           $headers = @{ Authorization = "Bearer ${{ github.token }}" }
-          $release = Invoke-RestMethod "https://api.github.com/repos/ggml-org/whisper.cpp/releases/tags/v1.9.5" -Headers $headers
+          # The newest release that has the Windows build attached (some releases are source only).
+          $releases = Invoke-RestMethod "https://api.github.com/repos/ggml-org/whisper.cpp/releases?per_page=20" -Headers $headers
+          $release = $releases | Where-Object { -not $_.prerelease -and ($_.assets.name -contains "whisper-bin-x64.zip") } | Select-Object -First 1
+          if (-not $release) { throw "No whisper.cpp release has whisper-bin-x64.zip." }
           $asset = $release.assets | Where-Object { $_.name -eq "whisper-bin-x64.zip" } | Select-Object -First 1
-          if (-not $asset) { throw "whisper-bin-x64.zip not found in whisper.cpp $($release.tag_name): $($release.assets.name -join ', ')" }
+          Write-Host "Using whisper.cpp $($release.tag_name) ($($release.published_at))"
+          "WHISPER_TAG=$($release.tag_name)" >> $env:GITHUB_ENV
           Invoke-WebRequest $asset.browser_download_url -OutFile whisper.zip -UseBasicParsing
           Expand-Archive whisper.zip -DestinationPath whisper-download
           $cli = Get-ChildItem whisper-download -Recurse -Filter whisper-cli.exe | Select-Object -First 1
           if (-not $cli) { throw "whisper-cli.exe not found in $($asset.name)." }
           New-Item -ItemType Directory -Force build/app/whisper | Out-Null
           Copy-Item (Join-Path $cli.DirectoryName "*") build/app/whisper -Recurse
-          Invoke-WebRequest "https://raw.githubusercontent.com/ggml-org/whisper.cpp/v1.9.5/LICENSE" -OutFile build/app/whisper/WHISPER-LICENSE.txt -UseBasicParsing
+          Invoke-WebRequest "https://raw.githubusercontent.com/ggml-org/whisper.cpp/$($release.tag_name)/LICENSE" -OutFile build/app/whisper/WHISPER-LICENSE.txt -UseBasicParsing
           Get-ChildItem build/app/whisper | Select-Object Name, Length | Format-Table | Out-String | Write-Host
           & build/app/whisper/whisper-cli.exe -h 2>&1 | Select-Object -First 3
 

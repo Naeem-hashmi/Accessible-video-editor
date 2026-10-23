@@ -1,5 +1,385 @@
 [
   {
+    "file": "Whooshes and swipes/Quick swipe.wav",
+    "name": "Quick swipe",
+    "category": "Whooshes and swipes",
+    "description": "A fast swipe for a cut or a text sliding in.",
+    "creator": "artisticdude",
+    "source": "https://opengameart.org/content/swishes-sound-pack",
+    "license": "CC0",
+    "seconds": 0.12
+  },
+  {
+    "file": "Whooshes and swipes/Soft swipe.wav",
+    "name": "Soft swipe",
+    "category": "Whooshes and swipes",
+    "description": "A gentle swipe, good under a slide transition.",
+    "creator": "artisticdude",
+    "source": "https://opengameart.org/content/swishes-sound-pack",
+    "license": "CC0",
+    "seconds": 0.12
+  },
+  {
+    "file": "Whooshes and swipes/Swipe with air.wav",
+    "name": "Swipe with air",
+    "category": "Whooshes and swipes",
+    "description": "A swipe with a little more body.",
+    "creator": "artisticdude",
+    "source": "https://opengameart.org/content/swishes-sound-pack",
+    "license": "CC0",
+    "seconds": 0.14
+  },
+  {
+    "file": "Whooshes and swipes/Sharp swish.wav",
+    "name": "Sharp swish",
+    "category": "Whooshes and swipes",
+    "description": "A short, sharp swish.",
+    "creator": "artisticdude",
+    "source": "https://opengameart.org/content/swishes-sound-pack",
+    "license": "CC0",
+    "seconds": 0.08
+  },
+  {
+    "file": "Whooshes and swipes/Light swish.wav",
+    "name": "Light swish",
+    "category": "Whooshes and swipes",
+    "description": "A light, airy swish.",
+    "creator": "artisticdude",
+    "source": "https://opengameart.org/content/swishes-sound-pack",
+    "license": "CC0",
+    "seconds": 0.14
+  },
+  {
+    "file": "Whooshes and swipes/Air whoosh.wav",
+    "name": "Air whoosh",
+    "category": "Whooshes and swipes",
+    "description": "A longer whoosh of air, for a big transition or a title flying in.",
+    "creator": "pyranostudios",
+    "source": "https://opengameart.org/content/air-whoosh",
+    "license": "CC0",
+    "seconds": 1.6
+  },
+  {
+    "file": "Whooshes and swipes/Whoosh up.wav",
+    "name": "Whoosh up",
+    "category": "Whooshes and swipes",
+    "description": "A rising whoosh, for something growing or appearing.",
+    "creator": "Kenney",
+    "source": "https://kenney.nl/assets/interface-sounds",
+    "license": "CC0",
+    "seconds": 0.38
+  },
+  {
+    "file": "Whooshes and swipes/Whoosh down.wav",
+    "name": "Whoosh down",
+    "category": "Whooshes and swipes",
+    "description": "A falling whoosh, for something shrinking or leaving.",
+    "creator": "Kenney",
+    "source": "https://kenney.nl/assets/interface-sounds",
+    "license": "CC0",
+    "seconds": 0.36
+  },
+  {
+    "file": "Whooshes and swipes/Paper slide.wav",
+    "name": "Paper slide",
+    "category": "Whooshes and swipes",
+    "description": "A card or paper sliding across a table.",
+    "creator": "Kenney",
+    "source": "https://kenney.nl/assets/casino-audio",
+    "license": "CC0",
+    "seconds": 0.47
+  },
+  {
+    "file": "Whooshes and swipes/Cloth swish.wav",
+    "name": "Cloth swish",
+    "category": "Whooshes and swipes",
+    "description": "Fabric moving quickly, a soft natural whoosh.",
+    "creator": "Kenney",
+    "source": "https://kenney.nl/assets/rpg-audio",
+    "license": "CC0",
+    "seconds": 0.49
+  },
+  {
+    "file": "Whooshes and swipes/Page flip.wav",
+    "name": "Page flip",
+    "category": "Whooshes and swipes",
+    "description": "A book page turning, for a new chapter or slide.",
+    "creator": "Kenney",
+    "source": "https://kenney.nl/assets/rpg-audio",
+    "license": "CC0",
+    "seconds": 0.14
+  },
+  {
+    "file": "Pops and bubbles/Pop.wav",
+    "name": "Pop",
+    "category": "Pops and bubbles",
+    "description": "A clean pop, for text or a sticker appearing.",
+    "creator": "cogitollc",
+    "source": "https://opengameart.org/content/pop-sounds",
+    "license": "CC0",
+    "seconds": 0.11
+  },
+  {
+    "file": "Pops and bubbles/Small pop.wav",
+    "name": "Small pop",
+    "category": "Pops and bubbles",
+    "description": "A small, soft pop.",
+    "creator": "cogitollc",
+    "source": "https://opengameart.org/content/pop-sounds",
+    "license": "CC0",
+    "seconds": 0.08
+  },
+  {
+    "file": "Pops and bubbles/Bright pop.wav",
+    "name": "Bright pop",
+    "category": "Pops and bubbles",
+    "description": "A bright pop with a little snap.",
+    "creator": "cogitollc",
+    "source": "https://opengameart.org/content/pop-sounds",
+    "license": "CC0",
+    "seconds": 0.12
+  },
+  {
+    "file": "Pops and bubbles/Cork pop.wav",
+    "name": "Cork pop",
+    "category": "Pops and bubbles",
+    "description": "A round pop like a cork.",
+    "creator": "wubitog",
+    "source": "https://opengameart.org/content/3-pop-sounds",
+    "license": "CC0",
+    "seconds": 0.19
+  },
+  {
+    "file": "Pops and bubbles/Mouth pop.wav",
+    "name": "Mouth pop",
+    "category": "Pops and bubbles",
+    "description": "A soft mouth pop, playful.",
+    "creator": "trezegames",
+    "source": "https://opengameart.org/content/pop-effect-sounds",
+    "license": "CC0",
+    "seconds": 0.07
+  },
+  {
+    "file": "Pops and bubbles/Bubble.wav",
+    "name": "Bubble",
+    "category": "Pops and bubbles",
+    "description": "A single bubble.",
+    "creator": "BMacZero",
+    "source": "https://opengameart.org/content/bubble-sound-effects",
+    "license": "CC0",
+    "seconds": 0.26
+  },
+  {
+    "file": "Pops and bubbles/Bubble pop.wav",
+    "name": "Bubble pop",
+    "category": "Pops and bubbles",
+    "description": "A bubble bursting.",
+    "creator": "farfadet46",
+    "source": "https://opengameart.org/content/bubbles-pop",
+    "license": "CC0",
+    "seconds": 0.06
+  },
+  {
+    "file": "Pops and bubbles/Slide pop.wav",
+    "name": "Slide pop",
+    "category": "Pops and bubbles",
+    "description": "A slide up that ends in a pop, for a playful entrance.",
+    "creator": "EZduzziteh",
+    "source": "https://opengameart.org/content/a-slide-pop-sound",
+    "license": "CC0",
+    "seconds": 0.5
+  },
+  {
+    "file": "Pops and bubbles/Water drop.wav",
+    "name": "Water drop",
+    "category": "Pops and bubbles",
+    "description": "A water drop, for a calm moment or a reveal.",
+    "creator": "Kenney",
+    "source": "https://kenney.nl/assets/interface-sounds",
+    "license": "CC0",
+    "seconds": 0.28
+  },
+  {
+    "file": "Pops and bubbles/Droplet.wav",
+    "name": "Droplet",
+    "category": "Pops and bubbles",
+    "description": "A short droplet.",
+    "creator": "Kenney",
+    "source": "https://kenney.nl/assets/interface-sounds",
+    "license": "CC0",
+    "seconds": 0.13
+  },
+  {
+    "file": "Clicks/Clean click.wav",
+    "name": "Clean click",
+    "category": "Clicks",
+    "description": "A clean click, for buttons, cursors and screen recordings.",
+    "creator": "OwlishMedia",
+    "source": "https://opengameart.org/content/87-clickety-clips",
+    "license": "CC0",
+    "seconds": 0.24
+  },
+  {
+    "file": "Clicks/Soft click.wav",
+    "name": "Soft click",
+    "category": "Clicks",
+    "description": "A soft, quiet click.",
+    "creator": "OwlishMedia",
+    "source": "https://opengameart.org/content/87-clickety-clips",
+    "license": "CC0",
+    "seconds": 0.11
+  },
+  {
+    "file": "Clicks/Tap.wav",
+    "name": "Tap",
+    "category": "Clicks",
+    "description": "A light tap.",
+    "creator": "OwlishMedia",
+    "source": "https://opengameart.org/content/87-clickety-clips",
+    "license": "CC0",
+    "seconds": 0.14
+  },
+  {
+    "file": "Clicks/Switch.wav",
+    "name": "Switch",
+    "category": "Clicks",
+    "description": "A switch flicked on.",
+    "creator": "Kenney",
+    "source": "https://kenney.nl/assets/interface-sounds",
+    "license": "CC0",
+    "seconds": 0.15
+  },
+  {
+    "file": "Clicks/Toggle.wav",
+    "name": "Toggle",
+    "category": "Clicks",
+    "description": "A small toggle.",
+    "creator": "Kenney",
+    "source": "https://kenney.nl/assets/interface-sounds",
+    "license": "CC0",
+    "seconds": 0.12
+  },
+  {
+    "file": "Clicks/Select.wav",
+    "name": "Select",
+    "category": "Clicks",
+    "description": "A soft select sound, for highlighting something on screen.",
+    "creator": "Kenney",
+    "source": "https://kenney.nl/assets/interface-sounds",
+    "license": "CC0",
+    "seconds": 0.23
+  },
+  {
+    "file": "Clicks/Tick.wav",
+    "name": "Tick",
+    "category": "Clicks",
+    "description": "A tiny tick, for a counter or a checklist.",
+    "creator": "Kenney",
+    "source": "https://kenney.nl/assets/interface-sounds",
+    "license": "CC0",
+    "seconds": 0.03
+  },
+  {
+    "file": "Notifications/Glass ding.wav",
+    "name": "Glass ding",
+    "category": "Notifications",
+    "description": "A clear glass ding, for a highlight or a tip.",
+    "creator": "Kenney",
+    "source": "https://kenney.nl/assets/interface-sounds",
+    "license": "CC0",
+    "seconds": 0.08
+  },
+  {
+    "file": "Notifications/Glass chime.wav",
+    "name": "Glass chime",
+    "category": "Notifications",
+    "description": "A longer glass chime.",
+    "creator": "Kenney",
+    "source": "https://kenney.nl/assets/interface-sounds",
+    "license": "CC0",
+    "seconds": 0.67
+  },
+  {
+    "file": "Notifications/Success.wav",
+    "name": "Success",
+    "category": "Notifications",
+    "description": "A happy confirmation, for something done or correct.",
+    "creator": "Kenney",
+    "source": "https://kenney.nl/assets/interface-sounds",
+    "license": "CC0",
+    "seconds": 0.54
+  },
+  {
+    "file": "Notifications/Wrong.wav",
+    "name": "Wrong",
+    "category": "Notifications",
+    "description": "A soft wrong-answer sound.",
+    "creator": "Kenney",
+    "source": "https://kenney.nl/assets/interface-sounds",
+    "license": "CC0",
+    "seconds": 0.19
+  },
+  {
+    "file": "Notifications/Bell hit.wav",
+    "name": "Bell hit",
+    "category": "Notifications",
+    "description": "A single bell strike.",
+    "creator": "Kenney",
+    "source": "https://kenney.nl/assets/impact-sounds",
+    "license": "CC0",
+    "seconds": 1.44
+  },
+  {
+    "file": "Hits and drums/Punch.wav",
+    "name": "Punch",
+    "category": "Hits and drums",
+    "description": "A heavy punch, for an impact or a big word landing.",
+    "creator": "Kenney",
+    "source": "https://kenney.nl/assets/impact-sounds",
+    "license": "CC0",
+    "seconds": 0.5
+  },
+  {
+    "file": "Hits and drums/Wood knock.wav",
+    "name": "Wood knock",
+    "category": "Hits and drums",
+    "description": "A knock on wood.",
+    "creator": "Kenney",
+    "source": "https://kenney.nl/assets/impact-sounds",
+    "license": "CC0",
+    "seconds": 0.31
+  },
+  {
+    "file": "Risers/Rise.wav",
+    "name": "Rise",
+    "category": "Risers",
+    "description": "A short electronic rise, before a reveal.",
+    "creator": "Kenney",
+    "source": "https://kenney.nl/assets/digital-audio",
+    "license": "CC0",
+    "seconds": 0.42
+  },
+  {
+    "file": "Risers/Power up.wav",
+    "name": "Power up",
+    "category": "Risers",
+    "description": "A bright power-up, for an achievement.",
+    "creator": "Kenney",
+    "source": "https://kenney.nl/assets/digital-audio",
+    "license": "CC0",
+    "seconds": 0.26
+  },
+  {
+    "file": "Risers/Level up.wav",
+    "name": "Level up",
+    "category": "Risers",
+    "description": "A longer level-up tune.",
+    "creator": "Kenney",
+    "source": "https://kenney.nl/assets/digital-audio",
+    "license": "CC0",
+    "seconds": 0.67
+  },
+  {
     "file": "Typing/Keyboard typing.mp3",
     "name": "Keyboard typing",
     "category": "Typing",

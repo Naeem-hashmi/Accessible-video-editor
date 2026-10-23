@@ -24,7 +24,8 @@ public sealed class RecordedSoundTests
     {
         var folder = Folder();
         var listed = RecordedSounds.Parse(File.ReadAllText(Path.Combine(folder, RecordedSounds.ManifestName)));
-        var files = Directory.EnumerateFiles(folder, "*.mp3", SearchOption.AllDirectories)
+        var files = Directory.EnumerateFiles(folder, "*.*", SearchOption.AllDirectories)
+            .Where(f => f.EndsWith(".mp3", StringComparison.Ordinal) || f.EndsWith(".wav", StringComparison.Ordinal))
             .Select(f => Path.GetRelativePath(folder, f).Replace('\\', '/'))
             .OrderBy(f => f, StringComparer.Ordinal)
             .ToList();
@@ -44,7 +45,9 @@ public sealed class RecordedSoundTests
             Assert.False(string.IsNullOrWhiteSpace(s.Description));
             Assert.False(string.IsNullOrWhiteSpace(s.Creator));
             Assert.True(s.Source.StartsWith("https://commons.wikimedia.org/wiki/File:", StringComparison.Ordinal) ||
-                        s.Source.StartsWith("https://freesound.org/", StringComparison.Ordinal), s.Source);
+                        s.Source.StartsWith("https://freesound.org/", StringComparison.Ordinal) ||
+                        s.Source.StartsWith("https://kenney.nl/assets/", StringComparison.Ordinal) ||
+                        s.Source.StartsWith("https://opengameart.org/content/", StringComparison.Ordinal), s.Source);
         });
         Assert.Equal(listed.Count, listed.Select(s => s.Name + s.Category).Distinct().Count());
         var credits = File.ReadAllText(Path.Combine(Folder(), "CREDITS.md"));
@@ -55,7 +58,7 @@ public sealed class RecordedSoundTests
     public void The_trending_categories_are_covered()
     {
         var categories = RecordedSounds.Load(Folder()).Select(s => s.Category).ToHashSet();
-        foreach (var expected in new[] { "Typing", "Clicks", "Notifications", "Reactions", "Everyday", "Nature" })
+        foreach (var expected in new[] { "Typing", "Clicks", "Notifications", "Reactions", "Everyday", "Nature", "Whooshes and swipes", "Pops and bubbles", "Risers" })
         {
             Assert.Contains(expected, categories);
         }
@@ -82,7 +85,7 @@ public sealed class RecordedSoundTests
             var output = p.StandardOutput.ReadToEnd().Trim();
             p.WaitForExit();
             Assert.True(double.TryParse(output, NumberStyles.Float, CultureInfo.InvariantCulture, out var seconds), $"{sound.File}: {output}");
-            Assert.InRange(seconds, 0.2, 12.5);
+            Assert.InRange(seconds, 0.02, 12.5); // Clicks and ticks are very short.
             Assert.InRange(Math.Abs(seconds - sound.Seconds), 0, 0.15);
         }
     }
@@ -105,6 +108,29 @@ public sealed class RecordedSoundTests
         finally
         {
             Directory.Delete(folder, true);
+        }
+    }
+
+    [Fact]
+    public async Task Editing_sounds_are_short_clean_level_and_start_at_once()
+    {
+        var folder = Folder();
+        var tools = await AccessibleVideoEditor.Core.Rendering.FfmpegTools.LocateAsync();
+        var editing = RecordedSounds.Load(folder).Where(s => s.File.EndsWith(".wav", StringComparison.Ordinal)).ToList();
+        Assert.True(editing.Count >= 30, $"Only {editing.Count} editing sounds");
+        foreach (var sound in editing)
+        {
+            var samples = AccessibleVideoEditor.Core.Rendering.FfmpegStream.DecodeMono(tools, RecordedSounds.FullPath(folder, sound), 44100);
+            var peak = samples.Max(Math.Abs);
+            Assert.InRange(20 * Math.Log10(peak), -4, -2); // All at the same level.
+            Assert.True(sound.Seconds <= 2, $"{sound.Name} is {sound.Seconds} s");
+            // Sound within the first 20 milliseconds, so it lands where it is placed.
+            var first = Array.FindIndex(samples, v => Math.Abs(v) > peak * 0.1);
+            var swells = sound.Category is "Whooshes and swipes" or "Risers" || sound.Name == "Slide pop";
+            var allowed = sound.Name == "Air whoosh" ? 0.3 : swells ? 0.1 : 0.02; // Whooshes and slides swell in.
+            Assert.True(first < 44100 * allowed, $"{sound.Name} starts after {first / 44.1:0} ms");
+            // It begins and ends quietly (faded), so it never clicks.
+            Assert.True(Math.Abs(samples[0]) < 0.05 && Math.Abs(samples[^1]) < 0.05, $"{sound.Name} starts or ends abruptly");
         }
     }
 }

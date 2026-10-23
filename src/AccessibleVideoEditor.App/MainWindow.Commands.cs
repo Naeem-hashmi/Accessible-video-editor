@@ -438,9 +438,9 @@ public partial class MainWindow
         try
         {
             var builtIn = AppPaths.BuiltInSoundEffects;
-            foreach (var effect in SoundEffects.BuiltIn)
+            foreach (var effect in SoundEffects.Offered)
             {
-                entries.Add(new ListEntry($"{effect.Name}. {effect.Description}", Path.Combine(builtIn, effect.FileName), effect.Category));
+                entries.Add(new ListEntry($"{effect.Name}. {effect.Description}", Path.Combine(builtIn, effect.FileName), "Generated, " + effect.Category));
             }
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
@@ -462,7 +462,7 @@ public partial class MainWindow
 
         using var player = new SoundPreviewPlayer(() => _preview.Tools);
         var dialog = new ListDialog(this, "Add sound effect or music", "Sounds", entries, searchable: true,
-            intro: "Real recordings and built-in sounds are all public domain and free to use in any video. Your own sounds come from Documents, ClipScribe, Sound Effects. Press Enter to add at the playhead, or use Preview to listen.");
+            intro: "Real recordings (swipes, whooshes, pops, bubbles, clicks, chimes, hits, risers and more) and a few generated sounds, all free to use in any video. Your own sounds come from Documents, ClipScribe, Sound Effects. Press Enter to add at the playhead, or use Preview to listen.");
         dialog.AddAction("_Add at playhead");
         dialog.AddAction("_Preview", entry =>
         {

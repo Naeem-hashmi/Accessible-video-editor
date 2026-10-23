@@ -30,3 +30,48 @@ These recordings were made by people and shared on Wikimedia Commons in the publ
 | Nature | Storm | Caesar | Public domain | [File:Rain and thunder.ogg](https://commons.wikimedia.org/wiki/File:Rain_and_thunder.ogg) |
 | Clicks | Mouse double click | Darklanlan | CC0 | [File:Computer mouse double click.ogg](https://commons.wikimedia.org/wiki/File:Computer_mouse_double_click.ogg) |
 | Clicks | Mouse right click | Darklanlan | CC0 | [File:Computer mouse right click.ogg](https://commons.wikimedia.org/wiki/File:Computer_mouse_right_click.ogg) |
+
+## Modern editing sounds
+
+Swipes, whooshes, pops, bubbles, clicks, chimes, hits and risers for reels, shorts and YouTube videos. All are CC0 (public domain): free for any video, commercial too, with no credit needed. They come from Kenney (kenney.nl) and from creators on OpenGameArt.org. For ClipScribe they were chosen for low background noise, trimmed of silence, given tiny fades so they never click, set to a peak of -3 dB and saved as WAV so they start exactly on time.
+
+| Category | Name | Made by | Licence | Original |
+|---|---|---|---|---|
+| Whooshes and swipes | Quick swipe | artisticdude | CC0 | [swishes-sound-pack](https://opengameart.org/content/swishes-sound-pack) |
+| Whooshes and swipes | Soft swipe | artisticdude | CC0 | [swishes-sound-pack](https://opengameart.org/content/swishes-sound-pack) |
+| Whooshes and swipes | Swipe with air | artisticdude | CC0 | [swishes-sound-pack](https://opengameart.org/content/swishes-sound-pack) |
+| Whooshes and swipes | Sharp swish | artisticdude | CC0 | [swishes-sound-pack](https://opengameart.org/content/swishes-sound-pack) |
+| Whooshes and swipes | Light swish | artisticdude | CC0 | [swishes-sound-pack](https://opengameart.org/content/swishes-sound-pack) |
+| Whooshes and swipes | Air whoosh | pyranostudios | CC0 | [air-whoosh](https://opengameart.org/content/air-whoosh) |
+| Whooshes and swipes | Whoosh up | Kenney | CC0 | [interface-sounds](https://kenney.nl/assets/interface-sounds) |
+| Whooshes and swipes | Whoosh down | Kenney | CC0 | [interface-sounds](https://kenney.nl/assets/interface-sounds) |
+| Whooshes and swipes | Paper slide | Kenney | CC0 | [casino-audio](https://kenney.nl/assets/casino-audio) |
+| Whooshes and swipes | Cloth swish | Kenney | CC0 | [rpg-audio](https://kenney.nl/assets/rpg-audio) |
+| Whooshes and swipes | Page flip | Kenney | CC0 | [rpg-audio](https://kenney.nl/assets/rpg-audio) |
+| Pops and bubbles | Pop | cogitollc | CC0 | [pop-sounds](https://opengameart.org/content/pop-sounds) |
+| Pops and bubbles | Small pop | cogitollc | CC0 | [pop-sounds](https://opengameart.org/content/pop-sounds) |
+| Pops and bubbles | Bright pop | cogitollc | CC0 | [pop-sounds](https://opengameart.org/content/pop-sounds) |
+| Pops and bubbles | Cork pop | wubitog | CC0 | [3-pop-sounds](https://opengameart.org/content/3-pop-sounds) |
+| Pops and bubbles | Mouth pop | trezegames | CC0 | [pop-effect-sounds](https://opengameart.org/content/pop-effect-sounds) |
+| Pops and bubbles | Bubble | BMacZero | CC0 | [bubble-sound-effects](https://opengameart.org/content/bubble-sound-effects) |
+| Pops and bubbles | Bubble pop | farfadet46 | CC0 | [bubbles-pop](https://opengameart.org/content/bubbles-pop) |
+| Pops and bubbles | Slide pop | EZduzziteh | CC0 | [a-slide-pop-sound](https://opengameart.org/content/a-slide-pop-sound) |
+| Pops and bubbles | Water drop | Kenney | CC0 | [interface-sounds](https://kenney.nl/assets/interface-sounds) |
+| Pops and bubbles | Droplet | Kenney | CC0 | [interface-sounds](https://kenney.nl/assets/interface-sounds) |
+| Clicks | Clean click | OwlishMedia | CC0 | [87-clickety-clips](https://opengameart.org/content/87-clickety-clips) |
+| Clicks | Soft click | OwlishMedia | CC0 | [87-clickety-clips](https://opengameart.org/content/87-clickety-clips) |
+| Clicks | Tap | OwlishMedia | CC0 | [87-clickety-clips](https://opengameart.org/content/87-clickety-clips) |
+| Clicks | Switch | Kenney | CC0 | [interface-sounds](https://kenney.nl/assets/interface-sounds) |
+| Clicks | Toggle | Kenney | CC0 | [interface-sounds](https://kenney.nl/assets/interface-sounds) |
+| Clicks | Select | Kenney | CC0 | [interface-sounds](https://kenney.nl/assets/interface-sounds) |
+| Clicks | Tick | Kenney | CC0 | [interface-sounds](https://kenney.nl/assets/interface-sounds) |
+| Notifications | Glass ding | Kenney | CC0 | [interface-sounds](https://kenney.nl/assets/interface-sounds) |
+| Notifications | Glass chime | Kenney | CC0 | [interface-sounds](https://kenney.nl/assets/interface-sounds) |
+| Notifications | Success | Kenney | CC0 | [interface-sounds](https://kenney.nl/assets/interface-sounds) |
+| Notifications | Wrong | Kenney | CC0 | [interface-sounds](https://kenney.nl/assets/interface-sounds) |
+| Notifications | Bell hit | Kenney | CC0 | [impact-sounds](https://kenney.nl/assets/impact-sounds) |
+| Hits and drums | Punch | Kenney | CC0 | [impact-sounds](https://kenney.nl/assets/impact-sounds) |
+| Hits and drums | Wood knock | Kenney | CC0 | [impact-sounds](https://kenney.nl/assets/impact-sounds) |
+| Risers | Rise | Kenney | CC0 | [digital-audio](https://kenney.nl/assets/digital-audio) |
+| Risers | Power up | Kenney | CC0 | [digital-audio](https://kenney.nl/assets/digital-audio) |
+| Risers | Level up | Kenney | CC0 | [digital-audio](https://kenney.nl/assets/digital-audio) |

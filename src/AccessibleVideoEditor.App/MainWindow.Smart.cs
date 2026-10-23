@@ -761,7 +761,8 @@ public partial class MainWindow
 
         var chosenStyle = styles[style()];
         // A real recorded whoosh if one is installed, otherwise the built-in one.
-        var whoosh = RecordedSounds.Load(AppPaths.Recordings).FirstOrDefault(s => s.Category == "Whooshes");
+        var recordings = RecordedSounds.Load(AppPaths.Recordings);
+        var whoosh = recordings.FirstOrDefault(s => s.Name == "Soft swipe") ?? recordings.FirstOrDefault(s => s.Category == "Whooshes and swipes");
         var whooshPath = whoosh is null ? Path.Combine(AppPaths.BuiltInSoundEffects, "Whoosh.wav") : RecordedSounds.FullPath(AppPaths.Recordings, whoosh);
         var whooshLength = whoosh is null ? 0.6 : Math.Min(0.8, whoosh.Seconds);
         var result = await WithProgressAsync("Making your video", async (progress, token) =>

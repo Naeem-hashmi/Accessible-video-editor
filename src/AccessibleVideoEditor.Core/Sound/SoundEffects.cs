@@ -9,6 +9,19 @@ public sealed record SoundEffect(string FileName, string Name, string Category, 
 /// </summary>
 public static class SoundEffects
 {
+    /// <summary>
+    /// Generated sounds that now have real recorded versions (see <see cref="RecordedSounds"/>). They still ship so
+    /// older projects play, but the sound lists offer the recordings instead.
+    /// </summary>
+    public static IReadOnlySet<string> Replaced { get; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+    {
+        "Whoosh.wav", "Swoosh down.wav", "Pop.wav", "Click.wav", "Notification.wav", "Ding.wav", "Success chime.wav",
+        "Error buzz.wav", "Typing.wav", "Tick tock.wav",
+    };
+
+    /// <summary>The generated sounds still offered: the ones with no real recording to replace them.</summary>
+    public static IEnumerable<SoundEffect> Offered => BuiltIn.Where(e => !Replaced.Contains(e.FileName));
+
     public static IReadOnlyList<SoundEffect> BuiltIn { get; } = new SoundEffect[]
     {
         new("Whoosh.wav", "Whoosh", "Transitions", "Air rushing past. Use on a cut or slide.", Whoosh),

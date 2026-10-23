@@ -69,7 +69,7 @@ public partial class MainWindow
         media.Children.Add(LibraryButton("Add at playhead", () => AddSelected(_mediaList, true)));
 
         // Built-in and user sounds
-        var sounds = TabPanel(LibraryTab.Sounds, "Sounds", "Real recordings (typing, clicks, bells, applause, rain and more) and built-in sounds, all free for any use. Your own go in Documents, ClipScribe, Sound Effects. Space previews, Enter adds at the playhead.");
+        var sounds = TabPanel(LibraryTab.Sounds, "Sounds", "Real recordings: swipes, whooshes, pops, bubbles, clicks, chimes, hits, risers, typing, applause, rain and more, all free for any use (CC0). Your own go in Documents, ClipScribe, Sound Effects. Space previews, Enter adds at the playhead.");
         _soundSearch = LabelledBox(sounds, "Search sounds");
         _soundSearch.TextChanged += (_, _) => FillSounds();
         _soundList = LibraryList("Sounds");
@@ -288,9 +288,9 @@ public partial class MainWindow
         try
         {
             var builtIn = AppPaths.BuiltInSoundEffects;
-            foreach (var effect in SoundEffects.BuiltIn)
+            foreach (var effect in SoundEffects.Offered)
             {
-                var text = $"{effect.Name}, {effect.Category}. {effect.Description}";
+                var text = $"Generated: {effect.Name}, {effect.Category}. {effect.Description}";
                 if (filter.Length == 0 || text.Contains(filter, StringComparison.CurrentCultureIgnoreCase))
                 {
                     _soundList.Items.Add(Entry(text, Path.Combine(builtIn, effect.FileName)));

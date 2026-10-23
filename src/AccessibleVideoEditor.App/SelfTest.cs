@@ -480,6 +480,7 @@ internal static class SelfTest
             Check(sounds.Count >= 20, $"Real recordings are installed ({sounds.Count} found)");
             Check(sounds.All(s => s.License is "CC0" or "Public domain"), "Every recording is public domain or CC0");
             Check(sounds.Any(s => s.Category == "Typing") && sounds.Any(s => s.Category == "Clicks"), "Typing and click recordings are included");
+            Check(sounds.Count(s => s.Category is "Whooshes and swipes" or "Pops and bubbles") >= 15, "Real whooshes, swipes, pops and bubbles are installed");
             if (sounds.Count > 0 && window.Tools is { } tools)
             {
                 using var stream = FfmpegStream.Decode(tools, RecordedSounds.FullPath(AppPaths.Recordings, sounds[0]), maxSeconds: 1);

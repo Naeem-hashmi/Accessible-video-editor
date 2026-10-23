@@ -342,6 +342,15 @@ public sealed class RenderHelpersTests
         Assert.Contains("libmp3lame", set);
     }
 
+    [Theory]
+    [InlineData(" T.C drawtext          V->V       Draw text on top of video frames using libfreetype library.")]
+    [InlineData(" T.C.. drawtext        V->V       Draw text on top of video frames using libfreetype library.\r")]
+    [InlineData("  TSC  drawtext  V->V  Draw text.")]
+    public void Filter_lists_of_any_version_are_parsed(string line)
+    {
+        Assert.Contains("drawtext", FfmpegTools.ParseFilters("Filters:\n  T.. = Timeline support\n ------\n" + line + "\n"));
+    }
+
     [Fact]
     public void Without_libx264_a_fallback_encoder_is_used()
     {

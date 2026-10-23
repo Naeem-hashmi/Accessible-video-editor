@@ -96,8 +96,15 @@ public sealed partial class FfmpegTools
         var encoderList = await RunAsync(ffmpegPath, ["-hide_banner", "-encoders"], token).ConfigureAwait(false);
         var filterList = await RunAsync(ffmpegPath, ["-hide_banner", "-filters"], token).ConfigureAwait(false);
         var filters = ParseFilters(filterList);
-        var align = filters.Contains("drawtext") &&
-                    (await RunAsync(ffmpegPath, ["-hide_banner", "-h", "filter=drawtext"], token).ConfigureAwait(false)).Contains("text_align", StringComparison.Ordinal);
+
+        // Ask about drawtext directly as well: this works whatever layout the filter list has.
+        var drawtextHelp = await RunAsync(ffmpegPath, ["-hide_banner", "-h", "filter=drawtext"], token).ConfigureAwait(false);
+        if (drawtextHelp.Contains("Filter drawtext", StringComparison.Ordinal))
+        {
+            filters.Add("drawtext");
+        }
+
+        var align = filters.Contains("drawtext") && drawtextHelp.Contains("text_align", StringComparison.Ordinal);
         var firstLine = version.Split('\n').FirstOrDefault()?.Trim() ?? "";
         var match = VersionPattern().Match(firstLine);
         var major = match.Success ? int.Parse(match.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture) : 0;
@@ -163,6 +170,7 @@ public sealed partial class FfmpegTools
     [GeneratedRegex(@"^\s[VAS][\.F][\.S][\.X][\.B][\.D]\s+(\S+)")]
     private static partial Regex EncoderLine();
 
-    [GeneratedRegex(@"^\s[T\.][S\.][C\.]\s+(\w+)\s+\S+->\S+")]
+    // Flag columns vary between versions (" T.C drawtext" in 6.1, more letters in later versions).
+    [GeneratedRegex(@"^\s*[A-Z\.|]{2,8}\s+(\w+)\s+\S*->\S*")]
     private static partial Regex FilterLine();
 }

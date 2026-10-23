@@ -72,6 +72,9 @@ public sealed class AppSettings
     /// <summary>Use the graphics chip for speech recognition when possible.</summary>
     public bool WhisperGpu { get; set; } = true;
 
+    /// <summary>Export speed: BestQuality, Balanced or Fastest (the video chip when it works).</summary>
+    public Rendering.ExportSpeed ExportSpeed { get; set; } = Rendering.ExportSpeed.Fastest;
+
     /// <summary>The AI assistant service, an <see cref="Ai.AiProvider"/> id.</summary>
     public string AiProvider { get; set; } = "openrouter";
 

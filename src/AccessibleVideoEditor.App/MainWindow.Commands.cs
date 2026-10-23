@@ -1249,8 +1249,22 @@ public partial class MainWindow
 
     // ------------------------------------------------------------------ export
 
+    private Task<IReadOnlyList<string>>? _hardwareEncoders;
+
+    /// <summary>The video chip encoders that work here, tested once per session in the background.</summary>
+    private Task<IReadOnlyList<string>> HardwareEncodersAsync() =>
+        _hardwareEncoders ??= Tools is { } tools ? Task.Run(() => VideoEncoders.DetectAsync(tools)) : Task.FromResult<IReadOnlyList<string>>([]);
+
+    private static readonly string[] ExportSpeedNames =
+    [
+        "Best quality (slowest)",
+        "Balanced: about 2 to 3 times faster, slightly larger file",
+        "Fastest: uses the video chip when this computer has one",
+    ];
+
     internal FormDialog BuildExportDialog(out Func<(OutputProfile Profile, bool RangeOnly)> result)
     {
+        _ = HardwareEncodersAsync();
         var profiles = OutputProfile.ExportProfiles;
         var form = new FormDialog(this, "Export");
         var muted = _editor.Project.Layers.Where(l => l.Muted).Select(l => l.Name).ToList();
@@ -1269,7 +1283,13 @@ public partial class MainWindow
             range = form.AddCheck($"Export only the range, {_editor.Describer.Time(rs)} to {_editor.Describer.Time(re)}", false);
         }
 
-        result = () => (profiles[format()], range?.Invoke() ?? false);
+        var speed = form.AddChoice("Speed", ExportSpeedNames, (int)_settings.ExportSpeed,
+            "Fastest uses Intel Quick Sync, NVIDIA or AMD encoding when it works on this computer, and otherwise the fastest processor setting.");
+        result = () =>
+        {
+            _settings.ExportSpeed = (ExportSpeed)speed();
+            return (profiles[format()], range?.Invoke() ?? false);
+        };
         return form;
     }
 
@@ -1311,16 +1331,19 @@ public partial class MainWindow
     {
         RenderPlan plan;
         var project = _editor.Project;
+        var encoder = profile.HasVideo ? VideoEncoders.Choose(_settings.ExportSpeed, await HardwareEncodersAsync()) : null;
+        RenderPlan Plan(VideoEncoder? with) => new GraphBuilder(Tools!.HasEncoder, Tools!.Text).Build(new RenderRequest
+        {
+            Project = project,
+            Profile = profile,
+            OutputPath = path,
+            Start = rangeOnly ? project.RangeStart ?? 0 : 0,
+            End = rangeOnly ? project.RangeEnd : null,
+            Encoder = with,
+        });
         try
         {
-            plan = new GraphBuilder(Tools!.HasEncoder, Tools!.Text).Build(new RenderRequest
-            {
-                Project = project,
-                Profile = profile,
-                OutputPath = path,
-                Start = rangeOnly ? project.RangeStart ?? 0 : 0,
-                End = rangeOnly ? project.RangeEnd : null,
-            });
+            plan = Plan(encoder);
         }
         catch (RenderException ex)
         {
@@ -1340,16 +1363,30 @@ public partial class MainWindow
             window.Show();
         }
 
-        Say($"Exporting {_editor.Describer.Time(plan.Duration)}. Press Escape to cancel.");
+        Say($"Exporting {_editor.Describer.Time(plan.Duration)}{(encoder is null ? "" : $" with {encoder.Spoken}")}. Press Escape to cancel.");
         var stopwatch = Stopwatch.StartNew();
         try
         {
             var progress = new Progress<double>(p => window?.Report(p));
-            await Task.Run(() => RenderRunner.RunAsync(Tools!, plan, path, progress, cancel.Token), cancel.Token);
+            try
+            {
+                await Task.Run(() => RenderRunner.RunAsync(Tools!, plan, path, progress, cancel.Token), cancel.Token);
+            }
+            catch (RenderException ex) when (encoder is { IsHardware: true })
+            {
+                // A video chip driver problem must never stop an export: do it again on the processor.
+                AppPaths.Log($"Hardware export with {encoder.Name} failed, retrying with x264: {ex.Message}");
+                Say("The video chip could not finish the export, so the processor is doing it instead.", interrupt: false);
+                encoder = VideoEncoders.Fallback;
+                plan = Plan(encoder);
+                await Task.Run(() => RenderRunner.RunAsync(Tools!, plan, path, progress, cancel.Token), cancel.Token);
+            }
+
             window?.Finish();
             var size = new FileInfo(path).Length / 1024.0 / 1024.0;
             _earcons.Play(EarconEvent.Finished);
-            var message = $"Export finished in {TimeFormat.Words(stopwatch.Elapsed.TotalSeconds)}. {Path.GetFileName(path)}, {size:0.#} megabytes.";
+            var speedText = plan.Duration > 0 ? $", {plan.Duration / Math.Max(0.1, stopwatch.Elapsed.TotalSeconds):0.#} times real time" : "";
+            var message = $"Export finished in {TimeFormat.Words(stopwatch.Elapsed.TotalSeconds)}{speedText}{(encoder is null ? "" : $" using {encoder.Spoken}")}. {Path.GetFileName(path)}, {size:0.#} megabytes.";
             try
             {
                 if (Credits.WriteFor(project, path) is { } creditsFile)

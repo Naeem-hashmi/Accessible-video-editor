@@ -309,6 +309,8 @@ internal static class SelfTest
         await Step("export", async () =>
         {
             var output = Path.Combine(folder, "export.mp4");
+            var hardware = await VideoEncoders.DetectAsync(window.Tools!);
+            log.Add($"Video chip encoders listed: {string.Join(", ", VideoEncoders.HardwareNames.Where(window.Tools!.HasEncoder))}; working here: {(hardware.Count == 0 ? "none" : string.Join(", ", hardware))}");
             var ok = await window.ExportToAsync(OutputProfile.YouTube720, output, rangeOnly: false, showProgress: false);
             Check(ok && File.Exists(output), "Export to 720p MP4 finished");
             var info = await MediaProbe.ProbeAsync(window.Tools!, output);

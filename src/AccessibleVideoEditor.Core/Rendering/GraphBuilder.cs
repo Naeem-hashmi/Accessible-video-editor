@@ -48,6 +48,9 @@ public sealed class RenderRequest
 
     public required string OutputPath { get; init; }
 
+    /// <summary>The video encoder for an export, from <see cref="VideoEncoders.Choose"/>. Null uses x264 at the profile's preset.</summary>
+    public VideoEncoder? Encoder { get; init; }
+
     /// <summary>Playback speed for live preview: 1, 2 or 4.</summary>
     public double Speed { get; init; } = 1;
 
@@ -246,7 +249,7 @@ public sealed class GraphBuilder
             outputArgs.AddRange(["-map", "[vout]"]);
             outputArgs.AddRange(request.Profile.Kind == OutputKind.StreamVideo
                 ? ["-c:v", "rawvideo", "-pix_fmt", "bgra", "-f", "rawvideo"]
-                : VideoCodecArgs(request.Profile));
+                : VideoCodecArgs(request.Profile, request.Encoder));
         }
 
         var mix = new StringBuilder();
@@ -940,9 +943,14 @@ public sealed class GraphBuilder
 
     // ------------------------------------------------------------------ codecs
 
-    private IEnumerable<string> VideoCodecArgs(OutputProfile profile)
+    private IEnumerable<string> VideoCodecArgs(OutputProfile profile, VideoEncoder? encoder)
     {
         var rate = Num(_fps);
+        if (encoder is not null && (encoder.IsHardware || _hasEncoder("libx264")) && _hasEncoder(encoder.Name))
+        {
+            return VideoEncoders.Args(encoder, profile.Crf, _fps);
+        }
+
         if (_hasEncoder("libx264"))
         {
             return ["-c:v", "libx264", "-preset", profile.X264Preset, "-crf", profile.Crf.ToString(Inv),

@@ -382,6 +382,46 @@ internal static class SelfTest
             }
         });
 
+        await Step("themes and still preview", async () =>
+        {
+            static double Lightness(object? brush) => brush is System.Windows.Media.SolidColorBrush b
+                ? (0.2126 * b.Color.R + 0.7152 * b.Color.G + 0.0722 * b.Color.B) / 255 : -1;
+            if (SystemParameters.HighContrast)
+            {
+                log.Add("SKIP theme colours: High Contrast is on, which always uses the system colours.");
+            }
+            else
+            {
+                ThemeService.Apply(Application.Current, ThemeService.DarkChoice);
+                await Settle();
+                var dark = Lightness(Application.Current.Resources["Ave.Window"]);
+                ThemeService.Apply(Application.Current, ThemeService.LightChoice);
+                await Settle();
+                var light = Lightness(Application.Current.Resources["Ave.Window"]);
+                log.Add($"Window background lightness: dark {dark:0.00}, light {light:0.00}");
+                Check(dark is >= 0 and < 0.35 && light > 0.75, "Dark and light themes change the window colours");
+                ThemeService.Apply(Application.Current, ThemeService.SystemChoice);
+                await Settle();
+            }
+
+            // Paused, the preview shows the picture at the playhead.
+            window.Preview.ShowFrame(window.Editor.Project, 1.0);
+            var clock = Stopwatch.StartNew();
+            System.Windows.Media.Imaging.WriteableBitmap? bitmap = null;
+            while (clock.Elapsed.TotalSeconds < 15)
+            {
+                await Task.Delay(250);
+                if (window.PreviewImage.Source is System.Windows.Media.Imaging.WriteableBitmap { PixelWidth: > 0 } b && HasPicture(b))
+                {
+                    bitmap = b;
+                    break;
+                }
+            }
+
+            Check(bitmap is not null, $"A paused preview shows the picture at the playhead ({clock.Elapsed.TotalSeconds:0.0} s)");
+            Check(bitmap is { PixelWidth: >= 480 }, $"The still preview is sharp ({bitmap?.PixelWidth} by {bitmap?.PixelHeight})");
+        });
+
         await Step("beats", async () =>
         {
             var pulse = Path.Combine(AppPaths.BuiltInSoundEffects, "Upbeat pulse.wav");
@@ -511,6 +551,23 @@ internal static class SelfTest
     }
 
     /// <summary>Counts focusable controls whose UI Automation name is empty.</summary>
+    /// <summary>True if the bitmap is not all one colour (a real frame, not an empty black area).</summary>
+    private static bool HasPicture(System.Windows.Media.Imaging.WriteableBitmap bitmap)
+    {
+        var pixels = new byte[bitmap.PixelWidth * bitmap.PixelHeight * 4];
+        bitmap.CopyPixels(pixels, bitmap.PixelWidth * 4, 0);
+        var first = BitConverter.ToInt32(pixels, 0);
+        for (var i = 0; i < pixels.Length; i += 4 * 97)
+        {
+            if (BitConverter.ToInt32(pixels, i) != first)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private static int CountButtons(DependencyObject root) =>
         LogicalTreeHelper.GetChildren(root).OfType<DependencyObject>().Sum(c => (c is Button ? 1 : 0) + CountButtons(c));
 

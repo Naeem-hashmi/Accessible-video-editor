@@ -21,10 +21,25 @@ public partial class App : Application
             SelfTest.LogPath = args.Length > 1 ? Path.GetFullPath(args[1]) : Path.GetFullPath("self-test.log");
         }
 
+        // Colours first, so the window opens in the right theme.
+        ThemeService.Apply(this, selfTest ? ThemeService.SystemChoice : AppSettingsTheme());
+
         var file = !selfTest && args.Length > 0 ? args[0] : null;
         var window = new MainWindow(file, selfTest);
         MainWindow = window;
         window.Show();
+    }
+
+    private static string AppSettingsTheme()
+    {
+        try
+        {
+            return Core.Settings.AppSettings.Load().Theme;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException)
+        {
+            return ThemeService.SystemChoice;
+        }
     }
 
     private void OnUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)

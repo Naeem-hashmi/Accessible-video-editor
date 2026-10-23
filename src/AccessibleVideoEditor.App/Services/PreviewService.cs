@@ -80,6 +80,7 @@ public sealed class PreviewService : IDisposable
         }
 
         Stop();
+        _still?.Cancel();
         _project = project;
         _scope = scope;
         Session session;
@@ -120,6 +121,66 @@ public sealed class PreviewService : IDisposable
         session.StartOutput();
         _timer.Start();
         return null;
+    }
+
+    private CancellationTokenSource? _still;
+
+    /// <summary>
+    /// Shows the picture at <paramref name="time"/> while paused, like a video player does when you move
+    /// through a video. Waits a moment after the last request, so moving quickly doesn't start many renders.
+    /// </summary>
+    public void ShowFrame(Project project, double time)
+    {
+        if (Tools is null || IsPlaying || IsPreparing || !GraphBuilder.ScopeHasVideo(project, RenderScope.AllLayers))
+        {
+            return;
+        }
+
+        _still?.Cancel();
+        var cancel = new CancellationTokenSource();
+        _still = cancel;
+        var tools = Tools;
+        var (w, h) = PreviewCanvas(project, 960, 540);
+        var snapshot = Core.Editing.ProjectSerializer.Clone(project);
+        _ = Task.Run(async () =>
+        {
+            await Task.Delay(150, cancel.Token).ConfigureAwait(false);
+            var at = Math.Clamp(time, 0, Math.Max(0, Timeline.ProjectDuration(snapshot) - 0.05));
+            var plan = new GraphBuilder(tools.HasEncoder, tools.Text).Build(new RenderRequest
+            {
+                Project = snapshot, Start = at, End = at + 0.2, Profile = OutputProfile.StreamVideo, OutputPath = "pipe:1", CanvasOverride = (w, h),
+            });
+            using var stream = FfmpegStream.Start(tools, plan);
+            var frame = new byte[w * h * 4];
+            if (!stream.ReadExactly(frame, cancel.Token) || cancel.IsCancellationRequested)
+            {
+                return;
+            }
+
+            await _image.Dispatcher.InvokeAsync(() =>
+            {
+                if (cancel.IsCancellationRequested || IsPlaying)
+                {
+                    return;
+                }
+
+                EnsureBitmap(w, h);
+                _bitmap!.WritePixels(new Int32Rect(0, 0, w, h), frame, w * 4, 0);
+            });
+        }, cancel.Token).ContinueWith(t =>
+        {
+            if (t.Exception is { } ex && ex.InnerException is not (OperationCanceledException or TaskCanceledException))
+            {
+                AppPaths.Log("Still frame failed: " + ex.InnerException?.Message);
+            }
+        }, TaskScheduler.Default);
+    }
+
+    /// <summary>The size a preview picture is drawn at: the project's shape, at most <paramref name="maxW"/> by <paramref name="maxH"/>.</summary>
+    internal static (int Width, int Height) PreviewCanvas(Project project, double maxW, double maxH)
+    {
+        var scale = Math.Min(1, Math.Min(maxW / project.Width, maxH / project.Height));
+        return ((int)Math.Round(project.Width * scale / 2) * 2, (int)Math.Round(project.Height * scale / 2) * 2);
     }
 
     /// <summary>Plays faster: 1, 2, then 4 times speed, then back to normal. Restarts the stream at the new speed.</summary>
@@ -195,6 +256,7 @@ public sealed class PreviewService : IDisposable
 
     public void Dispose()
     {
+        _still?.Cancel();
         Stop();
     }
 
@@ -393,13 +455,7 @@ public sealed class PreviewService : IDisposable
             }, token, TaskCreationOptions.LongRunning, TaskScheduler.Default);
         }
 
-        private static (int Width, int Height) PreviewCanvas(Project project)
-        {
-            const double maxW = 480;
-            const double maxH = 270;
-            var scale = Math.Min(1, Math.Min(maxW / project.Width, maxH / project.Height));
-            return ((int)Math.Round(project.Width * scale / 2) * 2, (int)Math.Round(project.Height * scale / 2) * 2);
-        }
+        private static (int Width, int Height) PreviewCanvas(Project project) => PreviewService.PreviewCanvas(project, 640, 360);
 
         public void Dispose()
         {

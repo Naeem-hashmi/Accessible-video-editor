@@ -60,6 +60,9 @@ public sealed class AppSettings
     /// <summary>The language last chosen for speech recognition: a Whisper code, or auto.</summary>
     public string SpeechLanguage { get; set; } = "auto";
 
+    /// <summary>Colours: System (follow Windows), Light or Dark. High Contrast always wins.</summary>
+    public string Theme { get; set; } = "System";
+
     public static string DefaultFolder =>
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ClipScribe");
 

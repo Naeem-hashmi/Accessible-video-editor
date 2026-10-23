@@ -35,6 +35,7 @@ public sealed class TimelineTracks : FrameworkElement
         Focusable = false;
         ClipToBounds = true;
         Cursor = Cursors.Arrow;
+        Services.ThemeService.Changed += InvalidateVisual;
     }
 
     /// <summary>Clicked on an item (itemId set) or empty space (null) at a time.</summary>
@@ -96,9 +97,13 @@ public sealed class TimelineTracks : FrameworkElement
 
     protected override void OnRender(DrawingContext dc)
     {
-        var back = SystemColors.WindowBrush;
-        var text = SystemColors.WindowTextBrush;
-        var grid = new Pen(SystemColors.GrayTextBrush, 0.5);
+        // Theme colours: light, dark, or the classic system colours in High Contrast.
+        var hc = SystemParameters.HighContrast;
+        var back = hc ? SystemColors.WindowBrush : Services.ThemeService.Brush("Ave.Window", SystemColors.WindowBrush);
+        var text = hc ? SystemColors.WindowTextBrush : Services.ThemeService.Brush("Ave.Text", SystemColors.WindowTextBrush);
+        var grid = new Pen(hc ? SystemColors.GrayTextBrush : Services.ThemeService.Brush("Ave.Border", SystemColors.GrayTextBrush), 0.5);
+        var accent = hc ? SystemColors.HighlightBrush : Services.ThemeService.Brush("Ave.Accent", SystemColors.HighlightBrush);
+        var dark = Services.ThemeService.IsDark && !hc;
         dc.DrawRectangle(back, null, new Rect(RenderSize));
         if (_project is null)
         {
@@ -126,7 +131,7 @@ public sealed class TimelineTracks : FrameworkElement
             var top = RulerHeight + RowOf(i) * RowHeight;
             if (layer.Id == _focusedLayer)
             {
-                dc.DrawRectangle(SystemColors.ControlLightBrush, null, new Rect(0, top, RenderSize.Width, RowHeight));
+                dc.DrawRectangle(hc ? SystemColors.ControlLightBrush : Services.ThemeService.Brush("Ave.Header", SystemColors.ControlLightBrush), null, new Rect(0, top, RenderSize.Width, RowHeight));
             }
 
             dc.DrawLine(grid, new Point(0, top + RowHeight), new Point(RenderSize.Width, top + RowHeight));
@@ -151,8 +156,8 @@ public sealed class TimelineTracks : FrameworkElement
 
                 var rect = new Rect(start * _pixelsPerSecond, top + 3, Math.Max(2, (end - start) * _pixelsPerSecond), RowHeight - 6);
                 var focused = item.Id == _focusedItem;
-                var fill = SystemParameters.HighContrast ? SystemColors.ControlBrush : KindBrush(item.Kind, layer.Muted);
-                var border = new Pen(focused ? SystemColors.HighlightBrush : SystemColors.ControlDarkBrush, focused ? 3 : 1);
+                var fill = hc ? SystemColors.ControlBrush : KindBrush(item.Kind, layer.Muted, dark);
+                var border = new Pen(focused ? accent : hc ? SystemColors.ControlDarkBrush : grid.Brush, focused ? 3 : 1);
                 dc.DrawRoundedRectangle(fill, border, rect, 4, 4);
                 if (item.VolumeDips.Count > 0)
                 {
@@ -165,13 +170,13 @@ public sealed class TimelineTracks : FrameworkElement
                         x1 = Math.Min(rect.Right, x1);
                         if (x1 > x0)
                         {
-                            dc.DrawRectangle(SystemColors.ControlDarkBrush, null, new Rect(x0, rect.Bottom - 5, x1 - x0, 4));
+                            dc.DrawRectangle(hc ? SystemColors.ControlDarkBrush : dark ? Brushes.White : Brushes.Black, null, new Rect(x0, rect.Bottom - 5, x1 - x0, 4));
                         }
                     }
                 }
 
                 var label = Text(item.Kind == ItemKind.Text ? item.Text.Content : item.Name, 12,
-                    SystemParameters.HighContrast ? SystemColors.ControlTextBrush : Brushes.Black);
+                    hc ? SystemColors.ControlTextBrush : dark ? Brushes.White : Brushes.Black);
                 label.MaxTextWidth = Math.Max(1, rect.Width - 8);
                 label.MaxTextHeight = RowHeight - 10;
                 label.Trimming = TextTrimming.CharacterEllipsis;
@@ -185,32 +190,39 @@ public sealed class TimelineTracks : FrameworkElement
         foreach (var beat in BeatEditing.BeatTimes(_project))
         {
             var x = beat * _pixelsPerSecond;
-            dc.DrawLine(new Pen(SystemColors.HotTrackBrush, 1), new Point(x, RulerHeight - 5), new Point(x, RulerHeight));
+            dc.DrawLine(new Pen(accent, 1), new Point(x, RulerHeight - 5), new Point(x, RulerHeight));
         }
 
         foreach (var marker in _project.Markers)
         {
             var x = marker.Time * _pixelsPerSecond;
-            dc.DrawLine(new Pen(SystemColors.HotTrackBrush, 1.5) { DashStyle = DashStyles.Dash }, new Point(x, RulerHeight), new Point(x, RenderSize.Height));
+            dc.DrawLine(new Pen(accent, 1.5) { DashStyle = DashStyles.Dash }, new Point(x, RulerHeight), new Point(x, RenderSize.Height));
         }
 
         var playX = _playhead * _pixelsPerSecond;
-        dc.DrawLine(new Pen(SystemParameters.HighContrast ? SystemColors.HighlightBrush : Brushes.Red, 2), new Point(playX, 0), new Point(playX, RenderSize.Height));
+        dc.DrawLine(new Pen(hc ? SystemColors.HighlightBrush : dark ? Brushes.OrangeRed : Brushes.Red, 2), new Point(playX, 0), new Point(playX, RenderSize.Height));
     }
 
-    private static Brush KindBrush(ItemKind kind, bool muted)
+    private static Brush KindBrush(ItemKind kind, bool muted, bool dark)
     {
-        var color = kind switch
+        // Light: soft pastels with black text. Dark: deep colours with white text. Both pass 4.5:1 contrast.
+        var color = (kind, dark) switch
         {
-            ItemKind.Video => Color.FromRgb(0x9C, 0xC3, 0xF5),
-            ItemKind.Image => Color.FromRgb(0xA8, 0xE0, 0xA8),
-            ItemKind.Audio => Color.FromRgb(0xF7, 0xC9, 0x8B),
-            ItemKind.Text => Color.FromRgb(0xD5, 0xB8, 0xF2),
-            _ => Color.FromRgb(0xD0, 0xD0, 0xD0),
+            (ItemKind.Video, false) => Color.FromRgb(0x9C, 0xC3, 0xF5),
+            (ItemKind.Image, false) => Color.FromRgb(0xA8, 0xE0, 0xA8),
+            (ItemKind.Audio, false) => Color.FromRgb(0xF7, 0xC9, 0x8B),
+            (ItemKind.Text, false) => Color.FromRgb(0xD5, 0xB8, 0xF2),
+            (_, false) => Color.FromRgb(0xD0, 0xD0, 0xD0),
+            (ItemKind.Video, true) => Color.FromRgb(0x1F, 0x4E, 0x8C),
+            (ItemKind.Image, true) => Color.FromRgb(0x2E, 0x6B, 0x34),
+            (ItemKind.Audio, true) => Color.FromRgb(0x8A, 0x4B, 0x08),
+            (ItemKind.Text, true) => Color.FromRgb(0x5E, 0x35, 0x8F),
+            _ => Color.FromRgb(0x4A, 0x4A, 0x4A),
         };
         if (muted)
         {
-            color = Color.FromRgb((byte)((color.R + 0xC0) / 2), (byte)((color.G + 0xC0) / 2), (byte)((color.B + 0xC0) / 2));
+            var grey = dark ? 0x40 : 0xC0;
+            color = Color.FromRgb((byte)((color.R + grey) / 2), (byte)((color.G + grey) / 2), (byte)((color.B + grey) / 2));
         }
 
         var brush = new SolidColorBrush(color);

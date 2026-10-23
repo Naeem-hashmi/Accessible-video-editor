@@ -983,6 +983,11 @@ public partial class MainWindow
         var timeStyle = form.AddChoice("Times are spoken as", ["Words, like 1 minute 5 seconds", "Clock, like 1:05.0"], (int)s.TimeStyle);
         var speech = form.AddChoice("Speech output", ["Automatic: talk to NVDA or JAWS directly, otherwise Windows", "Windows UI Automation only (for Narrator and others)"], (int)s.SpeechOutput);
 
+        form.AddPage("Look");
+        var colours = form.AddChoice("Colours", ThemeService.Choices.Select(ThemeService.Describe).ToList(),
+            Math.Max(0, ThemeService.Choices.ToList().IndexOf(s.Theme)),
+            "Same as Windows follows Settings, Personalisation, Colours. High Contrast is always used when it is on.");
+
         form.AddPage("Sounds");
         var themes = EarconPlayer.AvailableThemes();
         var themeNames = themes.Select(t => $"{t.Name}. {t.Description}").ToList();
@@ -1020,7 +1025,9 @@ public partial class MainWindow
             s.AutoSave = autosave();
             s.PreviewSeconds = previewLength();
             s.FfmpegFolder = ffmpeg().Trim();
+            s.Theme = ThemeService.Choices[colours()];
             s.Clamp();
+            ThemeService.Apply(Application.Current, s.Theme);
             ApplySettings();
         };
         return form;

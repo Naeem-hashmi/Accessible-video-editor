@@ -5,7 +5,7 @@
         Title="ClipScribe"
         Width="1440" Height="900" MinWidth="900" MinHeight="600"
         FontSize="15"
-        Background="{DynamicResource {x:Static SystemColors.WindowBrushKey}}"
+        Background="{DynamicResource Ave.Window}"
         WindowStartupLocation="CenterScreen">
     <Window.Resources>
         <!-- Icons come from the Segoe icon fonts built into Windows 11 (Fluent) and Windows 10 (MDL2). -->
@@ -17,19 +17,20 @@
                 <Setter.Value>
                     <ControlTemplate>
                         <Rectangle Margin="-2" StrokeThickness="3" RadiusX="3" RadiusY="3"
-                                   Stroke="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}" />
+                                   Stroke="{DynamicResource Ave.Focus}" />
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
         </Style>
 
-        <Style TargetType="Button">
+        <!-- Based on the theme's own button, so it follows light, dark and High Contrast. -->
+        <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
             <Setter Property="FocusVisualStyle" Value="{StaticResource StrongFocus}" />
             <Setter Property="Padding" Value="8,4" />
             <Setter Property="Margin" Value="2" />
         </Style>
 
-        <Style x:Key="SpokenItem" TargetType="ListBoxItem">
+        <Style x:Key="SpokenItem" TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
             <Setter Property="AutomationProperties.Name" Value="{Binding Spoken}" />
             <Setter Property="Padding" Value="6" />
             <Setter Property="Margin" Value="2" />
@@ -38,14 +39,15 @@
 
         <!-- A panel heading: an icon and a title. The icon is decoration; the title is what screen readers use. -->
         <Style x:Key="PanelHeader" TargetType="Border">
-            <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" />
+            <Setter Property="Background" Value="{DynamicResource Ave.Header}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource Ave.Border}" />
             <Setter Property="BorderThickness" Value="0,0,0,1" />
             <Setter Property="Padding" Value="8,5" />
         </Style>
 
         <Style x:Key="Panel" TargetType="Border">
-            <Setter Property="BorderBrush" Value="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" />
+            <Setter Property="Background" Value="{DynamicResource Ave.Panel}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource Ave.Border}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="CornerRadius" Value="4" />
             <Setter Property="Margin" Value="3" />
@@ -202,7 +204,7 @@
                                 </ListBox.ItemsPanel>
                                 <ListBox.ItemTemplate>
                                     <DataTemplate>
-                                        <Border BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" BorderThickness="1" CornerRadius="4" Padding="6" Width="190">
+                                        <Border BorderBrush="{DynamicResource Ave.Border}" BorderThickness="1" CornerRadius="4" Padding="6" Width="190">
                                             <DockPanel>
                                                 <TextBlock DockPanel.Dock="Left" Style="{StaticResource IconText}" FontSize="24" Text="{Binding Icon}" />
                                                 <TextBlock Text="{Binding Display}" TextWrapping="Wrap" MaxHeight="60" />

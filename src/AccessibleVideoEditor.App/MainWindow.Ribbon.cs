@@ -86,13 +86,15 @@ public partial class MainWindow
         var tab = new TabItem { Header = header };
         AutomationProperties.SetName(tab, name);
 
-        var panel = new WrapPanel { Margin = new Thickness(2) };
+        // One row of groups. When it is wider than the window it scrolls left and right; moving focus with the
+        // arrow keys scrolls the focused button into view.
+        var panel = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(2) };
         KeyboardNavigation.SetDirectionalNavigation(panel, KeyboardNavigationMode.Cycle);
         foreach (var (group, buttons) in groups)
         {
             var box = new GroupBox { Header = group, Margin = new Thickness(2, 0, 2, 0), Padding = new Thickness(2) };
             AutomationProperties.SetName(box, group);
-            var row = new WrapPanel();
+            var row = new StackPanel { Orientation = Orientation.Horizontal };
             foreach (var b in buttons)
             {
                 row.Children.Add(MakeIconButton(b.Icon, b.Label, b.Run, b.Command, b.Help, vertical: true));
@@ -102,7 +104,21 @@ public partial class MainWindow
             panel.Children.Add(box);
         }
 
-        tab.Content = panel;
+        var scroller = new ScrollViewer
+        {
+            Content = panel,
+            HorizontalScrollBarVisibility = ScrollBarVisibility.Auto,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Disabled,
+            Focusable = false,
+            PanningMode = PanningMode.HorizontalOnly,
+        };
+        scroller.PreviewMouseWheel += (_, e) =>
+        {
+            // The mouse wheel scrolls the ribbon sideways.
+            scroller.ScrollToHorizontalOffset(scroller.HorizontalOffset - e.Delta);
+            e.Handled = true;
+        };
+        tab.Content = scroller;
         Ribbon.Items.Add(tab);
     }
 
@@ -132,7 +148,10 @@ public partial class MainWindow
             Text = label,
             TextWrapping = TextWrapping.Wrap,
             TextAlignment = TextAlignment.Center,
-            MaxWidth = vertical ? 96 : double.PositiveInfinity,
+            MaxWidth = vertical ? 84 : double.PositiveInfinity,
+            MaxHeight = vertical ? 40 : double.PositiveInfinity,
+            FontSize = vertical ? 12 : 14,
+            TextTrimming = TextTrimming.CharacterEllipsis,
             VerticalAlignment = VerticalAlignment.Center,
         });
         var button = new Button

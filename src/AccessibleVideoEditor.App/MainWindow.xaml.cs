@@ -699,6 +699,11 @@ public partial class MainWindow : Window
     {
         TransportTime.Text = $"{TimeFormat.Clock(_editor.Playhead)} / {TimeFormat.Clock(_editor.ProjectDuration)}";
         Tracks.SetPlayhead(_editor.Playhead);
+        if (!_preview.IsPlaying && !SelfTestMode)
+        {
+            // Paused: show the picture at the playhead, like a video player.
+            _preview.ShowFrame(_editor.Project, _editor.Playhead);
+        }
         PlayheadText.Text =
             $"{TimeFormat.Clock(_editor.Playhead)} / {TimeFormat.Clock(_editor.ProjectDuration)}  |  {_editor.ListeningText}  |  ripple {(_settings.Ripple ? "on" : "off")}";
     }

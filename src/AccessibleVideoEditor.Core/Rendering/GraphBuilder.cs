@@ -53,6 +53,15 @@ public sealed class RenderRequest
 
     /// <summary>Compose at a smaller size than the project canvas (used for fast previews).</summary>
     public (int Width, int Height)? CanvasOverride { get; init; }
+
+    /// <summary>
+    /// Gain for the whole mix in decibels, measured beforehand by <see cref="Loudness"/> so the export
+    /// reaches <see cref="Project.MasterLoudness"/> exactly. Null uses a one-pass estimate instead.
+    /// </summary>
+    public double? MasterGainDb { get; init; }
+
+    /// <summary>Leave out the loudness levelling (used when measuring).</summary>
+    public bool SkipMasterLoudness { get; init; }
 }
 
 /// <summary>A ready-to-run FFmpeg job.</summary>
@@ -255,8 +264,20 @@ public sealed class GraphBuilder
             mix.Append(CultureInfo.InvariantCulture, $"amix=inputs={audioLabels.Count}:duration=longest:dropout_transition=0:normalize=0");
         }
 
+        var leveled = request.Project.MasterLoudness is not null && !request.Profile.IsStream && !request.SkipMasterLoudness;
+        if (leveled && request.MasterGainDb is { } gain)
+        {
+            mix.Append(CultureInfo.InvariantCulture, $",volume={Num(Math.Clamp(gain, -40, 40))}dB");
+        }
+        else if (leveled)
+        {
+            mix.Append(CultureInfo.InvariantCulture, $",loudnorm=I={Num(Math.Clamp(request.Project.MasterLoudness!.Value, -30, -5))}:TP=-1.5:LRA=11,aresample={SampleRate}");
+        }
+
+        // A levelled mix keeps 1 dB of headroom, as streaming sites ask; otherwise just stop clipping.
+        var limit = leveled ? "0.891" : "0.98";
         mix.Append(CultureInfo.InvariantCulture,
-            $",apad=whole_len={totalSamples},atrim=end_sample={totalSamples},alimiter=limit=0.98:attack=5:release=50:level=0");
+            $",apad=whole_len={totalSamples},atrim=end_sample={totalSamples},alimiter=limit={limit}:attack=5:release=50:level=0");
         for (var s = speed; s > 1.0001; s /= 2)
         {
             // atempo changes speed without changing pitch; one step doubles it.

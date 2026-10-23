@@ -119,6 +119,16 @@ public sealed class MediaFixture : IAsyncLifetime
         return double.Parse(value, System.Globalization.CultureInfo.InvariantCulture);
     }
 
+    /// <summary>Integrated loudness of a file in LUFS (EBU R128), as FFmpeg's ebur128 meter reports it.</summary>
+    public async Task<double> LoudnessLufs(string media)
+    {
+        var text = await RunText("-hide_banner", "-nostats", "-i", media, "-af", "ebur128", "-vn", "-f", "null", "-");
+        var summary = text[text.LastIndexOf("Summary:", StringComparison.Ordinal)..];
+        var line = summary.Split('\n').First(l => l.TrimStart().StartsWith("I:", StringComparison.Ordinal));
+        var value = line.Trim()[2..].Replace("LUFS", "").Trim();
+        return double.Parse(value, System.Globalization.CultureInfo.InvariantCulture);
+    }
+
     private static string Num(double v) => v.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture);
 
     private async Task Make(params string[] args)

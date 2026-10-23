@@ -80,7 +80,7 @@ public static class BeatEditing
             return EditResult.Fail($"{layer.Name} is empty.");
         }
 
-        var beats = BeatTimes(project).Where(b => b > 0).ToList();
+        var beats = BeatTimes(project).Where(b => b >= 0).ToList();
         if (beats.Count < 2)
         {
             return EditResult.Fail("There are no beats yet. Select the music and use Find beats first.");
@@ -124,7 +124,7 @@ public static class BeatEditing
             }
 
             var duration = end - span.Start;
-            if (Math.Abs(duration - item.Duration) > 0.001)
+            if (Math.Abs(duration - item.Duration) > 1e-9)
             {
                 item.Duration = duration;
                 changed++;

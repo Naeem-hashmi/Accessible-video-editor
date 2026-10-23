@@ -103,21 +103,24 @@ public static class CutEditing
 
     /// <summary>
     /// The cuts that shorten every pause longer than <paramref name="longerThan"/> seconds to
-    /// <paramref name="keep"/> seconds (half kept on each side). Pauses at the very start and end of the
-    /// clip are trimmed to <paramref name="keep"/> as well.
+    /// <paramref name="keep"/> seconds (half kept on each side). Silence at the very start and end of the
+    /// clip is trimmed to <paramref name="keep"/> whenever it is longer than that.
     /// </summary>
     public static IReadOnlyList<TimeStretch> PauseCuts(SpeechAnalysis analysis, double keep, double longerThan)
     {
         var cuts = new List<TimeStretch>();
         foreach (var pause in analysis.Pauses)
         {
-            if (pause.Duration <= longerThan + 1e-9 || pause.Duration <= keep)
+            var atStart = pause.Start <= 1e-6;
+            var atEnd = pause.End >= analysis.Length - 1e-6;
+
+            // Silence at the very start or end goes whenever it is longer than what is kept.
+            var threshold = atStart || atEnd ? keep : longerThan;
+            if (pause.Duration <= threshold + 1e-9 || pause.Duration <= keep)
             {
                 continue;
             }
 
-            var atStart = pause.Start <= 1e-6;
-            var atEnd = pause.End >= analysis.Length - 1e-6;
             if (atStart && atEnd)
             {
                 continue; // all silence: leave it for the user to decide

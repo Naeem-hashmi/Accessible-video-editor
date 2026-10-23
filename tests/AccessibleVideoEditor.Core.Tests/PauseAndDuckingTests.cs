@@ -156,6 +156,28 @@ public sealed class PauseAndDuckingTests(MediaFixture media)
     }
 
     [Fact]
+    public void Loudness_summaries_are_read_and_silence_has_none()
+    {
+        Assert.Equal(-14.2, Loudness.Parse("...\n  Summary:\n\n  Integrated loudness:\n    I:         -14.2 LUFS\n    Threshold: -24.4 LUFS"));
+        Assert.Null(Loudness.Parse("  Summary:\n    I:         -inf LUFS"));
+        Assert.Null(Loudness.Parse("no summary"));
+    }
+
+    [Fact]
+    public async Task A_quiet_mix_is_levelled_to_the_target_loudness()
+    {
+        var file = await media.Generate("quiet tone.wav", "-f", "lavfi", "-i", "sine=frequency=440:sample_rate=48000:duration=5", "-af", "volume=-30dB");
+        var project = new Project { MasterLoudness = -14 };
+        var layer = ProjectEditor.AddLayer(project, LayerKind.Audio);
+        layer.Items.Add(await media.ItemFor(file, LayerKind.Audio));
+        var before = await Loudness.MeasureAsync(media.Tools, project, RenderScope.AllLayers);
+        Assert.InRange(before!.Value, -55, -48); // FFmpeg's sine is -18 dBFS, then 30 dB quieter
+        var gain = await Loudness.MasterGainAsync(media.Tools, project, RenderScope.AllLayers);
+        var (output, _) = await media.Render(new RenderRequest { Project = project, Profile = OutputProfile.Wav, OutputPath = media.OutPath("levelled.wav"), MasterGainDb = gain });
+        Assert.InRange((await Loudness.MeasureFileAsync(media.Tools, output))!.Value, -14.5, -13.5);
+    }
+
+    [Fact]
     public void Ducking_can_be_cleared()
     {
         var layer = Make.Layer(LayerKind.Audio, Make.Clip("m.mp3", 10));

@@ -200,10 +200,10 @@ public sealed class TranscriptTests
     }
 
     [Fact]
-    public void Urdu_captions_use_a_nastaliq_font_and_hindi_devanagari()
+    public void Urdu_captions_use_an_urdu_font_and_hindi_a_devanagari_one()
     {
-        Assert.Equal("Noto Nastaliq Urdu", Captions.DefaultStyle("ur").Font);
-        Assert.Equal("Noto Sans Devanagari", Captions.DefaultStyle("hi").Font);
+        Assert.Equal("Noto Naskh Arabic", Captions.DefaultStyle("ur").Font);
+        Assert.Equal("Nirmala UI", Captions.DefaultStyle("hi").Font);
     }
 
     [Fact]

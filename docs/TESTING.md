@@ -67,6 +67,23 @@ Automated tests cover the editing logic, rendering and the UI Automation names. 
 | E | Delete an item | "Deleted item 2 of 5, name, length, from time. 4 items left on layer." The next item gets focus |
 | F | On a laptop: `Ctrl+Left`, `Ctrl+Right`, `Shift+I`, `Shift+O`, `Alt+.` | First and last item, trim start and end, next area |
 
+## New in 0.3
+
+| Step | Do | Expect |
+|---|---|---|
+| G | `F6` repeatedly from the timeline | Ribbon, library, preview, layers, timeline, inspector, each announced |
+| H | In the ribbon, Left and Right arrow, then Tab | Tab names (Home, Insert, Transitions...), then buttons with their keys |
+| I | `Ctrl+5`, Up and Down, then Left and Right | Layers, then that layer's items read one by one; focus stays on the layer |
+| J | Select a text item, `Ctrl+3` | Inspector says "Text:" with font, size, bold, colour, background, animations |
+| K | `Ctrl+Shift+Q`, choose 3 photos and a music bed, Reel, title | "Made a ... reel ... cut to the beat"; `K` plays it; pictures change on beats |
+| L | Select a talking clip, `Ctrl+Shift+W`, English, Accurate | Downloads once, then "Transcribed N words in English" |
+| M | `Ctrl+Shift+X`, delete a line, `Ctrl+Enter` | "Cut N words ... seconds shorter"; that sentence is gone when played |
+| N | `Ctrl+Shift+G` | Captions layer at the top; captions match the speech |
+| O | Same with Urdu and Hindi speech | Urdu script and Devanagari; Urdu captions draw in Nastaliq |
+| P | Select music, `Ctrl+Shift+B`, then `Shift+Right` | "N beats per minute"; each press says "Beat N, time" |
+| Q | Music layer, `Ctrl+Shift+D`, 12 decibels | "lowered by 12 decibels in N places"; music dips when someone speaks |
+| R | Mouse: drag an item on the visual timeline, drag its end | Item moves, length changes; the screen reader hears the result |
+
 ## Known limits
 
 - No scrubbing sound while moving the playhead with the arrows (the playhead moves silently, and `T` speaks it).

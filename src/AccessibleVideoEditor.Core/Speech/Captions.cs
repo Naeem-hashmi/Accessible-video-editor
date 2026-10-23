@@ -105,12 +105,15 @@ public static class Captions
         AnimationOut = TextAnimation.None,
     };
 
-    /// <summary>A font that has the letters of the language (Urdu needs a Nastaliq font, Hindi Devanagari).</summary>
+    /// <summary>
+    /// A font that has the letters of the language: Noto Naskh Arabic (comes with ClipScribe) for Urdu,
+    /// Arabic and Persian, Nirmala UI (part of Windows) for Hindi and other Indian scripts, Segoe UI otherwise.
+    /// FFmpeg's text drawing can't draw the Nastaliq style (tested: it shows empty boxes), so Urdu uses Naskh.
+    /// </summary>
     public static string FontFor(string language) => language switch
     {
-        "ur" => "Noto Nastaliq Urdu",
-        "ar" or "fa" => "Noto Naskh Arabic",
-        "hi" => "Noto Sans Devanagari",
+        "ur" or "ar" or "fa" => "Noto Naskh Arabic",
+        "hi" or "bn" or "pa" => "Nirmala UI",
         _ => "Segoe UI",
     };
 

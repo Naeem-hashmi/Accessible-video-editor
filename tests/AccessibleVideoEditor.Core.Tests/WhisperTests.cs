@@ -111,7 +111,7 @@ public sealed class WhisperTests(MediaFixture media)
         Assert.Contains("چاول", urduText);
         Assert.Contains("چینل", urduText);
         Assert.DoesNotContain(urduText, c => c is >= 'ऀ' and <= 'ॿ');
-        Assert.Equal("Noto Nastaliq Urdu", Captions.DefaultStyle(urdu.Language).Font);
+        Assert.Equal("Noto Naskh Arabic", Captions.DefaultStyle(urdu.Language).Font);
     }
 
     /// <summary>Reports progress on the calling thread (Progress&lt;T&gt; posts later, which tests can miss).</summary>

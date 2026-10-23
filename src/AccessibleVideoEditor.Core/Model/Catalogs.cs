@@ -137,6 +137,7 @@ public static class FontCatalog
         new("Consolas", "Typewriter-like, every letter the same width.", "consola.ttf", "consolab.ttf"),
         new("Segoe Script", "Joined-up handwriting.", "segoesc.ttf", "segoescb.ttf"),
         new("Nirmala UI", "Supports Hindi and other Indian scripts.", "Nirmala.ttc", "NirmalaB.ttc"),
+        new("Noto Naskh Arabic", "Urdu, Arabic and Persian, clear and joined. Comes with ClipScribe.", "NotoNaskhArabic-Regular.ttf", "NotoNaskhArabic-Bold.ttf"),
     };
 
     public static FontEntry Find(string name) =>
@@ -150,7 +151,8 @@ public static class FontCatalog
     {
         var entry = Find(name);
         var file = bold ? entry.BoldFile : entry.File;
-        var folders = new List<string>();
+        // Fonts that come with the program first, then the Windows font folders.
+        var folders = new List<string> { Path.Combine(AppContext.BaseDirectory, "Fonts") };
         var windows = Environment.GetFolderPath(Environment.SpecialFolder.Fonts);
         if (!string.IsNullOrEmpty(windows))
         {

@@ -20,4 +20,9 @@
     <Using Include="Xunit" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- The fonts that ship with the app, so Urdu text can be checked in renders. -->
+    <None Include="..\..\assets\fonts\*" LinkBase="Fonts" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

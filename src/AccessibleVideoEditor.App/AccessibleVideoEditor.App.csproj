@@ -23,6 +23,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Noto Naskh Arabic for Urdu, Arabic and Persian captions (SIL Open Font License 1.1). -->
+    <None Include="..\..\assets\fonts\*" LinkBase="Fonts" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- Real recorded sounds, public domain (CC0); see assets/sounds/recordings/CREDITS.md. -->
     <None Include="..\..\assets\sounds\recordings\**\*" LinkBase="Sounds\Recordings" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>

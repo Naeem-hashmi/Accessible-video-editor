@@ -1,6 +1,8 @@
 # ClipScribe
 
-A video editor for Windows built first for screen reader users. It works with **NVDA**, **JAWS** and **Narrator**, and everything is done from the keyboard.
+A video editor for Windows built first for screen reader users. It works with **NVDA**, **JAWS** and **Narrator**; everything can be done from the keyboard, and the mouse works too.
+
+**Quick video** makes a finished video in three steps (files, style, title). **Edit by transcript**: speech is turned into text on your own computer (English, Urdu, Hindi and more), and deleting words cuts the video. Captions, pause shortening, beat detection with cut-to-the-beat, and music that lowers itself under speech are built in.
 
 It can trim and split clips, join several videos, add music, voice and sound effects, layer pictures and videos over each other (logos, picture in picture), add picture and sound transitions, clean up sound (noise reduction, hum removal, equaliser, voice presets), and export high-quality video for YouTube and social media.
 

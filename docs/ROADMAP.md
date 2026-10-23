@@ -2,6 +2,14 @@
 
 This lists what the editor can't do yet, roughly in order of value to blind and low-vision creators, with how each could be built. It is honest about the current limits so nobody is surprised.
 
+## What version 0.3 added (ClipScribe)
+
+- **Renamed to ClipScribe**, with a Word- and VS Code-style window: ribbon tabs of icon buttons, a library with icon tabs on the left, a large preview with play controls, the timeline at the bottom with a visual multi-track view for the mouse, and an inspector on the right that changes with the selection (layer, text, picture, video, sound).
+- **Quick video** (`Ctrl+Shift+Q`): files, style, title, and the program does the rest (order, silence, beat sync, transitions, title, music, ducking, captions, -14 LUFS).
+- **Offline speech to text** with whisper.cpp, including Urdu and Hindi; **editing by transcript**; **captions** from the transcript.
+- **Shorten pauses**, **find beats** and **cut to the beat**, **lower music under speech** (auto-ducking).
+- **Exact loudness** for exports (measured, then levelled), **rounded corners** and **margin** for pictures.
+
 ## What version 0.2 added
 
 - **Text**: titles, captions, lower thirds, credits and calls to action, with 12 Windows fonts, outline, a dark or light box, and 8 ways in and out: fade, slide from any side, rise, and typewriter. `Ctrl+Shift+T` adds text, `F2` edits it, and the library's Text tab has ready-made styles.
@@ -21,6 +29,11 @@ This lists what the editor can't do yet, roughly in order of value to blind and 
 
 | Limitation | Why | How to fix |
 |---|---|---|
+| Whisper sometimes leaves out "um" and "uh" | The model writes clean text | Shorten pauses finds them by their gaps; a filler-keeping prompt could be offered |
+| Transcription speed depends on the computer | Whisper runs on the processor, in 30-second windows | Accurate is about real time on 4 cores; Fast is about 10 times faster; GPU builds of whisper.cpp could be offered |
+| Urdu recognition is good but not perfect | Whisper has less Urdu training data | Use the Accurate model and correct words in Fix text mode |
+| Beat detection needs a steady beat | It looks for evenly spaced hits | Calm music without drums is reported as having no beat |
+| Rounded corners are slower to export on long videos | Each frame is masked | Fine for pictures; for long videos keep corners square |
 | No sound while moving the playhead with the arrows | Each play starts a new live FFmpeg stream (fast, but not instant enough for scrubbing) | Add libmpv behind `PreviewService` for scrubbing |
 | The preview picture is small (at most 480 by 270, 15 frames a second) | Kept small so it starts at once on any computer | Offer a "large preview" setting |
 | No reverse playback | FFmpeg streams play forwards | libmpv supports it |
@@ -41,16 +54,15 @@ Fixed in 0.2.1: the preview no longer uses Windows Media Player, so "Windows cou
 
 ## Next features, in suggested order
 
-1. **libmpv preview**: instant play, scrubbing sound, reverse playback and frame stepping you can hear.
-2. **Auto-ducking**: "Make music quieter when someone speaks", in one checkbox.
-3. **Captions from speech** with Whisper, run on the computer with no upload. Captions become text items you can edit like any other.
+1. **Describe my clip** (optional AI): say what is in a video or photo, so clips can be told apart without sighted help.
+2. **Record a voice-over** straight onto an audio layer at the playhead.
+3. **libmpv preview**: scrubbing sound, reverse playback and frame stepping you can hear.
 4. **Speed**: 0.25 to 4 times, with pitch kept for speech.
 5. **Ken Burns** pan and zoom for photos: "slowly zoom in", "pan left to right".
 6. **Keyframed text and picture motion**: give a start place and an end place; the item glides between them.
 7. **Picture filters and colour**: brightness, contrast, black and white, warm and cool, blur the background.
 8. **Spoken frame check**: `F7` also warns when text covers a face or a logo, when text is too small to read on a phone, or when white text sits on a white area.
 9. **Audio description track**: a layer for spoken descriptions, with ducking of the main sound (the ADCanvas idea).
-10. **Recording**: record voice-over straight onto an audio layer at the playhead.
 11. **More free media**: Freesound (free API key), and Openverse images and video for B-roll.
 12. **Upload to YouTube** with the title, description and credits filled in.
 13. **Translations** of the interface and the spoken text.

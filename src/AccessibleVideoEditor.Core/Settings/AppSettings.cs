@@ -60,6 +60,18 @@ public sealed class AppSettings
     /// <summary>The language last chosen for speech recognition: a Whisper code, or auto.</summary>
     public string SpeechLanguage { get; set; } = "auto";
 
+    /// <summary>Whisper processor threads; 0 is automatic. Set by the speed test.</summary>
+    public int WhisperThreads { get; set; }
+
+    /// <summary>Extra careful recognition (beam search of 5): about three times slower.</summary>
+    public bool WhisperCareful { get; set; }
+
+    /// <summary>Find speech first and skip silence and music.</summary>
+    public bool WhisperSkipSilence { get; set; } = true;
+
+    /// <summary>Use the graphics chip for speech recognition when possible.</summary>
+    public bool WhisperGpu { get; set; } = true;
+
     /// <summary>Colours: System (follow Windows), Light or Dark. High Contrast always wins.</summary>
     public string Theme { get; set; } = "System";
 
@@ -120,5 +132,10 @@ public sealed class AppSettings
         ExportProfileId ??= "youtube-1080p";
         LastFolder ??= "";
         FfmpegFolder ??= "";
+        WhisperThreads = Math.Clamp(WhisperThreads, 0, 64);
+        Theme ??= "System";
+        SpeechLanguage ??= "auto";
     }
+
+    public Speech.WhisperOptions WhisperOptions => new(WhisperThreads, WhisperCareful ? 5 : 1, WhisperSkipSilence, WhisperGpu);
 }

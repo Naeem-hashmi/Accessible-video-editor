@@ -18,27 +18,31 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 40
     env:
-      WHISPER_VERSION: v1.9.5
+      WHISPER_VERSION: b4938
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 10.0.x
-      - name: Install FFmpeg
-        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg
+      - name: Install FFmpeg, and Vulkan with Mesa's software device (to test the graphics-chip path)
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg libvulkan-dev glslc mesa-vulkan-drivers
 
-      - name: Build whisper.cpp (offline speech recognition)
+      - name: Build whisper.cpp with Vulkan and loadable processor backends (as shipped on Windows)
         run: |
           git clone --depth 1 --branch "$WHISPER_VERSION" https://github.com/ggml-org/whisper.cpp "$RUNNER_TEMP/whisper.cpp"
-          cmake -S "$RUNNER_TEMP/whisper.cpp" -B "$RUNNER_TEMP/whisper.cpp/build" -DCMAKE_BUILD_TYPE=Release -DWHISPER_BUILD_TESTS=OFF
-          cmake --build "$RUNNER_TEMP/whisper.cpp/build" -j 4 --target whisper-cli
-          echo "WHISPER_CLI=$RUNNER_TEMP/whisper.cpp/build/bin/whisper-cli" >> "$GITHUB_ENV"
+          cmake -S "$RUNNER_TEMP/whisper.cpp" -B "$RUNNER_TEMP/whisper.cpp/build" -DCMAKE_BUILD_TYPE=Release -DWHISPER_BUILD_TESTS=OFF \
+            -DGGML_VULKAN=ON -DGGML_BACKEND_DL=ON -DGGML_CPU_ALL_VARIANTS=ON -DGGML_NATIVE=OFF -DBUILD_SHARED_LIBS=ON
+          cmake --build "$RUNNER_TEMP/whisper.cpp/build" -j 4 --target whisper-cli ggml-vulkan
+          BIN="$RUNNER_TEMP/whisper.cpp/build/bin"
+          echo "WHISPER_CLI=$BIN/whisper-cli" >> "$GITHUB_ENV"
+          echo "AVE_VULKAN_CLI=$BIN/whisper-cli" >> "$GITHUB_ENV"
+          echo "LD_LIBRARY_PATH=$BIN" >> "$GITHUB_ENV"
 
       - name: Cache speech models and voices
         uses: actions/cache@v4
         with:
           path: ~/speech-cache
-          key: speech-models-base-turbo-q5-piper-en-hi-ur-1
+          key: speech-models-base-turbo-q5-silero-piper-en-hi-ur-2
 
       - name: Download speech models and make test speech
         run: |
@@ -47,6 +51,8 @@ jobs:
           for m in ggml-base.bin ggml-large-v3-turbo-q5_0.bin; do
             [ -s "$m" ] || curl -sSL --retry 3 -o "$m" "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/$m"
           done
+          [ -s ggml-silero-v5.1.2.bin ] || curl -sSL --retry 3 -o ggml-silero-v5.1.2.bin "https://huggingface.co/ggml-org/whisper-vad/resolve/main/ggml-silero-v5.1.2.bin"
+          echo "WHISPER_VAD_MODEL=$HOME/speech-cache/models/ggml-silero-v5.1.2.bin" >> "$GITHUB_ENV"
           ls -la
           # Real speech for the tests from Piper, an offline neural voice (en, hi, ur).
           python3 -m venv ~/piper && ~/piper/bin/pip install -q piper-tts
@@ -75,7 +81,7 @@ jobs:
     runs-on: windows-latest
     permissions:
       contents: write
-    timeout-minutes: 60
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
@@ -139,24 +145,44 @@ jobs:
           Copy-Item docs/*.html build/app/docs
           Copy-Item LICENSE build/app/LICENSE.txt
 
-      - name: Add whisper.cpp for offline speech recognition
+      - name: Cache the whisper.cpp build
+        id: whisper-cache
+        uses: actions/cache@v4
+        with:
+          path: whisper-build
+          key: whisper-b4938-vulkan-1.4.321.1-win-x64-1
+
+      - name: Install the Vulkan SDK (to build the graphics-chip backend)
+        if: steps.whisper-cache.outputs.cache-hit != 'true'
         shell: pwsh
         run: |
-          $headers = @{ Authorization = "Bearer ${{ github.token }}" }
-          # The newest release that has the Windows build attached (some releases are source only).
-          $releases = Invoke-RestMethod "https://api.github.com/repos/ggml-org/whisper.cpp/releases?per_page=20" -Headers $headers
-          $release = $releases | Where-Object { -not $_.prerelease -and ($_.assets.name -contains "whisper-bin-x64.zip") } | Select-Object -First 1
-          if (-not $release) { throw "No whisper.cpp release has whisper-bin-x64.zip." }
-          $asset = $release.assets | Where-Object { $_.name -eq "whisper-bin-x64.zip" } | Select-Object -First 1
-          Write-Host "Using whisper.cpp $($release.tag_name) ($($release.published_at))"
-          "WHISPER_TAG=$($release.tag_name)" >> $env:GITHUB_ENV
-          Invoke-WebRequest $asset.browser_download_url -OutFile whisper.zip -UseBasicParsing
-          Expand-Archive whisper.zip -DestinationPath whisper-download
-          $cli = Get-ChildItem whisper-download -Recurse -Filter whisper-cli.exe | Select-Object -First 1
-          if (-not $cli) { throw "whisper-cli.exe not found in $($asset.name)." }
+          $version = "1.4.321.1"
+          Invoke-WebRequest "https://sdk.lunarg.com/sdk/download/$version/windows/vulkansdk-windows-X64-$version.exe" -OutFile "$env:RUNNER_TEMP\vulkan-sdk.exe" -UseBasicParsing
+          & "$env:RUNNER_TEMP\vulkan-sdk.exe" --accept-licenses --default-answer --confirm-command install | Out-Host
+          "VULKAN_SDK=C:\VulkanSDK\$version" >> $env:GITHUB_ENV
+          "C:\VulkanSDK\$version\Bin" >> $env:GITHUB_PATH
+
+      - name: Build whisper.cpp with Vulkan and loadable processor backends
+        if: steps.whisper-cache.outputs.cache-hit != 'true'
+        shell: pwsh
+        run: |
+          git clone --depth 1 --branch b4938 https://github.com/ggml-org/whisper.cpp whisper-src
+          cmake -S whisper-src -B whisper-src/build -A x64 -DWHISPER_BUILD_TESTS=OFF -DGGML_VULKAN=ON -DGGML_BACKEND_DL=ON `
+            -DGGML_CPU_ALL_VARIANTS=ON -DGGML_NATIVE=OFF -DBUILD_SHARED_LIBS=ON
+          if ($LASTEXITCODE -ne 0) { throw "cmake configure failed" }
+          cmake --build whisper-src/build --config Release -j 4 --target whisper-cli ggml-vulkan
+          if ($LASTEXITCODE -ne 0) { throw "whisper.cpp build failed" }
+          New-Item -ItemType Directory -Force whisper-build | Out-Null
+          Copy-Item whisper-src/build/bin/Release/* whisper-build
+          Copy-Item whisper-src/LICENSE whisper-build/WHISPER-LICENSE.txt
+
+      - name: Add whisper.cpp and the voice activity model to the app
+        shell: pwsh
+        run: |
           New-Item -ItemType Directory -Force build/app/whisper | Out-Null
-          Copy-Item (Join-Path $cli.DirectoryName "*") build/app/whisper -Recurse
-          Invoke-WebRequest "https://raw.githubusercontent.com/ggml-org/whisper.cpp/$($release.tag_name)/LICENSE" -OutFile build/app/whisper/WHISPER-LICENSE.txt -UseBasicParsing
+          Copy-Item whisper-build/* build/app/whisper
+          Invoke-WebRequest "https://huggingface.co/ggml-org/whisper-vad/resolve/main/ggml-silero-v5.1.2.bin" -OutFile build/app/whisper/ggml-silero-v5.1.2.bin -UseBasicParsing
+          if (-not (Test-Path build/app/whisper/ggml-vulkan.dll)) { throw "ggml-vulkan.dll was not built." }
           Get-ChildItem build/app/whisper | Select-Object Name, Length | Format-Table | Out-String | Write-Host
           & build/app/whisper/whisper-cli.exe -h 2>&1 | Select-Object -First 3
 

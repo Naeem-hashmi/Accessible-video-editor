@@ -23,7 +23,20 @@ namespace AccessibleVideoEditor.App;
 /// </summary>
 public partial class MainWindow
 {
-    private WhisperRunner? Whisper => WhisperRunner.Locate(AppPaths.WhisperModels);
+    /// <summary>The installed whisper-cli with the user's speed settings, or null when it is not installed.</summary>
+    private WhisperRunner? Whisper
+    {
+        get
+        {
+            var runner = WhisperRunner.Locate(AppPaths.WhisperModels);
+            if (runner is not null)
+            {
+                runner.Options = _settings.WhisperOptions;
+            }
+
+            return runner;
+        }
+    }
 
     /// <summary>Runs slow work off the window thread, with a progress window that can cancel it.</summary>
     private async Task<T?> WithProgressAsync<T>(string title, Func<ProgressWindow, CancellationToken, Task<T>> work)

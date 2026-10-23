@@ -117,6 +117,93 @@ public sealed class WhisperTests(MediaFixture media)
         Assert.Equal("Noto Naskh Arabic", Captions.DefaultStyle(urdu.Language).Font);
     }
 
+    [Fact]
+    public async Task Skipping_silence_hears_speech_after_a_long_gap_at_the_right_time()
+    {
+        if (Setup(WhisperModel.All[0]) is not var (runner, speech))
+        {
+            return;
+        }
+
+        Assert.True(runner.VadModelPath is not null || Environment.GetEnvironmentVariable("AVE_REQUIRE_WHISPER") != "1",
+            "The Silero voice activity model is required (WHISPER_VAD_MODEL or next to whisper-cli).");
+        if (runner.VadModelPath is null)
+        {
+            return;
+        }
+
+        // The English sample, 25 seconds of silence, then the sample again.
+        var english = Path.Combine(speech, "english.wav");
+        var gap = await media.Generate("speech with gap.wav", "-i", english, "-f", "lavfi", "-t", "25", "-i", "anullsrc=r=22050:cl=mono", "-i", english,
+            "-filter_complex", "[0][1][2]concat=n=3:v=0:a=1", "-ac", "1");
+        var firstLength = (await media.Probe(english)).Duration;
+        var transcript = await runner.TranscribeAsync(media.Tools, WhisperModel.All[0], gap, "en",
+            options: new WhisperOptions(SkipSilence: true));
+        var hellos = transcript.Words.Where(w => w.Text.StartsWith("Hello", StringComparison.OrdinalIgnoreCase)).ToList();
+        Assert.Equal(2, hellos.Count);
+        var expected = firstLength + 25 + (hellos[0].Start - 0);
+        Assert.InRange(hellos[1].Start, expected - 0.3, expected + 0.3);
+        var water = transcript.Words.First(w => w.Text.StartsWith("water", StringComparison.OrdinalIgnoreCase));
+        Assert.True(water.End < firstLength + 0.5, $"\"water\" ends at {water.End:0.00}, inside the silence");
+    }
+
+    [Fact]
+    public async Task The_speed_test_times_each_setting_and_picks_the_fastest()
+    {
+        if (Setup(WhisperModel.All[0]) is not var (runner, speech))
+        {
+            return;
+        }
+
+        var result = await WhisperSpeedTest.RunAsync(runner, media.Tools, WhisperModel.All[0], Path.Combine(speech, "english.wav"), 0, 8, "en",
+            [1, 2], tryGpu: false);
+        Assert.Equal(2, result.Runs.Count);
+        Assert.All(result.Runs, r => Assert.True(r.Seconds > 0 && r.Words > 10));
+        Assert.Equal(result.Runs.Min(r => r.Seconds), result.Best.Seconds);
+        Assert.Contains("times faster than real time. A 25-minute video would take about", result.Spoken);
+        Assert.Equal("processor", result.Best.Device);
+    }
+
+    /// <summary>
+    /// The graphics-chip path, run on Mesa's software Vulkan device in CI (AVE_VULKAN_CLI is a Vulkan build of
+    /// whisper-cli; the test sets GGML_VK_VISIBLE_DEVICES=0 so it uses the software device). Real GPUs are much faster.
+    /// </summary>
+    [Fact]
+    public async Task The_graphics_chip_path_gives_the_same_words_and_says_where_it_ran()
+    {
+        var vulkan = Environment.GetEnvironmentVariable("AVE_VULKAN_CLI");
+        if (Setup(WhisperModel.All[0]) is not var (cpuRunner, speech) || vulkan is null || !File.Exists(vulkan))
+        {
+            return;
+        }
+
+        var runner = new WhisperRunner(vulkan, cpuRunner.ModelsFolder);
+        var file = Path.Combine(speech, "english.wav");
+        // Only this test may use the slow software device; whisper-cli inherits the setting.
+        var before = Environment.GetEnvironmentVariable("GGML_VK_VISIBLE_DEVICES");
+        Environment.SetEnvironmentVariable("GGML_VK_VISIBLE_DEVICES", "0");
+        Transcript onGpu;
+        try
+        {
+            onGpu = await runner.TranscribeAsync(media.Tools, WhisperModel.All[0], file, "en", options: new WhisperOptions(UseGpu: true, SkipSilence: false));
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("GGML_VK_VISIBLE_DEVICES", before);
+        }
+
+        Assert.NotEqual("processor", runner.LastDevice);
+        var gpuText = string.Join(" ", onGpu.Words.Select(w => w.Text)).ToLowerInvariant();
+        var onCpu = await runner.TranscribeAsync(media.Tools, WhisperModel.All[0], file, "en", options: new WhisperOptions(UseGpu: false, SkipSilence: false));
+        Assert.Equal("processor", runner.LastDevice);
+        foreach (var word in new[] { "hello", "welcome", "rice", "water" })
+        {
+            Assert.Contains(word, gpuText);
+        }
+
+        Assert.InRange(onGpu.Words.Count, onCpu.Words.Count - 2, onCpu.Words.Count + 2);
+    }
+
     /// <summary>Reports progress on the calling thread (Progress&lt;T&gt; posts later, which tests can miss).</summary>
     private sealed class SyncProgress(Action<double> report) : IProgress<double>
     {

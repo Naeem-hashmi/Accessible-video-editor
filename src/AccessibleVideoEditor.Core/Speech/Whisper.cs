@@ -53,6 +53,15 @@ public sealed partial class WhisperRunner
 
     public string ModelsFolder { get; }
 
+    /// <summary>Settings used when a call gives none.</summary>
+    public WhisperOptions Options { get; set; } = WhisperOptions.Default;
+
+    /// <summary>The Silero voice activity model (under 1 MB, MIT licence) next to whisper-cli, if installed.</summary>
+    public string? VadModelPath { get; set; }
+
+    /// <summary>Where the last run ran: "processor", or the graphics chip's name.</summary>
+    public string LastDevice { get; private set; } = "processor";
+
     /// <summary>
     /// Finds whisper-cli: the WHISPER_CLI environment variable, then a "whisper" folder next to the program.
     /// Returns null when it is not installed.
@@ -68,7 +77,18 @@ public sealed partial class WhisperRunner
 
         candidates.Add(Path.Combine(AppContext.BaseDirectory, "whisper", exe));
         var found = candidates.FirstOrDefault(File.Exists);
-        return found is null ? null : new WhisperRunner(found, modelsFolder);
+        if (found is null)
+        {
+            return null;
+        }
+
+        var vad = Environment.GetEnvironmentVariable("WHISPER_VAD_MODEL") is { Length: > 0 } envVad && File.Exists(envVad)
+            ? envVad
+            : new[] { Path.GetDirectoryName(found)!, modelsFolder }
+                .Where(Directory.Exists)
+                .SelectMany(d => Directory.EnumerateFiles(d, "ggml-silero*.bin"))
+                .FirstOrDefault();
+        return new WhisperRunner(found, modelsFolder) { VadModelPath = vad };
     }
 
     public string ModelPath(WhisperModel model) => Path.Combine(ModelsFolder, model.FileName);
@@ -119,8 +139,9 @@ public sealed partial class WhisperRunner
     /// Whisper code such as en, hi or ur, or "auto".
     /// </summary>
     public async Task<Transcript> TranscribeAsync(FfmpegTools ffmpeg, WhisperModel model, string mediaPath, string language,
-        double start = 0, double? length = null, IProgress<double>? progress = null, CancellationToken token = default)
+        double start = 0, double? length = null, IProgress<double>? progress = null, WhisperOptions? options = null, CancellationToken token = default)
     {
+        options ??= Options;
         if (!HasModel(model))
         {
             throw new WhisperException($"The {model.Name} speech model is not downloaded yet.");
@@ -156,15 +177,35 @@ public sealed partial class WhisperRunner
             var args = new List<string>
             {
                 "-m", ModelPath(model), "-f", wav, "-l", language, "-ml", "1", "-sow", "-oj", "-of", output, "-pp",
-                "-t", Math.Clamp(Environment.ProcessorCount, 1, 8).ToString(CultureInfo.InvariantCulture),
+                "-t", options.EffectiveThreads.ToString(CultureInfo.InvariantCulture),
+                "-bs", Math.Clamp(options.BeamSize, 1, 8).ToString(CultureInfo.InvariantCulture),
+                "-bo", Math.Clamp(options.BeamSize, 1, 8).ToString(CultureInfo.InvariantCulture),
             };
+            if (!options.UseGpu)
+            {
+                args.Add("-ng");
+            }
+
+            if (options.SkipSilence && VadModelPath is { } vad)
+            {
+                args.AddRange(["--vad", "-vm", vad]);
+            }
             if (InitialPrompt(language) is { } prompt)
             {
                 args.AddRange(["--prompt", prompt]);
             }
 
+            var deviceLines = new List<string>();
             (code, error) = await RunAsync(CliPath, args, line =>
             {
+                if (line.Contains("whisper_backend_init_gpu", StringComparison.Ordinal) || line.StartsWith("ggml_vulkan: ", StringComparison.Ordinal))
+                {
+                    lock (deviceLines)
+                    {
+                        deviceLines.Add(line);
+                    }
+                }
+
                 var match = ProgressPattern().Match(line);
                 if (match.Success)
                 {
@@ -172,10 +213,19 @@ public sealed partial class WhisperRunner
                 }
             }, token).ConfigureAwait(false);
             var json = output + ".json";
+            if ((code != 0 || !File.Exists(json)) && options.UseGpu)
+            {
+                // A graphics driver problem must never stop transcription: try again on the processor.
+                return await TranscribeAsync(ffmpeg, model, mediaPath, language, start, length, progress, options with { UseGpu = false }, token)
+                    .ConfigureAwait(false);
+            }
+
             if (code != 0 || !File.Exists(json))
             {
                 throw new WhisperException("Speech recognition failed: " + Tail(error));
             }
+
+            LastDevice = DeviceFrom(deviceLines);
 
             var transcript = Parse(await File.ReadAllTextAsync(json, Encoding.UTF8, token).ConfigureAwait(false), start);
             transcript.MediaPath = mediaPath;
@@ -337,4 +387,34 @@ public sealed partial class WhisperRunner
 
     [GeneratedRegex(@"progress\s*=\s*(\d+)%")]
     private static partial Regex ProgressPattern();
+
+    /// <summary>whisper.cpp says "whisper_backend_init_gpu: using Vulkan0 backend" when a graphics chip is used.</summary>
+    [GeneratedRegex(@"whisper_backend_init_gpu: using (.+?) backend")]
+    private static partial Regex DevicePattern();
+
+    /// <summary>"ggml_vulkan: 0 = Intel(R) Iris(R) Xe Graphics (Intel Corporation) | uma: 1 | ..." names Vulkan device 0.</summary>
+    [GeneratedRegex(@"^ggml_vulkan: (\d+) = (.+?)(?: \(|\s*\|)")]
+    private static partial Regex VulkanDevicePattern();
+
+    /// <summary>The device whisper.cpp's log says it used, as <see cref="LastDevice"/> reports it.</summary>
+    internal static string DeviceFrom(IEnumerable<string> lines)
+    {
+        var device = "processor";
+        var names = new Dictionary<string, string>();
+        foreach (var line in lines)
+        {
+            if (VulkanDevicePattern().Match(line) is { Success: true } listed)
+            {
+                names["Vulkan" + listed.Groups[1].Value] = listed.Groups[2].Value.Replace("(R)", "").Replace("(TM)", "").Trim();
+            }
+
+            if (DevicePattern().Match(line) is { Success: true } used)
+            {
+                var id = used.Groups[1].Value.Trim();
+                device = names.TryGetValue(id, out var name) ? name : id;
+            }
+        }
+
+        return device;
+    }
 }

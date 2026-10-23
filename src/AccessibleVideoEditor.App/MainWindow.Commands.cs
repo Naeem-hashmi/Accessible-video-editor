@@ -1007,6 +1007,40 @@ public partial class MainWindow
         var jump = form.AddTime("Jump back step for J", s.JumpStep, minimum: 0.1);
         var autosave = form.AddCheck("Save a recovery copy every 20 seconds", s.AutoSave);
 
+        form.AddPage("Speech recognition");
+        var threadChoices = new List<int> { 0 };
+        threadChoices.AddRange(Core.Speech.WhisperSpeedTest.Candidates(Environment.ProcessorCount));
+        if (s.WhisperThreads > 0 && !threadChoices.Contains(s.WhisperThreads))
+        {
+            threadChoices.Add(s.WhisperThreads);
+        }
+
+        var threads = form.AddChoice("Processor threads", threadChoices.Select(t => t == 0 ? $"Automatic ({new Core.Speech.WhisperOptions().EffectiveThreads})" : $"{t}").ToList(),
+            Math.Max(0, threadChoices.IndexOf(s.WhisperThreads)), "The speed test below finds the fastest for this computer.");
+        var threadBox = form.LastChoice!;
+        var careful = form.AddCheck("Extra careful recognition (about three times slower)", s.WhisperCareful);
+        var skipSilence = form.AddCheck("Skip silence and music before recognising (faster, fewer made-up words)", s.WhisperSkipSilence);
+        var gpu = form.AddCheck("Use the graphics chip when possible", s.WhisperGpu);
+        var gpuBox = form.LastCheck!;
+        var test = form.AddButton("Run _speed test...");
+        test.Click += async (_, _) =>
+        {
+            if (await RunSpeedTestAsync(form) is not { } best)
+            {
+                return;
+            }
+
+            // Show the fastest setting in the dialog; OK saves it.
+            if (!threadChoices.Contains(best.Options.Threads))
+            {
+                threadChoices.Add(best.Options.Threads);
+                threadBox.Items.Add(new ComboBoxItem { Content = best.Options.Threads.ToString(System.Globalization.CultureInfo.InvariantCulture) });
+            }
+
+            threadBox.SelectedIndex = threadChoices.IndexOf(best.Options.Threads);
+            gpuBox.IsChecked = best.Options.UseGpu;
+        };
+
         form.AddPage("Playback and files");
         var previewLength = form.AddTime("Preview length rendered at a time", s.PreviewSeconds, "Longer previews take more time to prepare.", 10);
         var ffmpeg = form.AddText("FFmpeg folder (leave empty to use the built-in copy)", s.FfmpegFolder);
@@ -1026,11 +1060,58 @@ public partial class MainWindow
             s.PreviewSeconds = previewLength();
             s.FfmpegFolder = ffmpeg().Trim();
             s.Theme = ThemeService.Choices[colours()];
+            s.WhisperThreads = threadChoices[Math.Clamp(threads(), 0, threadChoices.Count - 1)];
+            s.WhisperCareful = careful();
+            s.WhisperSkipSilence = skipSilence();
+            s.WhisperGpu = gpu();
             s.Clamp();
             ThemeService.Apply(Application.Current, s.Theme);
             ApplySettings();
         };
         return form;
+    }
+
+    /// <summary>
+    /// Times Whisper on 30 seconds of the selected clip with each setting and reports the fastest. Uses the
+    /// installed model (the Accurate one if present), since that is what real transcription will use.
+    /// </summary>
+    private async Task<Core.Speech.SpeedTestRun?> RunSpeedTestAsync(Window owner)
+    {
+        if (Tools is not { } tools || Whisper is not { } whisper)
+        {
+            Say("Speech recognition is not installed, so there is nothing to test.");
+            return null;
+        }
+
+        if (whisper.InstalledModels().FirstOrDefault() is not { } model)
+        {
+            Say("Download a speech model first: transcribe a clip once with Control Shift W.");
+            return null;
+        }
+
+        if (_editor.FocusedItem is not { HasAudio: true, Kind: ItemKind.Video or ItemKind.Audio } item)
+        {
+            Say("Select a clip with speech first, so the test uses real speech.");
+            return null;
+        }
+
+        var length = Math.Min(30, item.Duration);
+        var candidates = Core.Speech.WhisperSpeedTest.Candidates(Environment.ProcessorCount);
+        Say($"Speed test: {candidates.Count + 1} runs of {length:0} seconds with the {model.Name} model. This takes a few minutes.", interrupt: false);
+        var result = await WithProgressAsync("Speech speed test", (progress, token) =>
+            Core.Speech.WhisperSpeedTest.RunAsync(whisper, tools, model, item.Path, item.SourceIn, length,
+                _settings.SpeechLanguage == "auto" ? "en" : _settings.SpeechLanguage, candidates, tryGpu: true,
+                new Progress<double>(progress.Report), token));
+        owner.Activate();
+        if (result is null)
+        {
+            return null;
+        }
+
+        var details = string.Join(" ", result.Runs.Select(r => $"{r.Options.EffectiveThreads} threads{(r.Options.UseGpu ? " with graphics" : "")}: {r.Seconds:0.0} seconds."));
+        Say(result.Spoken + " " + details);
+        AppPaths.Log("Speed test: " + result.Spoken + " " + details);
+        return result.Best;
     }
 
     private void ShowPreferences()

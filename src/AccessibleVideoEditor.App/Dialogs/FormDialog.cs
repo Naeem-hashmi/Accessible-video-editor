@@ -148,8 +148,15 @@ public sealed class FormDialog : Window
 
         _page.Children.Add(box);
         _fields.Add(new Field(box));
+        LastCheck = box;
         return () => box.IsChecked == true;
     }
+
+    /// <summary>The check box made by the last <see cref="AddCheck"/>, for changing it later.</summary>
+    public CheckBox? LastCheck { get; private set; }
+
+    /// <summary>The combo box made by the last <see cref="AddChoice"/>, for changing it later.</summary>
+    public ComboBox? LastChoice { get; private set; }
 
     /// <summary>A drop-down choice. Returns the chosen index.</summary>
     public Func<int> AddChoice(string label, IReadOnlyList<string> options, int selected, string? help = null, Action<int>? changed = null)
@@ -169,6 +176,7 @@ public sealed class FormDialog : Window
         }
 
         Add(label, combo, help);
+        LastChoice = combo;
         return () => Math.Max(0, combo.SelectedIndex);
     }
 

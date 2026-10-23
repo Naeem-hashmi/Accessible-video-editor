@@ -215,6 +215,34 @@ public sealed class TranscriptTests
     }
 
     [Fact]
+    public void The_device_used_is_read_from_the_whisper_log()
+    {
+        Assert.Equal("processor", WhisperRunner.DeviceFrom(["whisper_backend_init_gpu: device 0: CPU (type: 0)", "whisper_backend_init_gpu: no GPU found"]));
+        // Lines as whisper.cpp b4938 with the Vulkan backend prints them.
+        Assert.Equal("Intel Iris Xe Graphics", WhisperRunner.DeviceFrom([
+            "ggml_vulkan: Found 1 Vulkan devices:",
+            "ggml_vulkan: 0 = Intel(R) Iris(R) Xe Graphics (Intel Corporation) | uma: 1 | fp16: 1 | bf16: 0 | warp size: 32",
+            "whisper_backend_init_gpu: device 0: Vulkan0 (type: 1)",
+            "whisper_backend_init_gpu: found GPU device 0: Vulkan0 (type: 1, cnt: 0)",
+            "whisper_backend_init_gpu: using Vulkan0 backend",
+        ]));
+        Assert.Equal("llvmpipe", WhisperRunner.DeviceFrom([
+            "ggml_vulkan: 0 = llvmpipe (LLVM 20.1.2, 256 bits) (llvmpipe) | uma: 0 | fp16: 1",
+            "whisper_backend_init_gpu: using Vulkan0 backend",
+        ]));
+    }
+
+    [Fact]
+    public void Automatic_threads_use_half_the_processors_within_limits()
+    {
+        Assert.Equal(Math.Clamp(Environment.ProcessorCount / 2, 2, 8), new WhisperOptions().EffectiveThreads);
+        Assert.Equal(6, new WhisperOptions(Threads: 6).EffectiveThreads);
+        Assert.Equal([2, 4, 6, 8, 12], WhisperSpeedTest.Candidates(12));
+        Assert.Equal([2, 4], WhisperSpeedTest.Candidates(4));
+        Assert.Contains("normal care", new WhisperOptions().Spoken);
+    }
+
+    [Fact]
     public void Models_are_described_with_their_size()
     {
         Assert.Equal("Accurate (recommended), 574 MB. Best for Urdu, Hindi and noisy recordings. Slower; works on any modern computer.", WhisperModel.Recommended.Spoken);

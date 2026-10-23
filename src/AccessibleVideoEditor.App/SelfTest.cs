@@ -446,6 +446,8 @@ internal static class SelfTest
             var models = Environment.GetEnvironmentVariable("AVE_WHISPER_MODELS") ?? AppPaths.WhisperModels;
             var whisper = WhisperRunner.Locate(models);
             Check(whisper is not null, "whisper-cli is installed next to the program");
+            Check(whisper?.VadModelPath is not null, "The voice activity model for skipping silence is installed");
+            Check(File.Exists(Path.Combine(AppContext.BaseDirectory, "whisper", "ggml-vulkan.dll")), "The graphics-chip (Vulkan) backend is installed");
             if (whisper is null || speech is null || !File.Exists(speech) || !whisper.HasModel(WhisperModel.All[0]))
             {
                 log.Add("SKIP transcription: no speech sample or Fast model on this machine.");
@@ -455,7 +457,7 @@ internal static class SelfTest
             var clock = Stopwatch.StartNew();
             var transcript = await whisper.TranscribeAsync(window.Tools!, WhisperModel.All[0], speech, "en");
             var text = string.Join(" ", transcript.Words.Select(w => w.Text));
-            log.Add($"Heard in {clock.Elapsed.TotalSeconds:0.0} s: {text}");
+            log.Add($"Heard in {clock.Elapsed.TotalSeconds:0.0} s on {whisper.LastDevice} ({whisper.Options.Spoken}): {text}");
             Check(text.Contains("hello", StringComparison.OrdinalIgnoreCase) && text.Contains("video", StringComparison.OrdinalIgnoreCase),
                 "Windows speech is transcribed offline with word times");
             Check(transcript.Words.All(w => w.End >= w.Start), "Word times are in order");

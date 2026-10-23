@@ -171,6 +171,7 @@ public partial class MainWindow : Window
         }
 
         _preview.CancelPreparing();
+        _improving?.Cancel();
         try
         {
             _settings.Save();

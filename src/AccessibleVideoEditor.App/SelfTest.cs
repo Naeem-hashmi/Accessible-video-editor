@@ -461,6 +461,14 @@ internal static class SelfTest
             Check(text.Contains("hello", StringComparison.OrdinalIgnoreCase) && text.Contains("video", StringComparison.OrdinalIgnoreCase),
                 "Windows speech is transcribed offline with word times");
             Check(transcript.Words.All(w => w.End >= w.Start), "Word times are in order");
+
+            // Only a used part: words only from that part, in file time, and the part is remembered.
+            var part = new Core.Audio.TimeStretch(1.5, Math.Min(6, transcript.Words[^1].End));
+            var partial = await whisper.TranscribePartsAsync(window.Tools!, WhisperModel.All[0], speech, "en", [part]);
+            log.Add($"Heard between {part.Start} and {part.End:0.0} s: {string.Join(" ", partial.Words.Select(w => w.Text))}");
+            Check(partial.Words.Count > 0 && partial.Words.All(w => (w.Start + w.End) / 2 >= part.Start && (w.Start + w.End) / 2 < part.End),
+                "Transcribing only a used part keeps words from that part, in file time");
+            Check(TranscriptCoverage.Missing(partial, [part]).Count == 0, "A transcribed part is not done again");
         });
 
         await Step("real recorded sounds", () =>

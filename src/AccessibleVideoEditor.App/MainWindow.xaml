@@ -73,6 +73,9 @@
                 <TextBlock x:Name="StatusText" TextWrapping="Wrap" AutomationProperties.Name="Last message" />
             </StatusBarItem>
             <Separator />
+            <StatusBarItem>
+                <TextBlock x:Name="BackgroundText" AutomationProperties.Name="Background work" />
+            </StatusBarItem>
             <StatusBarItem HorizontalAlignment="Right">
                 <TextBlock x:Name="PlayheadText" AutomationProperties.Name="Playhead" />
             </StatusBarItem>

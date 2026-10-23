@@ -116,23 +116,32 @@ public partial class MainWindow
             }
         }
 
-        if (!whisper.HasModel(model))
-        {
-            var ok = await WithProgressAsync($"Downloading the {model.Name} speech model, {model.SizeText}", async (progress, token) =>
-            {
-                await whisper.DownloadAsync(Http, model, new Progress<double>(progress.Report), token);
-                return true;
-            });
-            if (!ok || !whisper.HasModel(model))
-            {
-                return null;
-            }
+        return whisper.HasModel(model) || await DownloadModelAsync(whisper, model) ? model : null;
+    }
 
-            Say($"{model.Name} speech model downloaded. It now works without internet.");
+    /// <summary>Downloads a speech model once, with progress. False if it failed or was cancelled.</summary>
+    private async Task<bool> DownloadModelAsync(WhisperRunner whisper, WhisperModel model)
+    {
+        var ok = await WithProgressAsync($"Downloading the {model.Name} speech model, {model.SizeText}", async (progress, token) =>
+        {
+            await whisper.DownloadAsync(Http, model, new Progress<double>(progress.Report), token);
+            return true;
+        });
+        if (!ok || !whisper.HasModel(model))
+        {
+            return false;
         }
 
-        return model;
+        Say($"{model.Name} speech model downloaded. It now works without internet.");
+        return true;
     }
+
+    /// <summary>One file to transcribe: which parts, and the words it already has outside them.</summary>
+    private sealed record TranscribeJob(string Path, double Offset, Transcript? Existing, IReadOnlyList<TimeStretch> Parts);
+
+    /// <summary>Set while a draft is being improved in the background.</summary>
+    private CancellationTokenSource? _improving;
+    private double _improvingDone;
 
     private async Task TranscribeAsync()
     {
@@ -148,19 +157,41 @@ public partial class MainWindow
             return;
         }
 
-        var files = layer.Items.Where(i => i.HasAudio && i.Kind is ItemKind.Video or ItemKind.Audio).Select(i => i.Path).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
-        if (files.Count == 0)
+        var clips = layer.Items.Where(i => i.HasAudio && i.Kind is ItemKind.Video or ItemKind.Audio)
+            .GroupBy(i => i.Path, StringComparer.OrdinalIgnoreCase).Select(g => g.First()).ToList();
+        if (clips.Count == 0)
         {
             _earcons.Play(EarconEvent.Error);
             Say($"{layer.Name} has no clips with sound to transcribe.");
             return;
         }
 
+        if (_improving is not null)
+        {
+            var answer = MessageBox.Show(this,
+                $"The transcript is still being improved in the background ({_improvingDone:P0} done). Stop that and transcribe again?",
+                "Transcribe speech", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            if (answer != MessageBoxResult.Yes)
+            {
+                return;
+            }
+
+            _improving.Cancel();
+        }
+
         var form = new FormDialog(this, "Transcribe speech");
-        form.AddIntro($"Write down what is said in {files.Count} {(files.Count == 1 ? "file" : "files")} on {layer.Name}. For Urdu and Hindi choose the language: automatic detection can mix them up.");
+        form.AddIntro($"Write down what is said in {clips.Count} {(clips.Count == 1 ? "file" : "files")} on {layer.Name}. For Urdu and Hindi choose the language: automatic detection can mix them up.");
         var languages = Transcript.Languages;
         var lastLanguage = Math.Max(0, languages.ToList().FindIndex(l => l.Code == _settings.SpeechLanguage));
         var language = form.AddChoice("Language spoken", languages.Select(l => l.Name).ToList(), lastLanguage);
+        var scope = form.AddChoice("What to transcribe",
+        [
+            "Only the parts used on the timeline, skipping parts already done (fastest)",
+            "Only the parts used on the timeline, all again",
+            "The whole files",
+        ], 0, "Parts of a file that no clip plays are not needed for captions or for editing by text.");
+        var draft = form.AddCheck("Quick draft first, then improve it in the background", _settings.WhisperDraftFirst,
+            "The Fast model writes a draft in a fraction of the time so you can start working; the chosen model then replaces it while you edit.");
         if (form.ShowDialog() != true)
         {
             return;
@@ -168,23 +199,55 @@ public partial class MainWindow
 
         var code = languages[language()].Code;
         _settings.SpeechLanguage = code;
+        _settings.WhisperDraftFirst = draft();
         if (await ChooseModelAsync(whisper, code) is not { } model)
         {
             return;
         }
 
-        var transcripts = await WithProgressAsync("Transcribing", async (progress, token) =>
+        var jobs = new List<TranscribeJob>();
+        foreach (var clip in clips)
         {
-            var done = new List<Transcript>();
-            for (var i = 0; i < files.Count; i++)
+            var existing = _editor.Project.TranscriptFor(clip.Path);
+            if (existing is not null && code != "auto" && existing.Language.Length > 0 && existing.Language != code)
             {
-                progress.SetStatus($"Transcribing {i + 1} of {files.Count}: {Path.GetFileName(files[i])}");
-                var offset = layer.Items.First(x => string.Equals(x.Path, files[i], StringComparison.OrdinalIgnoreCase)).AudioOffset;
-                done.Add(await whisper.TranscribeAsync(tools, model, files[i], code, progress: new Progress<double>(progress.Report), audioOffset: offset, token: token));
+                existing = null; // Another language: start again.
             }
 
-            return done;
-        });
+            var used = TranscriptCoverage.Used(_editor.Project, clip.Path);
+            var job = scope() switch
+            {
+                0 => new TranscribeJob(clip.Path, clip.AudioOffset, existing, TranscriptCoverage.Missing(existing, used)),
+                1 => new TranscribeJob(clip.Path, clip.AudioOffset, existing, used),
+                _ => new TranscribeJob(clip.Path, clip.AudioOffset, null, TranscriptCoverage.Whole(clip.SourceDuration)),
+            };
+            if (job.Parts.Count > 0)
+            {
+                jobs.Add(job);
+            }
+        }
+
+        if (jobs.Count == 0)
+        {
+            _earcons.Play(EarconEvent.Error);
+            Say($"Everything used on {layer.Name} is already transcribed. To do it again, choose \"all again\" under What to transcribe.");
+            return;
+        }
+
+        var fast = WhisperModel.All[0];
+        var useDraft = draft() && model != fast;
+        if (useDraft && !whisper.HasModel(fast))
+        {
+            var answer = MessageBox.Show(this,
+                $"A quick draft needs the Fast model, a one-time download of {fast.SizeText}. Download it now? Choose No to transcribe with {model.Name} only.",
+                "Quick draft", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            useDraft = answer == MessageBoxResult.Yes && await DownloadModelAsync(whisper, fast);
+        }
+
+        var first = useDraft ? fast : model;
+        var seconds = jobs.Sum(j => TranscriptCoverage.Seconds(j.Parts));
+        var transcripts = await WithProgressAsync(useDraft ? "Writing a quick draft" : "Transcribing", (progress, token) =>
+            RunJobsAsync(whisper, tools, first, code, jobs, new Progress<double>(progress.Report), progress.SetStatus, token));
         if (transcripts is null)
         {
             return;
@@ -192,7 +255,8 @@ public partial class MainWindow
 
         var words = transcripts.Sum(t => t.Words.Count);
         var spoken = Transcript.LanguageName(transcripts.Select(t => t.Language).FirstOrDefault(l => l.Length > 0) ?? code);
-        var feedback = _editor.Edit("transcribe", project =>
+        var minutes = SpokenLength(seconds);
+        var feedback = _editor.Edit(useDraft ? "transcribe draft" : "transcribe", project =>
         {
             foreach (var transcript in transcripts)
             {
@@ -200,12 +264,117 @@ public partial class MainWindow
                 project.Transcripts.Add(transcript);
             }
 
-            return words == 0
-                ? EditResult.Fail("No speech was found.")
-                : EditResult.Success($"Transcribed {words} words in {spoken}. Control Shift X opens the transcript to edit by text; Control Shift G makes captions.");
+            if (words == 0)
+            {
+                return EditResult.Fail("No speech was found.");
+            }
+
+            var next = useDraft
+                ? $"This is a quick draft; the {model.Name} model is improving it in the background and will replace it when done. "
+                : "";
+            return EditResult.Success($"Transcribed {minutes} of sound: {words} words in {spoken}. {next}Control Shift X opens the transcript to edit by text; Control Shift G makes captions.");
         });
         await ApplyAsync(feedback);
+        if (useDraft && words > 0)
+        {
+            _ = ImproveInBackgroundAsync(whisper, tools, model, code, jobs, transcripts);
+        }
     }
+
+    /// <summary>Transcribes each job's parts and returns the finished transcripts, in job order.</summary>
+    private static async Task<List<Transcript>> RunJobsAsync(WhisperRunner whisper, FfmpegTools tools, WhisperModel model, string language,
+        IReadOnlyList<TranscribeJob> jobs, IProgress<double> progress, Action<string>? status, CancellationToken token)
+    {
+        var total = Math.Max(0.001, jobs.Sum(j => TranscriptCoverage.Seconds(j.Parts)));
+        var done = 0.0;
+        var results = new List<Transcript>();
+        for (var i = 0; i < jobs.Count; i++)
+        {
+            var job = jobs[i];
+            var length = TranscriptCoverage.Seconds(job.Parts);
+            status?.Invoke($"Transcribing {i + 1} of {jobs.Count}: {Path.GetFileName(job.Path)}, {SpokenLength(length)}");
+            var before = done;
+            results.Add(await whisper.TranscribePartsAsync(tools, model, job.Path, language, job.Parts, job.Existing, job.Offset,
+                new Progress<double>(p => progress.Report((before + p * length) / total)), token: token));
+            done += length;
+        }
+
+        return results;
+    }
+
+    /// <summary>
+    /// Runs the chosen model over the same parts while the user keeps working, then swaps in its words for
+    /// every file whose draft was not corrected in the meantime. Progress shows in the status bar.
+    /// </summary>
+    private async Task ImproveInBackgroundAsync(WhisperRunner whisper, FfmpegTools tools, WhisperModel model, string language,
+        IReadOnlyList<TranscribeJob> jobs, IReadOnlyList<Transcript> drafts)
+    {
+        using var cancel = new CancellationTokenSource();
+        _improving = cancel;
+        _improvingDone = 0;
+        BackgroundText.Text = $"Improving transcript with {model.Name}: 0%";
+        try
+        {
+            var progress = new Progress<double>(p =>
+            {
+                _improvingDone = p;
+                BackgroundText.Text = $"Improving transcript with {model.Name}: {p:P0}";
+            });
+            var better = await RunJobsAsync(whisper, tools, model, language, jobs, progress, null, cancel.Token);
+            var replace = new List<Transcript>();
+            var kept = new List<string>();
+            for (var i = 0; i < better.Count; i++)
+            {
+                var now = _editor.Project.TranscriptFor(better[i].MediaPath);
+                if (now is not null && now.SameWords(drafts[i]))
+                {
+                    replace.Add(better[i]);
+                }
+                else
+                {
+                    kept.Add(Path.GetFileName(better[i].MediaPath));
+                }
+            }
+
+            var note = kept.Count > 0 ? $" {string.Join(", ", kept)} changed since the draft, so your version was kept." : "";
+            if (replace.Count == 0)
+            {
+                Say($"The {model.Name} transcript is ready.{note}");
+                return;
+            }
+
+            var feedback = _editor.Edit("improve transcript", project =>
+            {
+                foreach (var transcript in replace)
+                {
+                    project.Transcripts.RemoveAll(t => string.Equals(t.MediaPath, transcript.MediaPath, StringComparison.OrdinalIgnoreCase));
+                    project.Transcripts.Add(transcript);
+                }
+
+                return EditResult.Success($"Transcript improved with the {model.Name} model: {replace.Sum(t => t.Words.Count)} words.{note} Control Z puts the draft back.");
+            });
+            await ApplyAsync(feedback);
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (WhisperException ex)
+        {
+            AppPaths.Log("Improving the transcript failed: " + ex.Message);
+            Say("Improving the transcript failed, so the quick draft stays. " + ex.Message, interrupt: false);
+        }
+        finally
+        {
+            if (_improving == cancel)
+            {
+                _improving = null;
+                BackgroundText.Text = "";
+            }
+        }
+    }
+
+    private static string SpokenLength(double seconds) =>
+        seconds >= 90 ? $"{Math.Round(seconds / 60):0} minutes" : $"{Math.Max(1, Math.Round(seconds)):0} seconds";
 
     private async Task MakeCaptionsAsync()
     {

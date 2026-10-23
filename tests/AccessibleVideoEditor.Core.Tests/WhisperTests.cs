@@ -148,6 +148,47 @@ public sealed class WhisperTests(MediaFixture media)
     }
 
     [Fact]
+    public async Task Only_the_used_part_is_transcribed_and_a_new_clip_adds_just_its_own_part()
+    {
+        if (Setup(WhisperModel.All[0]) is not var (runner, speech))
+        {
+            return;
+        }
+
+        // The English sample twice with 15 seconds of silence between. Only the second copy is on the timeline.
+        var english = Path.Combine(speech, "english.wav");
+        var file = await media.Generate("used parts.wav", "-i", english, "-f", "lavfi", "-t", "15", "-i", "anullsrc=r=22050:cl=mono", "-i", english,
+            "-filter_complex", "[0][1][2]concat=n=3:v=0:a=1", "-ac", "1");
+        var first = (await media.Probe(english)).Duration;
+        var total = (await media.Probe(file)).Duration;
+        var second = first + 15;
+        var project = new Project();
+        project.Layers.Add(new Layer { Kind = LayerKind.Audio, Name = "Voice" });
+        project.Layers[0].Items.Add(new Item { Kind = ItemKind.Audio, Path = file, HasAudio = true, SourceIn = second, Duration = first, SourceDuration = total });
+
+        var used = TranscriptCoverage.Used(project, file);
+        Assert.True(TranscriptCoverage.Seconds(used) < total * 0.6, "only about half the file is transcribed");
+        var transcript = await runner.TranscribePartsAsync(media.Tools, WhisperModel.All[0], file, "en", TranscriptCoverage.Missing(null, used));
+        var hellos = transcript.Words.Where(w => w.Text.StartsWith("Hello", StringComparison.OrdinalIgnoreCase)).ToList();
+        Assert.Single(hellos);
+        Assert.InRange(hellos[0].Start, second - 0.2, second + 1.0);
+        Assert.All(transcript.Words, w => Assert.True(w.Start >= second - TranscriptCoverage.Margin - 0.01, $"{w.Text} at {w.Start:0.00}"));
+        Assert.Contains(transcript.Words, w => w.Text.StartsWith("water", StringComparison.OrdinalIgnoreCase));
+        Assert.Empty(TranscriptCoverage.Missing(transcript, used));
+
+        // Adding the first copy to the timeline transcribes just that part, keeping the words already there.
+        project.Layers[0].Items.Insert(0, new Item { Kind = ItemKind.Audio, Path = file, HasAudio = true, SourceIn = 0, Duration = first, SourceDuration = total });
+        var missing = TranscriptCoverage.Missing(transcript, TranscriptCoverage.Used(project, file));
+        Assert.Single(missing);
+        Assert.InRange(missing[0].End, first, second);
+        var both = await runner.TranscribePartsAsync(media.Tools, WhisperModel.All[0], file, "en", missing, transcript);
+        Assert.Equal(2, both.Words.Count(w => w.Text.StartsWith("Hello", StringComparison.OrdinalIgnoreCase)));
+        Assert.Equal(2, both.Words.Count(w => w.Text.StartsWith("water", StringComparison.OrdinalIgnoreCase)));
+        Assert.All(both.Words.Zip(both.Words.Skip(1)), p => Assert.True(p.First.Start <= p.Second.Start));
+        Assert.Empty(TranscriptCoverage.Missing(both, TranscriptCoverage.Used(project, file)));
+    }
+
+    [Fact]
     public async Task The_speed_test_times_each_setting_and_picks_the_fastest()
     {
         if (Setup(WhisperModel.All[0]) is not var (runner, speech))

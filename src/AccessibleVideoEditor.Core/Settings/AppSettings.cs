@@ -72,6 +72,9 @@ public sealed class AppSettings
     /// <summary>Use the graphics chip for speech recognition when possible.</summary>
     public bool WhisperGpu { get; set; } = true;
 
+    /// <summary>Transcribe a quick draft with the Fast model first, then improve it in the background.</summary>
+    public bool WhisperDraftFirst { get; set; } = true;
+
     /// <summary>Colours: System (follow Windows), Light or Dark. High Contrast always wins.</summary>
     public string Theme { get; set; } = "System";
 

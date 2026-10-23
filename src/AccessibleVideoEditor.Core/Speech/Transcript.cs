@@ -31,9 +31,20 @@ public sealed class Transcript
 
     public List<TranscriptWord> Words { get; set; } = new();
 
+    /// <summary>
+    /// The parts of the file that have been transcribed, in file time. Empty means the whole file.
+    /// See <see cref="TranscriptCoverage"/>.
+    /// </summary>
+    public List<Audio.TimeStretch> Covered { get; set; } = new();
+
     /// <summary>Words that fall inside the file stretch [from, to).</summary>
     public IEnumerable<TranscriptWord> WordsBetween(double from, double to) =>
         Words.Where(w => (w.Start + w.End) / 2 >= from - 1e-6 && (w.Start + w.End) / 2 < to - 1e-6);
+
+    /// <summary>True when both have the same words at the same times (nothing was corrected in between).</summary>
+    public bool SameWords(Transcript other) =>
+        Words.Count == other.Words.Count &&
+        Words.Zip(other.Words).All(p => p.First.Text == p.Second.Text && Math.Abs(p.First.Start - p.Second.Start) < 1e-6 && Math.Abs(p.First.End - p.Second.End) < 1e-6);
 
     public Transcript Clone() => new()
     {
@@ -41,6 +52,7 @@ public sealed class Transcript
         Language = Language,
         Model = Model,
         Words = Words.Select(w => w.Clone()).ToList(),
+        Covered = [.. Covered],
     };
 
     /// <summary>Languages offered, with their Whisper codes. Whisper knows 99; these are the common ones.</summary>

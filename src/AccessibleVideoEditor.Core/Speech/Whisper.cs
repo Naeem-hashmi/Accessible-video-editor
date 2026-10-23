@@ -262,6 +262,36 @@ public sealed partial class WhisperRunner
     }
 
     /// <summary>
+    /// Transcribes only <paramref name="parts"/> of a file (file time) and adds the words to a copy of
+    /// <paramref name="existing"/> (or a new transcript). Whisper also hears a second either side of each part
+    /// so words at the edges come out whole; only the words inside the part are kept.
+    /// </summary>
+    public async Task<Transcript> TranscribePartsAsync(FfmpegTools ffmpeg, WhisperModel model, string mediaPath, string language,
+        IReadOnlyList<Audio.TimeStretch> parts, Transcript? existing = null, double audioOffset = 0, IProgress<double>? progress = null,
+        WhisperOptions? options = null, CancellationToken token = default)
+    {
+        var result = existing?.Clone() ?? new Transcript { MediaPath = mediaPath, Language = language == "auto" ? "" : language };
+        var total = Math.Max(0.001, TranscriptCoverage.Seconds(parts));
+        var done = 0.0;
+        foreach (var part in parts)
+        {
+            token.ThrowIfCancellationRequested();
+            var from = Math.Max(0, part.Start - TranscriptCoverage.Context);
+            var to = part.End + TranscriptCoverage.Context;
+            var before = done;
+            var heard = await TranscribeAsync(ffmpeg, model, mediaPath, language, from, to - from,
+                progress is null ? null : new Progress<double>(p => progress.Report((before + p * part.Duration) / total)),
+                options, audioOffset, token).ConfigureAwait(false);
+            TranscriptCoverage.Merge(result, heard, part);
+            done += part.Duration;
+            progress?.Report(done / total);
+        }
+
+        result.MediaPath = mediaPath;
+        return result;
+    }
+
+    /// <summary>
     /// A short prompt in the right script. Without it, Whisper sometimes writes Hindi speech in Urdu letters
     /// (they sound alike). Urdu gets no prompt: in tests it made Whisper stop early.
     /// </summary>

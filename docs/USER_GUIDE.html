@@ -18,12 +18,15 @@ kbd{font-family:inherit;font-weight:bold}
 <p>The <strong>playhead</strong> is the current time. Playing starts from it, splitting happens at it, and markers are added at it.</p>
 
 <h2>The window</h2>
+<p>The window has five areas, like Microsoft Clipchamp. Press <kbd>F6</kbd> to move to the next area and <kbd>Shift F6</kbd> to go back, or jump straight to one:</p>
 <ul>
-<li><strong>Timeline</strong>: the items of the focused layer, in time order. This is where you spend most of your time. Each item is read as, for example, "2 of 5, interview.mp4, video, starts 12.5 seconds, length 30 seconds".</li>
-<li><strong>Layer list</strong>: every layer, for example "Layer 3, Audio, Music, 2 items, muted". Press <kbd>F6</kbd> to move between the timeline and the layer list.</li>
-<li><strong>Menu bar</strong>: press <kbd>Alt</kbd> to reach every command and see its key.</li>
-<li><strong>Status bar</strong>: the last message, the playhead time and the listening mode. Your screen reader's status bar command reads it (<kbd>NVDA+End</kbd> or <kbd>Insert+Page Down</kbd> in JAWS).</li>
+<li><kbd>Control 1</kbd>, <strong>Library</strong> (left): Import, Export and Save buttons, then tabs. <strong>Media</strong> lists the files in your project; <strong>Sounds</strong> has the built-in and your own sounds; <strong>Free music online</strong> searches for music you may use; <strong>Text</strong> has ready-made text styles; <strong>Templates</strong> holds built-in and saved templates. Control Tab moves between tabs.</li>
+<li><kbd>Control 2</kbd>, <strong>Timeline</strong> (middle): the items of the focused layer, in time order. This is where you spend most of your time. Each item is read as, for example, "2 of 5, interview.mp4, video, starts 12.5 seconds, length 30 seconds".</li>
+<li><kbd>Control 3</kbd>, <strong>Properties</strong> (right): quick settings for the focused item: name or text, length, fades, volume, mute, position, size, opacity, and font and animation for text. Change a field and press Enter (Control Enter in the text box) to apply.</li>
+<li><kbd>Control 4</kbd>, <strong>Preview</strong> (middle top): the picture. When it has focus it describes what is on screen at the playhead. Playback and timeline keys still work here.</li>
+<li><kbd>Control 5</kbd>, <strong>Layers</strong>: every layer, for example "Layer 3, Audio, Music, 2 items, muted".</li>
 </ul>
+<p>The menu bar (press <kbd>Alt</kbd>) has every command and shows its key. The status bar shows the last message, the playhead time and the listening mode; your screen reader's status bar command reads it (<kbd>NVDA+End</kbd>, or <kbd>Insert+Page Down</kbd> in JAWS).</p>
 
 <h2>Moving around: a grid of layers and time</h2>
 <ul>
@@ -91,12 +94,58 @@ kbd{font-family:inherit;font-weight:bold}
 <li><kbd>Control C</kbd>, <kbd>Control X</kbd>, <kbd>Control V</kbd> and <kbd>Control D</kbd> copy, cut, paste and duplicate items.</li>
 </ul>
 
+<h2>Text: titles, captions and credits</h2>
+<ul>
+<li><kbd>Control Shift T</kbd> adds text at the playhead. Type the words (Enter starts a new line, Tab moves on) and choose a style: Title, Lower third, Caption, Top headline, Typewriter, Credits or Call to action. The other tabs set the font, colour, size, box, position and animation.</li>
+<li>Text goes on its own "Text" layer above your video, so it never replaces a clip.</li>
+<li>Ways in and out: appear, fade, slide from the left, right, top or bottom, float up gently, and typewriter (letter by letter).</li>
+<li><kbd>F2</kbd> changes the words. <kbd>Enter</kbd> opens all options, including a Text tab.</li>
+<li>The library's Text tab lists the same styles; Enter on one adds text in that style.</li>
+</ul>
+
+<h2>Where things are on screen</h2>
+<p>Press <kbd>Shift W</kbd> to hear the picture at the playhead, from the bottom layer up. For example: "Layer 1, interview.mp4, full frame. Layer 2, logo.png, top right, 11 percent wide and 20 percent high, over interview.mp4. Layer 3, text "Welcome", bottom centre, 52 percent wide, over interview.mp4." The frame is thought of as a 3 by 3 grid: top left, top centre, top right, middle left, centre, middle right, bottom left, bottom centre and bottom right. You also hear which edges a picture touches, whether it is cropped or see-through, what it covers, and whether parts of the frame are black.</p>
+
+<h2>Position mode: moving, resizing and cropping with the keyboard</h2>
+<p>On a picture, video or text, press <kbd>P</kbd>. This is the keyboard version of dragging on the screen. Until you press Enter or Escape:</p>
+<ul>
+<li><kbd>Arrows</kbd> move it 5 percent of the frame; with <kbd>Shift</kbd>, 1 percent. You hear the new position, for example "65 percent across, 10 percent down, touching the right edge".</li>
+<li><kbd>Plus</kbd> and <kbd>minus</kbd> make it bigger and smaller.</li>
+<li><kbd>1</kbd> to <kbd>9</kbd> snap it to a place laid out like a number pad: 7 top left, 8 top centre, 9 top right, 4 middle left, 5 centre, 6 middle right, 1 bottom left, 2 bottom centre, 3 bottom right.</li>
+<li><kbd>0</kbd> makes it full frame (maximise). <kbd>F</kbd> then switches between fit (the whole picture, maybe with black bars) and fill (covers the frame, cutting off edges). Use minus or a number key to make it small again (minimise).</li>
+<li><kbd>Control</kbd> with an arrow crops 5 percent from that edge; <kbd>Control Shift</kbd> with an arrow gives it back; <kbd>R</kbd> removes all cropping.</li>
+<li><kbd>O</kbd> and <kbd>Shift O</kbd> make it more or less see-through.</li>
+<li><kbd>D</kbd> describes it and the whole picture. <kbd>F1</kbd> repeats these keys.</li>
+<li><kbd>Enter</kbd> keeps the changes; <kbd>Escape</kbd> puts everything back as it was.</li>
+</ul>
+<p>After every move a short tone plays. It comes from the left or right speaker depending on how far across the picture is, and is higher the nearer the picture is to the top. With headphones you can hear the position as well as be told it.</p>
+
+<h2>Sound of each item and layer</h2>
+<ul>
+<li><kbd>Control Up</kbd> and <kbd>Control Down</kbd>: the focused item louder or quieter by 10 percent (up to 400 percent).</li>
+<li><kbd>Control M</kbd>: mute or unmute only this item's sound.</li>
+<li><kbd>Control Shift Up</kbd> and <kbd>Control Shift Down</kbd>: the whole layer louder or quieter.</li>
+<li>In properties (<kbd>Control 3</kbd>) and item options (<kbd>Enter</kbd>, Sound tab): volume, mute, fade in and out, noise reduction, hum removal, rumble removal, a low, middle and high equaliser, voice presets and loudness levelling.</li>
+</ul>
+
+<h2>Free music and sounds online</h2>
+<p><kbd>Control Shift O</kbd> opens the library's Free music online tab. Type what you want, for example "calm piano" or "rain", choose Music or Sound effects, and press Enter. Each result says its title, artist, length and licence. Space previews; Enter downloads it and adds it at the playhead.</p>
+<p>Only two kinds of licence are shown, both safe for monetised videos and for trimming: public domain (CC0, no credit needed) and CC BY (credit needed). For CC BY sounds the program saves the credit with the project, and when you export it writes a file named after your video, ending in "credits.txt". Copy its lines into your video description. <kbd>F7</kbd> also reminds you. The search uses Openverse and needs an internet connection; about 20 searches a minute are allowed.</p>
+
+<h2>Templates</h2>
+<ul>
+<li><kbd>Control Shift N</kbd> saves the project as a template. Give it a name and a folder (your own folders, such as "Vlogs" or "Tutorials"), and choose whether to keep the media files. Layers, their settings, text and colour cards are always kept, so a template can hold a ready-made intro title.</li>
+<li><kbd>Control Shift K</kbd> opens the Templates tab: Enter starts a new project, Delete removes a template, and buttons rename, move to another folder, import a template file from someone else, or open the templates folder (Documents, Accessible Video Editor, Templates).</li>
+<li><kbd>Control N</kbd> lists every template, built-in and yours; type to search.</li>
+</ul>
+
 <h2>Item options</h2>
 <p>Press <kbd>Enter</kbd> on an item. The options dialog has tabs; press <kbd>Control Tab</kbd> to move between them.</p>
 <ul>
 <li><strong>General</strong>: name, where in the file to start, length, gap before, fade in and fade out.</li>
 <li><strong>Transition in</strong>: the transition from the previous item into this one. Picture transitions include cross fade, fade through black or white, dissolve, wipes and slides in four directions, cover and reveal, circle and box shapes, clock wipe, barn doors, pixelate, blur and zoom. Sound crossfades come in many curves, from linear to smooth (good for music) and exponential. A transition only plays when the two items touch.</li>
-<li><strong>Picture</strong>, on video layers: position (full frame, centre, the four corners, top, bottom and sides, or custom), size as a percentage of the frame, and opacity.</li>
+<li><strong>Picture</strong>, on video layers: position (full frame, centre, the four corners, top, bottom and sides, or custom), size, opacity, fill, and cropping from each edge.</li>
+<li><strong>Text</strong>, for text items: the words, font, size, colour, bold, outline, box, and how it comes in and goes out.</li>
 <li><strong>Sound</strong>: volume up to 400 percent, mute, noise reduction (light, medium or strong), hum removal (50 or 60 hertz), rumble removal, a three-band equaliser (low at 100 hertz, middle at 1000 hertz, high at 8000 hertz, each from minus 12 to plus 12 decibels), voice presets (clear, warm, broadcast) and loudness levelling.</li>
 </ul>
 <p><kbd>Control T</kbd> chooses the transition at the join nearest the playhead without opening the whole dialog. <kbd>D</kbd> reads every setting of the focused item.</p>

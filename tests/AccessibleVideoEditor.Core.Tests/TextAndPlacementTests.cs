@@ -37,6 +37,16 @@ public sealed class TextRenderingTests(MediaFixture media)
     private bool CanDrawText => media.Tools.Text.Available;
 
     [Fact]
+    public void Text_drawing_is_available_where_required()
+    {
+        // CI sets AVE_REQUIRE_TEXT so a build without drawtext fails instead of skipping the text tests.
+        if (Environment.GetEnvironmentVariable("AVE_REQUIRE_TEXT") == "1")
+        {
+            Assert.True(CanDrawText, "This FFmpeg has no drawtext filter, so text can't be rendered.");
+        }
+    }
+
+    [Fact]
     public async Task Text_fades_in_stays_and_fades_out()
     {
         if (!CanDrawText)

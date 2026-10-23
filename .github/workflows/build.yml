@@ -25,6 +25,8 @@ jobs:
       - name: Install FFmpeg
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg
       - name: Test
+        env:
+          AVE_REQUIRE_TEXT: "1"
         run: dotnet test tests/AccessibleVideoEditor.Core.Tests -c Release --logger "console;verbosity=normal"
 
   windows:
@@ -37,29 +39,29 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
-      - name: Download FFmpeg (stable GPL release build)
+      - name: Download FFmpeg (stable GPL release, full build with text drawing)
         shell: pwsh
         run: |
-          # Prefer a stable release; fall back to BtbN release branches, and only then to a nightly.
-          $urls = @(
-            "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip",
-            "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-n8.0-latest-win64-gpl-8.0.zip",
-            "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-n7.1-latest-win64-gpl-7.1.zip",
-            "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip"
-          )
+          # The "full" release build includes libfreetype and HarfBuzz, needed to draw text (and to shape
+          # scripts such as Urdu and Hindi). The "essentials" build does not draw text.
           $ok = $false
-          foreach ($url in $urls) {
-            try {
-              Invoke-WebRequest $url -OutFile ffmpeg.zip -UseBasicParsing
-              Write-Host "Downloaded $url"
-              $ok = $true
-              break
-            } catch {
-              Write-Host "Not available: $url"
-            }
+          try {
+            Invoke-WebRequest "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-full.7z" -OutFile ffmpeg.7z -UseBasicParsing
+            & 7z x ffmpeg.7z -offmpeg-download -y | Out-Null
+            $ok = $LASTEXITCODE -eq 0
+            Write-Host "Downloaded the gyan.dev full release build."
+          } catch {
+            Write-Host "gyan.dev full build not available: $_"
           }
-          if (-not $ok) { throw "No FFmpeg build could be downloaded." }
-          Expand-Archive ffmpeg.zip -DestinationPath ffmpeg-download
+          if (-not $ok) {
+            # Fall back to the newest BtbN release-branch GPL build (never a nightly).
+            $release = Invoke-RestMethod "https://api.github.com/repos/BtbN/FFmpeg-Builds/releases/latest" -Headers @{ Authorization = "Bearer ${{ github.token }}" }
+            $asset = $release.assets | Where-Object { $_.name -match '^ffmpeg-n\d+\.\d+-latest-win64-gpl-\d+\.\d+\.zip$' } | Sort-Object name -Descending | Select-Object -First 1
+            if (-not $asset) { throw "No FFmpeg release build could be downloaded." }
+            Invoke-WebRequest $asset.browser_download_url -OutFile ffmpeg.zip -UseBasicParsing
+            Expand-Archive ffmpeg.zip -DestinationPath ffmpeg-download
+            Write-Host "Downloaded $($asset.name)"
+          }
           $exe = Get-ChildItem ffmpeg-download -Recurse -Filter ffmpeg.exe | Select-Object -First 1
           $root = $exe.Directory.Parent.FullName
           New-Item -ItemType Directory -Force build/ffmpeg | Out-Null
@@ -69,9 +71,16 @@ jobs:
             if (Test-Path $file) { Copy-Item $file "build/ffmpeg/FFMPEG-$name" }
           }
           & build/ffmpeg/ffmpeg.exe -hide_banner -version | Select-Object -First 1
+          $filters = & build/ffmpeg/ffmpeg.exe -hide_banner -filters
+          foreach ($needed in "drawtext", "xfade", "acrossfade", "afftdn", "loudnorm") {
+            if (-not ($filters | Select-String -SimpleMatch " $needed ")) { throw "The FFmpeg build has no $needed filter." }
+          }
+          Write-Host "FFmpeg has drawtext, xfade, acrossfade, afftdn and loudnorm."
           "FFMPEG_PATH=$((Resolve-Path build/ffmpeg).Path)" >> $env:GITHUB_ENV
 
       - name: Core tests (Windows, bundled FFmpeg)
+        env:
+          AVE_REQUIRE_TEXT: "1"
         run: dotnet test tests/AccessibleVideoEditor.Core.Tests -c Release --logger "console;verbosity=normal"
 
       - name: Publish the app (self-contained, x64)
@@ -119,12 +128,12 @@ jobs:
           }
           $iscc = (Get-Command iscc -ErrorAction SilentlyContinue).Source
           if (-not $iscc) { $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" }
-          & $iscc "/DSourceDir=$((Resolve-Path build/app).Path)" "/DAppVersion=0.1.0" installer/AccessibleVideoEditor.iss
+          & $iscc "/DSourceDir=$((Resolve-Path build/app).Path)" "/DAppVersion=0.2.0" installer/AccessibleVideoEditor.iss
           if ($LASTEXITCODE -ne 0) { throw "Installer build failed." }
 
       - name: Make the portable zip
         shell: pwsh
-        run: Compress-Archive -Path build/app/* -DestinationPath build/installer/AccessibleVideoEditor-portable-0.1.0.zip
+        run: Compress-Archive -Path build/app/* -DestinationPath build/installer/AccessibleVideoEditor-portable-0.2.0.zip
 
       - uses: actions/upload-artifact@v4
         with:

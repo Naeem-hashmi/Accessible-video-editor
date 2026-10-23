@@ -64,10 +64,9 @@ public partial class MainWindow : Window
         _announcer = new Announcer(this, _settings.SpeechOutput);
         _announcer.Spoken += text => StatusText.Text = text;
         _earcons.Configure(_settings.EarconTheme, _settings.EarconVolume);
-        _preview = new PreviewService(Player) { WindowSeconds = _settings.PreviewSeconds };
+        _preview = new PreviewService(PreviewImage) { WindowSeconds = _settings.PreviewSeconds };
         _preview.PositionChanged += OnPlaybackPosition;
         _preview.ReachedEnd += OnPlaybackEnded;
-        _preview.ContinueRequested += time => _ = ContinuePlaybackAsync(time);
         _preview.Preparing += OnPreviewPreparing;
 
         LayersList.ItemsSource = _layers;
@@ -108,6 +107,8 @@ public partial class MainWindow : Window
     internal Announcer Speech => _announcer;
 
     internal string StatusTextValue => StatusText.Text;
+
+    internal PreviewService Preview => _preview;
 
     internal EarconPlayer Earcons => _earcons;
 
@@ -307,7 +308,29 @@ public partial class MainWindow : Window
         }
 
         e.Handled = true;
+        SyncFocusFromScreen();
         _ = RunAsync(command);
+    }
+
+    /// <summary>
+    /// Makes sure commands act on exactly the item or layer the screen reader last announced, even if focus
+    /// got there by Tab, the mouse or the screen reader's own navigation.
+    /// </summary>
+    private void SyncFocusFromScreen()
+    {
+        if (Keyboard.FocusedElement is not ListBoxItem { DataContext: SpokenViewModel vm })
+        {
+            return;
+        }
+
+        if (ItemsList.IsKeyboardFocusWithin && vm.Id != _editor.FocusedItemId)
+        {
+            _editor.FocusItem(vm.Id);
+        }
+        else if (LayersList.IsKeyboardFocusWithin && vm.Id != _editor.FocusedLayerId)
+        {
+            _editor.FocusLayer(vm.Id);
+        }
     }
 
     /// <summary>Keys a text box needs for editing, which must not run editor commands there.</summary>

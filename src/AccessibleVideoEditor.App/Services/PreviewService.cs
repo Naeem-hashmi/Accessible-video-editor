@@ -1,68 +1,51 @@
+using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.IO;
-using System.Security.Cryptography;
-using System.Text;
+using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using System.Windows.Threading;
-using AccessibleVideoEditor.Core.Editing;
 using AccessibleVideoEditor.Core.Model;
 using AccessibleVideoEditor.Core.Rendering;
+using NAudio.Wave;
 
 namespace AccessibleVideoEditor.App.Services;
 
 /// <summary>
-/// Plays the project while editing. A short, low-resolution preview is rendered with FFmpeg from a little
-/// before the playhead and played with Windows Media Foundation. Previews are cached, so playing the
-/// same part again starts at once.
+/// Plays the project live. FFmpeg renders the mix from the playhead and streams raw sound (and small
+/// picture frames) straight into the program, so playback starts at once with no file to prepare.
+/// Sound goes to the standard Windows audio output through NAudio; Windows Media Player is not needed.
 /// </summary>
 public sealed class PreviewService : IDisposable
 {
-    /// <summary>Preview windows start this much before the playhead so J (jump back) is instant.</summary>
-    private const double LeadIn = 10;
-
     private static readonly double[] Speeds = [1, 2, 4];
+    private const int BytesPerSecond = 48000 * 4;
 
-    private readonly MediaElement _media;
+    private readonly Image _image;
     private readonly DispatcherTimer _timer;
-    private readonly Dictionary<string, string> _cache = new();
-    private CancellationTokenSource? _renderCancel;
-    private TaskCompletionSource<bool>? _opening;
-    private string? _currentKey;
-    private double _fileStart;
-    private double _fileLength;
-    private double _projectEnd;
+    private Session? _session;
     private int _speedIndex;
+    private double _lastTime;
+    private Project? _project;
+    private RenderScope? _scope;
+    private WriteableBitmap? _bitmap;
 
-    public PreviewService(MediaElement media)
+    public PreviewService(Image image)
     {
-        _media = media;
-        _media.LoadedBehavior = MediaState.Manual;
-        _media.UnloadedBehavior = MediaState.Manual;
-        _media.ScrubbingEnabled = true;
-        _media.MediaOpened += (_, _) => _opening?.TrySetResult(true);
-        _media.MediaFailed += (_, e) =>
-        {
-            AppPaths.Log("Preview playback failed: " + e.ErrorException?.Message);
-            _opening?.TrySetResult(false);
-        };
-        _media.MediaEnded += (_, _) => OnWindowEnded();
-        _timer = new DispatcherTimer(DispatcherPriority.Background) { Interval = TimeSpan.FromMilliseconds(100) };
-        _timer.Tick += (_, _) =>
-        {
-            if (IsPlaying)
-            {
-                PositionChanged?.Invoke(_fileStart + _media.Position.TotalSeconds);
-            }
-        };
+        _image = image;
+        _timer = new DispatcherTimer(DispatcherPriority.Render) { Interval = TimeSpan.FromMilliseconds(40) };
+        _timer.Tick += (_, _) => Tick();
     }
 
     public FfmpegTools? Tools { get; set; }
 
-    /// <summary>Seconds rendered per preview window.</summary>
+    /// <summary>Kept for settings compatibility; live playback has no window to render.</summary>
     public double WindowSeconds { get; set; } = 60;
 
-    public bool IsPlaying { get; private set; }
+    public bool IsPlaying => _session is { Started: true };
 
-    public bool IsPreparing => _renderCancel is not null;
+    public bool IsPreparing => _session is { Started: false };
 
     public double Speed => Speeds[_speedIndex];
 
@@ -72,13 +55,12 @@ public sealed class PreviewService : IDisposable
     /// <summary>The end of the project was reached.</summary>
     public event Action? ReachedEnd;
 
-    /// <summary>Preview rendering progress, 0 to 1, for announcements.</summary>
+    /// <summary>Raised while waiting for the first sound (0 to 1), for "Preparing preview".</summary>
     public event Action<double>? Preparing;
 
-    /// <summary>
-    /// Plays from <paramref name="time"/>. Returns an error message, or null when playback started
-    /// (or was cancelled by a newer request).
-    /// </summary>
+    public double CurrentTime => _session is { } s ? s.Start + s.OutputSeconds * s.Speed : _lastTime;
+
+    /// <summary>Plays from <paramref name="time"/>. Returns an error message, or null when playback started or was cancelled.</summary>
     public async Task<string?> PlayAsync(Project project, RenderScope scope, double time)
     {
         if (Tools is null)
@@ -94,215 +76,346 @@ public sealed class PreviewService : IDisposable
 
         if (time >= end - 0.05)
         {
-            return "The playhead is at the end. Press Control Home to go to the start.";
+            return "The playhead is at the end. Press Control Home or Control Shift Left to go to the start.";
         }
 
-        _projectEnd = end;
-        var windowStart = Math.Max(0, time - LeadIn);
-        var key = CacheKey(project, scope, windowStart);
-        var reuse = _currentKey is not null && FitsCurrent(project, scope, time);
-
-        if (!reuse)
+        Stop();
+        _project = project;
+        _scope = scope;
+        Session session;
+        try
         {
-            Pause();
-            var file = _cache.GetValueOrDefault(key);
-            if (file is null || !File.Exists(file))
-            {
-                file = await RenderAsync(project, scope, windowStart, key).ConfigureAwait(true);
-                if (file is null)
-                {
-                    return null;
-                }
-            }
-
-            if (!await OpenAsync(file).ConfigureAwait(true))
-            {
-                return "Windows could not play the preview. Make sure the Media Feature Pack is installed (Windows N editions need it).";
-            }
-
-            _currentKey = key;
-            _fileStart = windowStart;
-            _fileLength = Math.Min(WindowSeconds + LeadIn, end - windowStart);
+            session = Session.Open(Tools, project, scope, time, Speed, GraphBuilder.ScopeHasVideo(project, scope));
+        }
+        catch (RenderException ex)
+        {
+            return ex.Message;
         }
 
-        _media.Position = TimeSpan.FromSeconds(Math.Max(0, time - _fileStart));
-        _media.SpeedRatio = Speed;
-        _media.Play();
-        IsPlaying = true;
+        _session = session;
+        if (session.HasPicture)
+        {
+            EnsureBitmap(session.FrameWidth, session.FrameHeight);
+        }
+
+        var clock = Stopwatch.StartNew();
+        while (!session.HasEnoughSound && !session.SoundEnded && clock.Elapsed.TotalSeconds < 15)
+        {
+            Preparing?.Invoke(0);
+            await Task.Delay(20).ConfigureAwait(true);
+            if (!ReferenceEquals(_session, session))
+            {
+                return null;
+            }
+        }
+
+        if (!session.HasEnoughSound && session.BufferedBytes == 0)
+        {
+            var reason = session.Errors;
+            Stop();
+            AppPaths.Log("Preview failed: " + reason);
+            return "The preview could not be played. " + (string.IsNullOrWhiteSpace(reason) ? "" : "FFmpeg said: " + reason.Split('\n').Last().Trim());
+        }
+
+        session.StartOutput();
         _timer.Start();
         return null;
     }
 
-    /// <summary>Plays faster: 1, 2, then 4 times speed, then back to normal.</summary>
+    /// <summary>Plays faster: 1, 2, then 4 times speed, then back to normal. Restarts the stream at the new speed.</summary>
     public double Faster()
     {
         _speedIndex = (_speedIndex + 1) % Speeds.Length;
-        _media.SpeedRatio = Speed;
+        if (IsPlaying && _project is not null && _scope is not null)
+        {
+            var at = CurrentTime;
+            _ = PlayAsync(_project, _scope, at);
+        }
+
         return Speed;
     }
 
-    public void ResetSpeed()
-    {
-        _speedIndex = 0;
-        _media.SpeedRatio = 1;
-    }
+    public void ResetSpeed() => _speedIndex = 0;
 
-    public void Pause()
-    {
-        if (IsPlaying)
-        {
-            _media.Pause();
-        }
+    public void Pause() => Stop();
 
-        IsPlaying = false;
-        _timer.Stop();
-    }
-
-    /// <summary>Stops any preview being prepared.</summary>
     public void CancelPreparing()
     {
-        _renderCancel?.Cancel();
-    }
-
-    /// <summary>The project changed: cached previews are kept, but the playing one may be out of date.</summary>
-    public void Invalidate() => _currentKey = null;
-
-    public double CurrentTime => _fileStart + _media.Position.TotalSeconds;
-
-    private bool FitsCurrent(Project project, RenderScope scope, double time)
-    {
-        if (time < _fileStart || time > _fileStart + _fileLength - 0.5)
+        if (IsPreparing)
         {
-            return false;
-        }
-
-        return _currentKey == CacheKey(project, scope, _fileStart);
-    }
-
-    private async Task<string?> RenderAsync(Project project, RenderScope scope, double start, string key)
-    {
-        _renderCancel?.Cancel();
-        var cancel = new CancellationTokenSource();
-        _renderCancel = cancel;
-        try
-        {
-            var hasVideo = GraphBuilder.ScopeHasVideo(project, scope);
-            var profile = hasVideo ? OutputProfile.PreviewVideo : OutputProfile.PreviewAudio;
-            Directory.CreateDirectory(AppPaths.PreviewFolder);
-            var output = Path.Combine(AppPaths.PreviewFolder, $"preview-{key[..16]}{profile.Extension}");
-            var canvas = PreviewCanvas(project);
-            var request = new RenderRequest
-            {
-                Project = project,
-                Scope = scope,
-                Start = start,
-                End = start + WindowSeconds + LeadIn,
-                Profile = profile,
-                OutputPath = output,
-                CanvasOverride = canvas,
-            };
-            var plan = new GraphBuilder(Tools!.HasEncoder, Tools!.Text).Build(request);
-            var progress = new Progress<double>(p => Preparing?.Invoke(p));
-            await Task.Run(() => RenderRunner.RunAsync(Tools, plan, output, progress, cancel.Token), cancel.Token).ConfigureAwait(true);
-            _cache[key] = output;
-            TrimCache();
-            return output;
-        }
-        catch (OperationCanceledException)
-        {
-            return null;
-        }
-        finally
-        {
-            if (ReferenceEquals(_renderCancel, cancel))
-            {
-                _renderCancel = null;
-            }
-
-            cancel.Dispose();
+            Stop();
         }
     }
 
-    private async Task<bool> OpenAsync(string file)
+    /// <summary>The project changed. Live playback always uses the latest project when it restarts.</summary>
+    public void Invalidate()
     {
-        _opening = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
-        _media.Stop();
-        _media.Source = null;
-        _media.Source = new Uri(file);
-        _media.Play();
-        _media.Pause();
-        var finished = await Task.WhenAny(_opening.Task, Task.Delay(TimeSpan.FromSeconds(15))).ConfigureAwait(true);
-        return finished == _opening.Task && _opening.Task.Result;
     }
 
-    private void OnWindowEnded()
+    private void Stop()
     {
-        var reached = _fileStart + _fileLength;
-        Pause();
-        _currentKey = null;
-        if (reached >= _projectEnd - 0.1)
+        _timer.Stop();
+        if (_session is { } session)
         {
+            _lastTime = CurrentTime;
+            _session = null;
+            session.Dispose();
+        }
+    }
+
+    private void Tick()
+    {
+        if (_session is not { Started: true } session)
+        {
+            return;
+        }
+
+        var output = session.OutputSeconds;
+        PositionChanged?.Invoke(session.Start + output * session.Speed);
+        if (session.HasPicture && _bitmap is not null && session.TakeFrame(output) is { } frame)
+        {
+            _bitmap.WritePixels(new Int32Rect(0, 0, session.FrameWidth, session.FrameHeight), frame, session.FrameWidth * 4, 0);
+        }
+
+        if (session.SoundEnded && session.BufferedBytes == 0 && output >= session.OutputLength - 0.15)
+        {
+            Stop();
             ReachedEnd?.Invoke();
         }
-        else
+    }
+
+    private void EnsureBitmap(int width, int height)
+    {
+        if (_bitmap is null || _bitmap.PixelWidth != width || _bitmap.PixelHeight != height)
         {
-            // More of the project follows: let the window ask to continue from here.
-            PositionChanged?.Invoke(reached);
-            ContinueRequested?.Invoke(reached);
-        }
-    }
-
-    /// <summary>A preview window ended before the project did; play on from this time.</summary>
-    public event Action<double>? ContinueRequested;
-
-    private static (int Width, int Height) PreviewCanvas(Project project)
-    {
-        const int maxW = 640;
-        const int maxH = 360;
-        var scale = Math.Min((double)maxW / project.Width, (double)maxH / project.Height);
-        scale = Math.Min(1, scale);
-        return ((int)Math.Round(project.Width * scale / 2) * 2, (int)Math.Round(project.Height * scale / 2) * 2);
-    }
-
-    private string CacheKey(Project project, RenderScope scope, double start)
-    {
-        var text = $"{ProjectSerializer.ToJson(project, indented: false)}|{scope.LayerId}|{start:0.###}|{WindowSeconds}";
-        return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(text)));
-    }
-
-    private void TrimCache()
-    {
-        while (_cache.Count > 12)
-        {
-            var oldest = _cache.First();
-            _cache.Remove(oldest.Key);
-            TryDelete(oldest.Value);
+            _bitmap = new WriteableBitmap(width, height, 96, 96, PixelFormats.Bgra32, null);
+            _image.Source = _bitmap;
         }
     }
 
     public void Dispose()
     {
-        _renderCancel?.Cancel();
-        _timer.Stop();
-        _media.Stop();
-        _media.Source = null;
-        foreach (var file in _cache.Values)
-        {
-            TryDelete(file);
-        }
+        Stop();
     }
 
-    private static void TryDelete(string file)
+    /// <summary>One run of live playback: the sound and picture streams and their readers.</summary>
+    private sealed class Session : IDisposable
     {
-        try
+        private readonly FfmpegStream _sound;
+        private readonly FfmpegStream? _picture;
+        private readonly BufferedWaveProvider _buffer = new(new WaveFormat(48000, 16, 2))
         {
-            File.Delete(file);
+            BufferDuration = TimeSpan.FromSeconds(4),
+            ReadFully = true,
+            DiscardOnBufferOverflow = false,
+        };
+
+        private readonly ConcurrentQueue<(int Index, byte[] Pixels)> _frames = new();
+        private readonly CancellationTokenSource _cancel = new();
+        private readonly Stopwatch _fallbackClock = new();
+        private WaveOutEvent? _output;
+        private volatile bool _soundEnded;
+
+        private Session(FfmpegStream sound, FfmpegStream? picture, double start, double speed, double outputLength, int width, int height)
+        {
+            _sound = sound;
+            _picture = picture;
+            Start = start;
+            Speed = speed;
+            OutputLength = outputLength;
+            FrameWidth = width;
+            FrameHeight = height;
         }
-        catch (IOException)
+
+        public double Start { get; }
+
+        public double Speed { get; }
+
+        /// <summary>Length of the stream in playback seconds.</summary>
+        public double OutputLength { get; }
+
+        public int FrameWidth { get; }
+
+        public int FrameHeight { get; }
+
+        public bool HasPicture => _picture is not null;
+
+        public bool Started { get; private set; }
+
+        public bool SoundEnded => _soundEnded;
+
+        public int BufferedBytes => _buffer.BufferedBytes;
+
+        public bool HasEnoughSound => _buffer.BufferedBytes >= BytesPerSecond / 6;
+
+        public string Errors => _sound.Errors;
+
+        /// <summary>Seconds of sound played so far (from the sound card, or a clock when there is none).</summary>
+        public double OutputSeconds => _output is { } o
+            ? Math.Min(OutputLength, o.GetPosition() / (double)BytesPerSecond)
+            : Math.Min(OutputLength, _fallbackClock.Elapsed.TotalSeconds);
+
+        public static Session Open(FfmpegTools tools, Project project, RenderScope scope, double time, double speed, bool withPicture)
         {
+            var builder = new GraphBuilder(tools.HasEncoder, tools.Text);
+            var soundPlan = builder.Build(new RenderRequest
+            {
+                Project = project, Scope = scope, Start = time, Speed = speed, Profile = OutputProfile.StreamAudio, OutputPath = "pipe:1",
+            });
+            var (w, h) = PreviewCanvas(project);
+            var sound = FfmpegStream.Start(tools, soundPlan);
+            FfmpegStream? picture = null;
+            if (withPicture)
+            {
+                try
+                {
+                    var picturePlan = new GraphBuilder(tools.HasEncoder, tools.Text).Build(new RenderRequest
+                    {
+                        Project = project, Scope = scope, Start = time, Speed = speed, Profile = OutputProfile.StreamVideo,
+                        OutputPath = "pipe:1", CanvasOverride = (w, h),
+                    });
+                    picture = FfmpegStream.Start(tools, picturePlan);
+                }
+                catch (RenderException ex)
+                {
+                    // The sound matters most; play it even if the picture can't be made.
+                    AppPaths.Log("Preview picture unavailable: " + ex.Message);
+                }
+            }
+
+            var session = new Session(sound, picture, time, speed, soundPlan.Duration, w, h);
+            session.ReadSound();
+            if (picture is not null)
+            {
+                session.ReadPicture();
+            }
+
+            return session;
         }
-        catch (UnauthorizedAccessException)
+
+        public void StartOutput()
         {
+            try
+            {
+                _output = new WaveOutEvent { DesiredLatency = 150, NumberOfBuffers = 3 };
+                _output.Init(_buffer);
+                _output.Play();
+            }
+            catch (Exception ex)
+            {
+                // No sound device (for example on a server): keep time with a clock so the picture still plays.
+                AppPaths.Log("No sound output for preview: " + ex.Message);
+                _output?.Dispose();
+                _output = null;
+                _fallbackClock.Start();
+            }
+
+            Started = true;
+        }
+
+        /// <summary>The newest frame due at <paramref name="outputSeconds"/>, or null if none is new.</summary>
+        public byte[]? TakeFrame(double outputSeconds)
+        {
+            var due = (int)(outputSeconds * OutputProfile.StreamFrameRate);
+            byte[]? latest = null;
+            while (_frames.TryPeek(out var head) && head.Index <= due)
+            {
+                if (_frames.TryDequeue(out var frame))
+                {
+                    latest = frame.Pixels;
+                }
+            }
+
+            return latest;
+        }
+
+        private void ReadSound()
+        {
+            var token = _cancel.Token;
+            Task.Factory.StartNew(() =>
+            {
+                var chunk = new byte[BytesPerSecond / 20];
+                try
+                {
+                    while (!token.IsCancellationRequested)
+                    {
+                        var read = _sound.Output.Read(chunk, 0, chunk.Length);
+                        if (read == 0)
+                        {
+                            break;
+                        }
+
+                        while (_buffer.BufferedDuration.TotalSeconds > 2 && !token.IsCancellationRequested)
+                        {
+                            Thread.Sleep(15);
+                        }
+
+                        _buffer.AddSamples(chunk, 0, read);
+                    }
+                }
+                catch (Exception ex) when (ex is IOException or ObjectDisposedException or InvalidOperationException)
+                {
+                }
+                finally
+                {
+                    _soundEnded = true;
+                }
+            }, token, TaskCreationOptions.LongRunning, TaskScheduler.Default);
+        }
+
+        private void ReadPicture()
+        {
+            var token = _cancel.Token;
+            Task.Factory.StartNew(() =>
+            {
+                var index = 0;
+                try
+                {
+                    while (!token.IsCancellationRequested)
+                    {
+                        var frame = new byte[FrameWidth * FrameHeight * 4];
+                        if (!_picture!.ReadExactly(frame, token))
+                        {
+                            break;
+                        }
+
+                        while (_frames.Count > 20 && !token.IsCancellationRequested)
+                        {
+                            Thread.Sleep(10);
+                        }
+
+                        _frames.Enqueue((index++, frame));
+                    }
+                }
+                catch (Exception ex) when (ex is IOException or ObjectDisposedException or OperationCanceledException or InvalidOperationException)
+                {
+                }
+            }, token, TaskCreationOptions.LongRunning, TaskScheduler.Default);
+        }
+
+        private static (int Width, int Height) PreviewCanvas(Project project)
+        {
+            const double maxW = 480;
+            const double maxH = 270;
+            var scale = Math.Min(1, Math.Min(maxW / project.Width, maxH / project.Height));
+            return ((int)Math.Round(project.Width * scale / 2) * 2, (int)Math.Round(project.Height * scale / 2) * 2);
+        }
+
+        public void Dispose()
+        {
+            _cancel.Cancel();
+            try
+            {
+                _output?.Stop();
+            }
+            catch (Exception ex) when (ex is InvalidOperationException or NAudio.MmException)
+            {
+            }
+
+            _output?.Dispose();
+            _sound.Dispose();
+            _picture?.Dispose();
+            _cancel.Dispose();
         }
     }
 }

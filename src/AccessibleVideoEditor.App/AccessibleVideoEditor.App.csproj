@@ -17,4 +17,9 @@
     <ProjectReference Include="..\AccessibleVideoEditor.Core\AccessibleVideoEditor.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Sound output for the live preview (MIT licence). Uses the standard Windows audio API, not Windows Media Player. -->
+    <PackageReference Include="NAudio.WinMM" Version="2.2.1" />
+  </ItemGroup>
+
 </Project>

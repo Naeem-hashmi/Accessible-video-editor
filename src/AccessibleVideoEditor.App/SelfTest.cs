@@ -329,6 +329,25 @@ internal static class SelfTest
             Check(File.Exists(output), "A preview renders");
         });
 
+        await Step("live preview", async () =>
+        {
+            var clock = Stopwatch.StartNew();
+            var error = await window.Preview.PlayAsync(window.Editor.Project, RenderScope.AllLayers, 0);
+            var startup = clock.Elapsed.TotalSeconds;
+            log.Add($"Live preview started in {startup:0.00} seconds{(error is null ? "" : ": " + error)}.");
+            Check(error is null, "Live preview starts without Windows Media Player");
+            Check(startup < 5, "Live preview starts within 5 seconds");
+            await Task.Delay(1500);
+            var at = window.Preview.CurrentTime;
+            log.Add($"After 1.5 seconds the preview is at {at:0.00} seconds.");
+            Check(window.Preview.IsPlaying && at > 0.5, "The preview clock moves while playing");
+            window.Preview.Pause();
+            Check(!window.Preview.IsPlaying, "Pause stops the preview");
+            var fromMiddle = await window.Preview.PlayAsync(window.Editor.Project, RenderScope.AllLayers, 3);
+            Check(fromMiddle is null && window.Preview.CurrentTime >= 3, "The preview can start from the middle");
+            window.Preview.Pause();
+        });
+
         await Step("every command runs without crashing", async () =>
         {
             foreach (var command in Enum.GetValues<CommandId>())

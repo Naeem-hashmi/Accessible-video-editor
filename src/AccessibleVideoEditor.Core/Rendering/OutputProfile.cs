@@ -4,6 +4,12 @@ public enum OutputKind
 {
     VideoAndAudio,
     AudioOnly,
+
+    /// <summary>Raw 16-bit stereo 48 kHz sound written to a pipe, for live preview.</summary>
+    StreamAudio,
+
+    /// <summary>Raw BGRA picture frames written to a pipe, for live preview. The sound is discarded.</summary>
+    StreamVideo,
 }
 
 /// <summary>An export or preview format. Width and height of 0 mean "use the project canvas size".</summary>
@@ -20,7 +26,22 @@ public sealed record OutputProfile(
     string AudioCodec,
     string AudioBitrate)
 {
-    public bool HasVideo => Kind == OutputKind.VideoAndAudio;
+    public bool HasVideo => Kind is OutputKind.VideoAndAudio or OutputKind.StreamVideo;
+
+    public bool IsStream => Kind is OutputKind.StreamAudio or OutputKind.StreamVideo;
+
+    /// <summary>Frames per second of the live preview picture.</summary>
+    public const int StreamFrameRate = 15;
+
+    /// <summary>Live preview sound: raw PCM to stdout.</summary>
+    public static OutputProfile StreamAudio { get; } = new(
+        "stream-audio", "Live preview sound", "Raw sound for live playback.",
+        "", OutputKind.StreamAudio, 0, 0, 0, "", "pcm_s16le", "");
+
+    /// <summary>Live preview picture: raw BGRA frames to stdout.</summary>
+    public static OutputProfile StreamVideo { get; } = new(
+        "stream-video", "Live preview picture", "Raw frames for live playback.",
+        "", OutputKind.StreamVideo, 0, 0, 0, "", "", "");
 
     public static OutputProfile YouTube1080 { get; } = new(
         "youtube-1080p", "YouTube and web, 1080p HD (recommended)",

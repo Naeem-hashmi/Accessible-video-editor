@@ -266,9 +266,19 @@ public static class ProjectEditor
             }
         }
 
+        var count = layer.Items.Count;
+        var deletedSpan = spans[index];
         layer.Items.RemoveAt(index);
         Guid? focus = layer.Items.Count == 0 ? null : layer.Items[Math.Min(index, layer.Items.Count - 1)].Id;
-        return EditResult.Success($"Deleted {item.Name}.", focus, layer.Id);
+        var left = layer.Items.Count switch
+        {
+            0 => $"{layer.Name} is now empty.",
+            1 => $"1 item left on {layer.Name}.",
+            var n => $"{n} items left on {layer.Name}.",
+        };
+        return EditResult.Success(
+            $"Deleted item {index + 1} of {count}, {item.Name}, {TimeFormat.Words(item.Duration)} long, from {TimeFormat.Words(deletedSpan.Start)}. {left}",
+            focus, layer.Id);
     }
 
     /// <summary>Removes everything between <paramref name="from"/> and <paramref name="to"/> on one layer.</summary>
@@ -279,6 +289,11 @@ public static class ProjectEditor
             return EditResult.Fail("The range is too short. Set range start with left bracket and range end with right bracket.");
         }
 
+        var touched = Timeline.Spans(layer)
+            .Where(sp => sp.End > from + 0.01 && sp.Start < to - 0.01)
+            .Select(sp => layer.Items[sp.Index].Name)
+            .Distinct()
+            .ToList();
         SplitIfInside(layer, to);
         SplitIfInside(layer, from);
 
@@ -314,7 +329,7 @@ public static class ProjectEditor
 
         var focus = layer.Items.Count == 0 ? (Guid?)null : layer.Items[Math.Max(0, Timeline.NearestItem(layer, from))].Id;
         return EditResult.Success(
-            $"Removed {TimeFormat.Words(to - from)} from {layer.Name}{(ripple ? ", later items moved earlier" : "")}.",
+            $"Removed {TimeFormat.Words(from)} to {TimeFormat.Words(to)}, {TimeFormat.Words(to - from)}, from {layer.Name}, cutting {string.Join(" and ", touched)}{(ripple ? ". Later items moved earlier" : ". Later items kept their time")}.",
             focus, layer.Id);
     }
 

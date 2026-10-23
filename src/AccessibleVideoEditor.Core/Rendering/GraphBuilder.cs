@@ -48,6 +48,9 @@ public sealed class RenderRequest
 
     public required string OutputPath { get; init; }
 
+    /// <summary>Playback speed for live preview: 1, 2 or 4.</summary>
+    public double Speed { get; init; } = 1;
+
     /// <summary>Compose at a smaller size than the project canvas (used for fast previews).</summary>
     public (int Width, int Height)? CanvasOverride { get; init; }
 }
@@ -184,6 +187,7 @@ public sealed class GraphBuilder
         var totalFrames = Math.Max(1, (long)Math.Round(total * _fps));
         var totalSamples = (long)Math.Round(totalFrames / _fps * SampleRate);
         var outputVideo = request.Profile.HasVideo;
+        var speed = request.Speed is 2 or 4 ? request.Speed : 1;
 
         var videoLabels = new List<string>();
         var audioLabels = new List<string>();
@@ -218,10 +222,22 @@ public sealed class GraphBuilder
                     $",scale={outW}:{outH}:force_original_aspect_ratio=decrease:force_divisible_by=2,pad={outW}:{outH}:(ow-iw)/2:(oh-ih)/2:color=black");
             }
 
+            if (Math.Abs(speed - 1) > 1e-9)
+            {
+                finish.Append(CultureInfo.InvariantCulture, $",setpts=PTS/{Num(speed)}");
+            }
+
+            if (request.Profile.Kind == OutputKind.StreamVideo)
+            {
+                finish.Append(CultureInfo.InvariantCulture, $",fps={OutputProfile.StreamFrameRate},format=bgra");
+            }
+
             finish.Append(",setsar=1[vout]");
             _chains.Add(finish.ToString());
             outputArgs.AddRange(["-map", "[vout]"]);
-            outputArgs.AddRange(VideoCodecArgs(request.Profile));
+            outputArgs.AddRange(request.Profile.Kind == OutputKind.StreamVideo
+                ? ["-c:v", "rawvideo", "-pix_fmt", "bgra", "-f", "rawvideo"]
+                : VideoCodecArgs(request.Profile));
         }
 
         var mix = new StringBuilder();
@@ -240,18 +256,44 @@ public sealed class GraphBuilder
         }
 
         mix.Append(CultureInfo.InvariantCulture,
-            $",apad=whole_len={totalSamples},atrim=end_sample={totalSamples},alimiter=limit=0.98:attack=5:release=50:level=0,{AudioFormat}[aout]");
-        _chains.Add(mix.ToString());
-        outputArgs.AddRange(["-map", "[aout]"]);
-        outputArgs.AddRange(AudioCodecArgs(request.Profile));
+            $",apad=whole_len={totalSamples},atrim=end_sample={totalSamples},alimiter=limit=0.98:attack=5:release=50:level=0");
+        for (var s = speed; s > 1.0001; s /= 2)
+        {
+            // atempo changes speed without changing pitch; one step doubles it.
+            mix.Append(",atempo=2");
+        }
 
-        var seconds = totalFrames / _fps;
+        if (request.Profile.Kind == OutputKind.StreamVideo)
+        {
+            // The picture stream has no sound output; the sound is finished off inside the graph.
+            mix.Append(",anullsink");
+            _chains.Add(mix.ToString());
+        }
+        else
+        {
+            mix.Append(CultureInfo.InvariantCulture, $",{AudioFormat}[aout]");
+            _chains.Add(mix.ToString());
+            outputArgs.AddRange(["-map", "[aout]"]);
+            outputArgs.AddRange(request.Profile.Kind == OutputKind.StreamAudio
+                ? ["-c:a", "pcm_s16le", "-ar", SampleRate.ToString(Inv), "-ac", "2", "-f", "s16le"]
+                : AudioCodecArgs(request.Profile));
+        }
+
+        var seconds = totalFrames / _fps / speed;
         if (request.Profile.Extension == ".mp4" || request.Profile.Extension == ".m4a")
         {
             outputArgs.AddRange(["-movflags", "+faststart"]);
         }
 
-        outputArgs.AddRange(["-t", Num(seconds), "-progress", "pipe:1", "-nostats", Path.GetFullPath(request.OutputPath)]);
+        if (request.Profile.IsStream)
+        {
+            // Standard output carries the media itself, so no progress lines there.
+            outputArgs.AddRange(["-t", Num(seconds), "-nostats", "pipe:1"]);
+        }
+        else
+        {
+            outputArgs.AddRange(["-t", Num(seconds), "-progress", "pipe:1", "-nostats", Path.GetFullPath(request.OutputPath)]);
+        }
         return new RenderPlan(new List<string>(_inputs), string.Join(";\n", _chains), outputArgs, seconds, outputVideo,
             new Dictionary<string, AuxiliaryFile>(_aux));
     }

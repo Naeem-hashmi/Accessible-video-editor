@@ -56,7 +56,7 @@
                         FocusVisualStyle="{x:Null}" BorderBrush="DodgerBlue"
                         AutomationProperties.Name="Preview"
                         AutomationProperties.HelpText="The picture. It describes what is on screen at the playhead. Playback and timeline keys work here; P moves the focused picture.">
-                    <MediaElement x:Name="Player" Focusable="False" Stretch="Uniform" AutomationProperties.Name="Preview picture" />
+                    <Image x:Name="PreviewImage" Focusable="False" Stretch="Uniform" RenderOptions.BitmapScalingMode="LowQuality" AutomationProperties.Name="Preview picture" />
                 </Border>
 
                 <Grid Grid.Row="1">

@@ -153,6 +153,7 @@ public sealed class EditorControllerTests
         Press(editor, CommandId.SetRangeEnd);
         var result = Press(editor, CommandId.DeleteRange);
         Assert.Equal(EarconEvent.Deleted, result.Earcon);
+        Assert.Equal("Removed 2 seconds to 6 seconds, 4 seconds, from Video 1, cutting clip1.mp4 and clip2.mp4. Later items moved earlier.", result.Speech);
         Assert.Equal(8, Timeline.LayerEnd(editor.Project.Layers[0]), 6);
         Assert.Equal(10, Timeline.LayerEnd(editor.Project.Layers[1]), 6);
         Assert.Equal(2, editor.Playhead);
@@ -206,7 +207,7 @@ public sealed class EditorControllerTests
         var editor = Editor(out _);
         Press(editor, CommandId.NextItem);
         var deleted = Press(editor, CommandId.Delete);
-        Assert.Equal("Deleted clip2.mp4.", deleted.Speech);
+        Assert.Equal("Deleted item 2 of 3, clip2.mp4, 4 seconds long, from 4 seconds. 2 items left on Video 1.", deleted.Speech);
         Assert.Equal("clip3.mp4", editor.FocusedItem!.Name);
         var undo = Press(editor, CommandId.Undo);
         Assert.Equal("Undo delete item.", undo.Speech);

@@ -112,6 +112,7 @@ public sealed class ProjectEditorTests
         var layer = Make.Layer(LayerKind.Video, Make.Clip("a", 2), Make.Clip("b", 3), Make.Clip("c", 1));
         var result = ProjectEditor.DeleteItem(layer, 1, ripple: true);
         Assert.True(result.Ok);
+        Assert.Equal("Deleted item 2 of 3, b, 3 seconds long, from 2 seconds. 2 items left on Video 1.", result.Message);
         Assert.Equal(new[] { 0.0, 2 }, Make.Starts(layer));
         Assert.Equal(layer.Items[1].Id, result.FocusItemId);
     }

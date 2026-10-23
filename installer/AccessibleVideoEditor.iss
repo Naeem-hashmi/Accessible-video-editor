@@ -5,7 +5,7 @@
 #define AppName "ClipScribe"
 #define AppExe "ClipScribe.exe"
 #ifndef AppVersion
-  #define AppVersion "0.3.0"
+  #define AppVersion "0.4.0"
 #endif
 #ifndef SourceDir
   #define SourceDir "..\build\app"

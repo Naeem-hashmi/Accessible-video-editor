@@ -4,6 +4,8 @@ A video editor for Windows built first for screen reader users. It works with **
 
 **Quick video** makes a finished video in three steps (files, style, title). **Edit by transcript**: speech is turned into text on your own computer (English, Urdu, Hindi and more), and deleting words cuts the video. Captions, pause shortening, beat detection with cut-to-the-beat, and music that lowers itself under speech are built in.
 
+New in 0.4: select several items with `Shift` and the arrows and change them all at once; stretch any item longer or shorter and play clips faster or slower (`Alt =`, `Alt -`, `Alt ]`, `Alt [`); an options menu on every item and layer with the `Applications` key; a timeline that follows the keyboard and shows picture thumbnails; held keys that speed up; light, dark and follow-Windows themes; faster speech recognition (only the parts you use, skipping silence, a quick draft improved in the background, the graphics chip, and a speed test); finding repeats and fillers, transcript export and import, and an optional AI clean-up with OpenRouter, Ollama or any OpenAI-compatible service; real swipes, whooshes, pops, bubbles and clicks; and faster export with the video chip (Intel Quick Sync, NVIDIA, AMD).
+
 It can trim and split clips, join several videos, add music, voice and sound effects, layer pictures and videos over each other (logos, picture in picture), add picture and sound transitions, clean up sound (noise reduction, hum removal, equaliser, voice presets), and export high-quality video for YouTube and social media.
 
 ## How it works
@@ -15,7 +17,7 @@ It can trim and split clips, join several videos, add music, voice and sound eff
 - **Arranging.** `Alt+J` and `Alt+L` slide an item in time; `Alt+Shift+Left` and `Alt+Shift+Right` change its order.
 - **Speech that never fights the screen reader.** Messages go to NVDA or JAWS directly when they are running, otherwise through Windows UI Automation. When focus moves, the message is read as part of the newly focused item, so the two never cut each other off.
 - **Standard Windows controls only.** Menus, lists, tabs, text boxes and combo boxes, with every field labelled. Nothing is a custom drawing that screen readers can't read.
-- **Copyright-free sounds.** Real recordings of typing, clicks, bells, applause, laughter, rain and more, all public domain or CC0 from Wikimedia Commons, plus earcon themes and 18 effects and music beds made by the program's own synthesizer. Space previews any sound.
+- **Copyright-free sounds.** Real recordings for modern edits (swipes, whooshes, pops, bubbles, clicks, chimes, hits, risers) from Kenney and OpenGameArt, plus typing, bells, applause, laughter, rain and more from Wikimedia Commons, all CC0 or public domain, and earcon themes and music beds made by the program's own synthesizer. Space previews any sound.
 - **Live preview.** Plays at once from the playhead, mixed live by FFmpeg; no Windows Media Player needed.
 - **Laptop friendly.** Every command has a key that needs no number pad, and Tab, Shift+Tab and the arrows reach everything, including an icon toolbar.
 

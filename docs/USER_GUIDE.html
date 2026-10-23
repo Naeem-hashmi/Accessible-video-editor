@@ -100,11 +100,30 @@ kbd{font-family:inherit;font-weight:bold}
 <h2>Arranging items</h2>
 <ul>
 <li><kbd>Alt Shift left arrow</kbd> and <kbd>Alt Shift right arrow</kbd>: swap the item with the one before or after it, changing the order. For example, to put item 3 first, go to it and press <kbd>Alt Shift Home</kbd>.</li>
-<li><kbd>Alt J</kbd> and <kbd>Alt L</kbd>: slide the item earlier or later in time by 1 second. With <kbd>Shift</kbd> added, by a tenth of a second.</li>
+<li><kbd>Alt J</kbd> and <kbd>Alt L</kbd>: slide the item earlier or later in time by 1 second. With <kbd>Shift</kbd> added, by a tenth of a second. <strong>Hold the keys down</strong> and the slide speeds up: four times faster after 2 seconds, ten times after 4. However long you hold, one <kbd>Control Z</kbd> takes the whole slide back.</li>
 <li><kbd>Control Shift J</kbd> and <kbd>Control Shift L</kbd>: slide the whole layer.</li>
 <li><kbd>Alt Shift up arrow</kbd> and <kbd>Alt Shift down arrow</kbd>: move the focused layer up or down the list. For video layers, a higher number is in front.</li>
 <li><kbd>Control C</kbd>, <kbd>Control X</kbd>, <kbd>Control V</kbd> and <kbd>Control D</kbd> copy, cut, paste and duplicate items.</li>
 </ul>
+
+<h2>Making items longer, shorter, faster or slower</h2>
+<ul>
+<li><kbd>Alt equals</kbd> and <kbd>Alt minus</kbd> (or the number pad plus and minus with Alt): make the item 1 second longer or shorter, keeping its start. A picture, colour card or text simply stays on longer; a video or sound clip shows more or less of its file, never past its end. Add <kbd>Shift</kbd> for a tenth of a second. Holding speeds up, like sliding.</li>
+<li><kbd>Alt right bracket</kbd> and <kbd>Alt left bracket</kbd> (or <kbd>Control Shift equals</kbd> and <kbd>Control Shift minus</kbd>): play a video or sound clip faster or slower, from a quarter speed (slow motion) up to 4 times. The clip keeps all its content, so faster makes it shorter and slower makes it longer. Sound keeps its normal pitch. <kbd>Alt Shift right bracket</kbd> or <kbd>Control Shift 0</kbd> goes back to normal speed. Speed is also in the item options (<kbd>Enter</kbd>), and captions, the transcript, pauses, beats and music ducking all follow it.</li>
+<li>With ripple off, the next item keeps its time: a longer item can only grow into the gap before it, and ClipScribe tells you when the next item is in the way.</li>
+</ul>
+
+<h2>Selecting several items at once</h2>
+<ul>
+<li><kbd>Shift right arrow</kbd> and <kbd>Shift left arrow</kbd> select the next or previous item too, from where you started. Each step says the item and how many are selected.</li>
+<li><kbd>Control Space</kbd> selects or unselects just the focused item, to pick items that are not next to each other. <kbd>Control A</kbd> selects every item on the layer. <kbd>Escape</kbd> clears the selection.</li>
+<li>While items are selected, these work on all of them: delete (with or without keeping the timing), copy, cut, duplicate, paste, mute, louder and quieter, sliding, longer and shorter, and faster and slower. <kbd>Enter</kbd> opens <strong>Settings for the selected items</strong>: volume, sound on or off, speed, one length for all, fades and the transition into each. Anything left at "Keep as is" stays as it was on every item.</li>
+<li>Selected items say "Selected" in the timeline list and have an outline on the visual timeline.</li>
+<li>Find beats now uses <kbd>Alt B</kbd> (next beat) and <kbd>Alt Shift B</kbd> (previous beat), since Shift with the arrows selects.</li>
+</ul>
+
+<h2>The options menu: Applications key</h2>
+<p>On an item in the timeline, press the <kbd>Applications</kbd> key (the menu key next to the right Control) or <kbd>Shift F10</kbd>, or right-click. A menu lists everything you can do with that item: All settings, rename or edit text, copy, cut, paste, duplicate, delete, split and trim, a <em>Length and speed</em> submenu, a <em>Move</em> submenu, a <em>Sound</em> submenu (mute, volume, transcribe, clean up words) and a <em>Picture</em> submenu, with each command's keys shown. When several items are selected, the menu offers the commands for all of them. On a layer in the layer list, the same key opens the layer's menu: settings, mute, solo, volume, moving, sliding everything, adding files, transcribing, captions, ducking and deleting.</p>
 
 <h2>Text: titles, captions and credits</h2>
 <ul>
@@ -151,12 +170,21 @@ kbd{font-family:inherit;font-weight:bold}
 <li><kbd>Control Shift X</kbd>, <strong>Edit by transcript</strong>: the words open as a document, one sentence per line, in a normal text box. Read and select with your screen reader's usual keys. In <em>Cut</em> mode, delete words or whole lines and press Apply (or <kbd>Control Enter</kbd>): those parts are cut out of the video, keeping a short natural pause. Changing a word never cuts anything. In <em>Fix text</em> mode, correct spellings for the captions; the video stays the same. <kbd>Control Space</kbd> plays from the word at the cursor. Every change can be undone with <kbd>Control Z</kbd>.</li>
 <li><kbd>Control Shift G</kbd>, <strong>Make captions</strong>: short caption lines (at most 32 letters or 3.5 seconds, new line at each sentence and pause) on a Captions layer at the top, white bold text on a dark box. Urdu captions use the Noto Nastaliq Urdu font and Hindi Noto Sans Devanagari. After cutting by transcript, make captions again and they follow the new timing.</li>
 </ul>
+<p><strong>Faster transcription.</strong> By default only the parts of each file that clips actually play are transcribed (with a second to spare), and parts already done are skipped, so a 25-minute recording cut down to 4 minutes takes about 4 minutes of work. Choose "The whole files" to do everything. Silence and music are skipped before Whisper listens, which is faster and avoids made-up words. With <em>Quick draft first</em> ticked, the Fast model writes a draft in a fraction of the time so you can start editing at once; the model you chose then improves it in the background (the status bar shows how far it is) and replaces the draft when done, unless you corrected the draft meanwhile. In Preferences, Speech recognition, <em>Run speed test</em> finds the fastest number of processor threads for your computer, and the graphics chip is used when it helps. Sound that a camera recorded a little before or after its picture stays in step.</p>
 <p>Good to know: Whisper often leaves out "um" and "uh", so to remove those use Shorten pauses, which finds them by the gaps they leave. Word times can be a tenth of a second or so off; ClipScribe moves each word's edges to where the sound really starts and stops before cutting.</p>
+
+<h2>Cleaning up the words: repeats, fillers and AI</h2>
+<ul>
+<li><kbd>Alt Shift R</kbd>, <strong>Find repeats and fillers</strong>, on this computer: filler sounds (um, uh, hmm), a word said twice, a phrase started again ("I went to the, I went to the shop": the first try is cut and the last kept) and stray symbols. Each one is a tick box in a list, ticked to begin with: untick any you want to keep, press <kbd>Enter</kbd> on one to move the playhead there, then choose <em>Cut ticked</em>. One <kbd>Control Z</kbd> undoes it all.</li>
+<li><kbd>Alt Shift A</kbd>, <strong>Clean up with AI</strong>: sends only the words (never the video or sound) to the AI service you set up in Preferences, AI assistant, together with what the video is about. It suggests repeats, false starts, fillers and mistakes the speaker corrects, and you get the same tick list. Every suggestion is checked against the real transcript first, so a confused AI cannot cut the wrong part. Choose <strong>OpenRouter</strong> (one key for many low-cost and open-source models), <strong>Ollama</strong> (free, runs on your own computer, no key, nothing leaves the computer), <strong>OpenAI</strong>, or any other OpenAI-compatible service. Your API key is stored encrypted for your Windows account. <em>Test the AI service</em> checks the address, model and key.</li>
+<li><kbd>Alt Shift E</kbd>, <strong>Export transcript</strong>: saves the words as plain text, one sentence per line (to edit in Notepad, Word or an AI chat), or as SRT or VTT captions.</li>
+<li><kbd>Alt Shift I</kbd>, <strong>Import edited transcript</strong>: reads the edited file back. Words you deleted become cuts, shown in the tick list first, and words you corrected fix the transcript without cutting. Keep the sentences in their order.</li>
+</ul>
 
 <h2>Pauses, beats and music under speech</h2>
 <ul>
 <li><kbd>Control Shift H</kbd>, <strong>Shorten pauses</strong>: on the selected clip, ClipScribe measures the loudness every 20 milliseconds, works out the background noise of that recording, and finds every quiet stretch. It tells you, for example, "7 pauses longer than 0.7 seconds, 12.4 seconds in all", then shortens each to 0.3 seconds (natural), 0.15 seconds (tight) or removes it. Each cut has a tiny sound fade so it never clicks.</li>
-<li><kbd>Control Shift B</kbd>, <strong>Find beats</strong>: on the selected music, finds the tempo and every beat ("120 beats per minute, 96 beats"). Then <kbd>Shift Right</kbd> and <kbd>Shift Left</kbd> jump from beat to beat. Music with drums works best; for calm music without a beat it says so.</li>
+<li><kbd>Control Shift B</kbd>, <strong>Find beats</strong>: on the selected music, finds the tempo and every beat ("120 beats per minute, 96 beats"). Then <kbd>Alt B</kbd> and <kbd>Alt Shift B</kbd> jump to the next and previous beat. Music with drums works best; for calm music without a beat it says so.</li>
 <li><kbd>Control Shift U</kbd>, <strong>Cut to the beat</strong>: every picture and clip on the selected layer ends on a beat; pictures change every 1, 2, 4 or 8 beats. Clips are never made longer than their file.</li>
 <li><kbd>Control Shift D</kbd>, <strong>Lower music under speech</strong> (auto-ducking): on the music layer, finds speech on the other layers and makes the music 6, 12 or 18 decibels quieter there, with smooth fades. The places show in the inspector and on the visual timeline, and it can be removed again.</li>
 </ul>
@@ -186,11 +214,12 @@ kbd{font-family:inherit;font-weight:bold}
 <h2>Checking and exporting</h2>
 <ul>
 <li><kbd>F7</kbd> checks the project for things a sighted editor would notice: black gaps, missing files, transitions that cannot play, muted layers, or picture ending before the sound. Press Enter on a finding to go there.</li>
-<li><kbd>Control E</kbd> exports. Choose a format: YouTube 1080p (recommended), 720p, 4K, vertical for Shorts and Reels, square, the project size, or audio only as MP3, WAV or M4A. Progress is spoken every 10 percent; Escape cancels.</li>
+<li><kbd>Control E</kbd> exports. Choose a format: YouTube 1080p (recommended), 720p, 4K, vertical for Shorts and Reels, square, the project size, or audio only as MP3, WAV or M4A. Then a speed: <em>Fastest</em> (the default) uses your computer's video chip (Intel Quick Sync, NVIDIA or AMD) when it really works, tested with a tiny export first, and otherwise the fastest processor setting; <em>Balanced</em> is about two to three times faster than <em>Best quality</em> with a slightly larger file. If the video chip fails part way, the export is redone on the processor by itself. The finished message says how long it took and what encoded it. Progress is spoken every 10 percent; Escape cancels.</li>
 <li><kbd>Control S</kbd> saves the project. A recovery copy is also kept automatically, and offered if the program ever closes unexpectedly.</li>
 </ul>
 
 <h2>Speech and sounds</h2>
+<p>The sound library (<kbd>Control Shift E</kbd>, or the Sounds tab of the library) has real recorded sounds for modern edits: swipes and whooshes for transitions, pops and bubbles for text and stickers, clicks and ticks, glass dings, chimes and success sounds, punches and knocks, and risers and power-ups, as well as typing, applause, laughter, rain and more. All are CC0 or public domain, free for any video, and every one starts right on its sound so it lands where you put it.</p>
 <p>When NVDA or JAWS is running, the program talks to it directly; otherwise it uses Windows UI Automation, which Narrator also reads. Short sounds confirm actions without words: moving, reaching an edge, changing layer, adding a marker, an error, muting. Choose a sound theme (Soft, Classic, Crisp, Retro or Off) and its volume in Preferences (<kbd>Control Shift comma</kbd>). <kbd>Shift V</kbd> switches between brief, normal and detailed descriptions.</p>
 <p>To make your own sound theme, use Tools, "Copy the current sound theme to my themes folder", replace the WAV files with your own (keep the file names), and choose your theme in Preferences.</p>
 

@@ -2,6 +2,21 @@
 
 This lists what the editor can't do yet, roughly in order of value to blind and low-vision creators, with how each could be built. It is honest about the current limits so nobody is surprised.
 
+## What version 0.4 added
+
+- **Several items at once**: `Shift+Left`/`Shift+Right` select a range, `Ctrl+Space` picks single items, `Ctrl+A` the whole layer; delete, copy, cut, paste, duplicate, mute, volume, slide, length and speed then work on all of them, and `Enter` opens one settings dialog for them all. Beat jumps moved to `Alt+B` and `Alt+Shift+B`.
+- **Stretching**: `Alt+=`/`Alt+-` make any item longer or shorter; `Alt+]`/`Alt+[` play clips faster or slower (a quarter to 4 times, pitch kept), followed by export, preview, captions, transcripts, pauses, beats and ducking.
+- **Options menu** on every item and layer with the `Applications` key, `Shift+F10` or right click.
+- **Held keys speed up** (after 2 and 4 seconds) and a whole hold is one undo step.
+- **Timeline** that scrolls with the focus and the playback, with picture thumbnails along clips, and selected items outlined.
+- **Light, dark and follow-Windows themes** (Windows 11 Fluent look; High Contrast keeps the system colours), a player-style preview that shows the frame at the playhead, and a one-row ribbon that scrolls sideways.
+- **Faster speech recognition**: only the parts clips use, silence skipped (voice activity detection), a quick draft improved in the background, the graphics chip through Vulkan with an automatic fallback, a speed test for threads, and greedy decoding (about 3 times faster, same words in tests).
+- **Sound in step** for files whose sound starts before or after their picture.
+- **Cleaning up words**: find repeats, fillers and false starts offline; export the transcript (text, SRT, VTT), edit it anywhere and import it back as cuts and fixes; optional AI clean-up with OpenRouter, Ollama, OpenAI or any OpenAI-compatible service, every suggestion checked and ticked first, the key stored with Windows DPAPI.
+- **Real modern editing sounds**: 38 CC0 swipes, whooshes, pops, bubbles, clicks, chimes, hits and risers, levelled and cut to start on time.
+- **Faster export**: best quality, balanced (x264 veryfast) or fastest (Intel Quick Sync, NVIDIA or AMD when a test encode proves they work, else x264 superfast), with automatic fallback.
+- **.NET 10** (long-term support).
+
 ## What version 0.3 added (ClipScribe)
 
 - **Renamed to ClipScribe**, with a Word- and VS Code-style window: ribbon tabs of icon buttons, a library with icon tabs on the left, a large preview with play controls, the timeline at the bottom with a visual multi-track view for the mouse, and an inspector on the right that changes with the selection (layer, text, picture, video, sound).
@@ -30,7 +45,9 @@ This lists what the editor can't do yet, roughly in order of value to blind and 
 | Limitation | Why | How to fix |
 |---|---|---|
 | Whisper sometimes leaves out "um" and "uh" | The model writes clean text | Shorten pauses finds them by their gaps; a filler-keeping prompt could be offered |
-| Transcription speed depends on the computer | Whisper runs on the processor, in 30-second windows | Accurate is about real time on 4 cores; Fast is about 10 times faster; GPU builds of whisper.cpp could be offered |
+| Transcription speed depends on the computer | Whisper is heavy, even on the graphics chip | Only used parts are transcribed and silence is skipped; the quick draft lets you start at once; the speed test picks the best threads. Integrated graphics help less than a separate graphics card |
+| The video chip encoder was tested only on build machines without one | GitHub's Windows machines have no Intel, NVIDIA or AMD video encoder | ClipScribe tests the encoder on your computer before using it and falls back to the processor if it fails |
+| AI clean-up needs a key or Ollama | Language models are online services, or large local downloads | The offline repeat and filler finder needs neither |
 | Urdu recognition is good but not perfect | Whisper has less Urdu training data | Use the Accurate model and correct words in Fix text mode |
 | Beat detection needs a steady beat | It looks for evenly spaced hits | Calm music without drums is reported as having no beat |
 | Rounded corners are slower to export on long videos | Each frame is masked | Fine for pictures; for long videos keep corners square |

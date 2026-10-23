@@ -238,12 +238,12 @@ jobs:
           }
           $iscc = (Get-Command iscc -ErrorAction SilentlyContinue).Source
           if (-not $iscc) { $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" }
-          & $iscc "/DSourceDir=$((Resolve-Path build/app).Path)" "/DAppVersion=0.3.0" installer/AccessibleVideoEditor.iss
+          & $iscc "/DSourceDir=$((Resolve-Path build/app).Path)" "/DAppVersion=0.4.0" installer/AccessibleVideoEditor.iss
           if ($LASTEXITCODE -ne 0) { throw "Installer build failed." }
 
       - name: Make the portable zip
         shell: pwsh
-        run: Compress-Archive -Path build/app/* -DestinationPath build/installer/ClipScribe-portable-0.3.0.zip
+        run: Compress-Archive -Path build/app/* -DestinationPath build/installer/ClipScribe-portable-0.4.0.zip
 
       - uses: actions/upload-artifact@v4
         with:
@@ -255,17 +255,17 @@ jobs:
         if: github.event_name == 'push'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v0.3.0
+          tag_name: v0.4.0
           target_commitish: ${{ github.sha }}
-          name: ClipScribe 0.3.0 (test build)
+          name: ClipScribe 0.4.0 (test build)
           prerelease: true
           body: |
             Test build from commit ${{ github.sha }}.
-            Download ClipScribe-Setup-0.3.0.exe to install, or the portable zip to run without installing.
+            Download ClipScribe-Setup-0.4.0.exe to install, or the portable zip to run without installing.
             Windows may warn that the installer is from an unknown publisher because it is not code-signed: choose More info, then Run anyway.
           files: |
-            build/installer/ClipScribe-Setup-0.3.0.exe
-            build/installer/ClipScribe-portable-0.3.0.zip
+            build/installer/ClipScribe-Setup-0.4.0.exe
+            build/installer/ClipScribe-portable-0.4.0.zip
           fail_on_unmatched_files: true
 
       - uses: actions/upload-artifact@v4

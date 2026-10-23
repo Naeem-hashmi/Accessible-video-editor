@@ -79,17 +79,40 @@ public sealed class FfmpegStream : IDisposable
     /// Decodes the sound of one file or web address to raw 16-bit stereo 48 kHz, for listening to a sound
     /// before adding it. Plays at most <paramref name="maxSeconds"/>.
     /// </summary>
-    public static FfmpegStream Decode(FfmpegTools tools, string source, double maxSeconds = 300)
+    public static FfmpegStream Decode(FfmpegTools tools, string source, double maxSeconds = 300, double start = 0, int sampleRate = 48000, int channels = 2)
     {
         var workFolder = Path.Combine(Path.GetTempPath(), $"ave-stream-{Guid.NewGuid():N}");
         Directory.CreateDirectory(workFolder);
-        string[] args =
+        var inv = System.Globalization.CultureInfo.InvariantCulture;
+        var args = new List<string> { "-hide_banner", "-nostdin", "-loglevel", "error" };
+        if (start > 0)
+        {
+            args.AddRange(["-ss", start.ToString("0.######", inv)]);
+        }
+
+        args.AddRange(
         [
-            "-hide_banner", "-nostdin", "-loglevel", "error", "-i", source, "-vn",
-            "-t", maxSeconds.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture),
-            "-ac", "2", "-ar", "48000", "-c:a", "pcm_s16le", "-f", "s16le", "pipe:1",
-        ];
+            "-i", source, "-vn", "-t", maxSeconds.ToString("0.######", inv),
+            "-ac", channels.ToString(inv), "-ar", sampleRate.ToString(inv), "-c:a", "pcm_s16le", "-f", "s16le", "pipe:1",
+        ]);
         return Launch(tools, args, workFolder);
+    }
+
+    /// <summary>Decodes a stretch of sound to mono samples between -1 and 1, for analysis (beats, speech, levels).</summary>
+    public static float[] DecodeMono(FfmpegTools tools, string source, int sampleRate, double start = 0, double maxSeconds = 3600)
+    {
+        using var stream = Decode(tools, source, maxSeconds, start, sampleRate, 1);
+        using var memory = new MemoryStream();
+        stream.Output.CopyTo(memory);
+        var bytes = memory.GetBuffer();
+        var count = (int)(memory.Length / 2);
+        var samples = new float[count];
+        for (var i = 0; i < count; i++)
+        {
+            samples[i] = (short)(bytes[2 * i] | (bytes[2 * i + 1] << 8)) / 32768f;
+        }
+
+        return samples;
     }
 
     private static FfmpegStream Launch(FfmpegTools tools, IEnumerable<string> arguments, string workFolder)

@@ -220,6 +220,15 @@ public sealed class Item
     /// <summary>Words and style for text items.</summary>
     public TextStyle Text { get; set; } = new();
 
+    /// <summary>Beat times found in the source file, in source seconds (so trimming never moves them).</summary>
+    public List<double> Beats { get; set; } = new();
+
+    /// <summary>Tempo of the source music, or 0 when unknown.</summary>
+    public double Bpm { get; set; }
+
+    /// <summary>Places where this item's sound is lowered, for example under speech (auto-ducking).</summary>
+    public List<VolumeDip> VolumeDips { get; set; } = new();
+
     /// <summary>The maximum duration the source allows from <see cref="SourceIn"/>, or infinity.</summary>
     [JsonIgnore]
     public double AvailableDuration =>
@@ -240,8 +249,28 @@ public sealed class Item
         copy.Placement = Placement.Clone();
         copy.Audio = Audio.Clone();
         copy.Text = Text.Clone();
+        copy.Beats = [.. Beats];
+        copy.VolumeDips = VolumeDips.Select(d => d.Clone()).ToList();
         return copy;
     }
+}
+
+/// <summary>
+/// A stretch where an item plays quieter, in source seconds. The level ramps down over <see cref="Ramp"/>
+/// seconds before <see cref="Start"/> and back up after <see cref="End"/>.
+/// </summary>
+public sealed class VolumeDip
+{
+    public double Start { get; set; }
+
+    public double End { get; set; }
+
+    /// <summary>Volume during the dip, 0.25 = a quarter (12 dB quieter).</summary>
+    public double Level { get; set; } = 0.25;
+
+    public double Ramp { get; set; } = 0.3;
+
+    public VolumeDip Clone() => (VolumeDip)MemberwiseClone();
 }
 
 /// <summary>A transition into an item. <see cref="Video"/> is an xfade name, <see cref="Audio"/> an acrossfade curve.</summary>

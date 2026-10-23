@@ -65,6 +65,14 @@ public sealed class MediaFixture : IAsyncLifetime
         return Task.CompletedTask;
     }
 
+    /// <summary>Makes a file in the media folder with the given FFmpeg arguments (the output path is added last).</summary>
+    public async Task<string> Generate(string name, params string[] args)
+    {
+        var path = Path.Combine(Folder, name);
+        await Make([.. args, path]);
+        return path;
+    }
+
     public string OutPath(string name) => Path.Combine(Folder, "out", name);
 
     public async Task<Item> ItemFor(string path, LayerKind layerKind, LayerDefaults? defaults = null)

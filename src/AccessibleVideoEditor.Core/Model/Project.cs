@@ -117,6 +117,12 @@ public sealed class Project
     /// <summary>Credits for music and sounds that need attribution (for example CC BY), written next to exports.</summary>
     public List<ProjectCredit> Credits { get; set; } = new();
 
+    /// <summary>Transcripts of the media files, one per file, in file time.</summary>
+    public List<Speech.Transcript> Transcripts { get; set; } = new();
+
+    public Speech.Transcript? TranscriptFor(string mediaPath) =>
+        Transcripts.FirstOrDefault(t => string.Equals(t.MediaPath, mediaPath, StringComparison.OrdinalIgnoreCase));
+
     public Layer? FindLayer(Guid id) => Layers.FirstOrDefault(l => l.Id == id);
 
     public int LayerIndexOf(Guid id) => Layers.FindIndex(l => l.Id == id);

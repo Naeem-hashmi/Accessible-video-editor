@@ -10,6 +10,7 @@ using AccessibleVideoEditor.Core.Editing;
 using AccessibleVideoEditor.Core.Input;
 using AccessibleVideoEditor.Core.Media;
 using AccessibleVideoEditor.Core.Model;
+using AccessibleVideoEditor.Core.Online;
 using AccessibleVideoEditor.Core.Rendering;
 using AccessibleVideoEditor.Core.Sound;
 using AccessibleVideoEditor.Core.Templates;
@@ -212,6 +213,86 @@ internal static class SelfTest
             return Task.CompletedTask;
         });
 
+        await Step("text, position mode, regions, sound keys, templates", async () =>
+        {
+            Check(window.Tools?.Text.Available == true, "The bundled FFmpeg can draw text");
+            window.Editor.GoToTime(1);
+            await window.ApplyAsync(window.Editor.AddText(new TextStyle { Content = "Self test title", AnimationIn = TextAnimation.SlideFromLeft }, 2,
+                new Placement { Position = PositionPreset.BottomCenter }));
+            var text = window.Editor.FocusedItem;
+            Check(text?.Kind == ItemKind.Text, "Control Shift T adds a text item");
+            Check(window.Editor.FocusedLayer?.Name == "Text", "Text goes on its own layer above the video");
+
+            window.Activate();
+            window.FocusTimeline();
+            await Settle();
+            var realKeys = window.IsActive && Keyboard.FocusedElement is ListBoxItem;
+            await window.RunAsync(CommandId.PositionMode);
+            Check(window.Editor.InPositionMode, "P enters position mode");
+            if (realKeys)
+            {
+                PressKey(window, Key.Right);
+                await Settle();
+                PressKey(window, Key.Enter);
+                await Settle();
+            }
+            else
+            {
+                await window.ApplyAsync(window.Editor.Position(PositionAction.Right));
+                await window.ApplyAsync(window.Editor.Position(PositionAction.Done));
+            }
+
+            Check(!window.Editor.InPositionMode, "Enter leaves position mode");
+            Check(window.Editor.FocusedItem?.Placement.Position == PositionPreset.Custom, "Right arrow in position mode moved the text");
+
+            await window.RunAsync(CommandId.DescribePicture);
+            Check(window.StatusTextValue.Contains("Self test title", StringComparison.Ordinal), "Shift W describes the picture, including the text");
+
+            await window.RunAsync(CommandId.FocusProperties);
+            await Settle();
+            Check(CountUnnamedControls(window.PropertiesRegion) == 0, "Every control in the properties area has a screen reader name");
+            await window.RunAsync(CommandId.FocusLibrary);
+            await Settle();
+            Check(CountUnnamedControls(window.LibraryRegion) == 0, "Every control in the library has a screen reader name");
+            if (realKeys)
+            {
+                Check(window.CurrentRegion == Region.Library, "Control 1 moves to the library");
+            }
+
+            await window.RunAsync(CommandId.FocusPreview);
+            await Settle();
+            var previewName = System.Windows.Automation.AutomationProperties.GetName(window.PreviewRegion);
+            log.Add("Preview name: " + previewName);
+            Check(previewName.StartsWith("Preview. At ", StringComparison.Ordinal), "The preview area describes the picture");
+            await window.RunAsync(CommandId.FocusTimelineRegion);
+
+            window.Editor.FocusLayer(window.Editor.Project.Layers[0].Id);
+            window.Refresh();
+            var before = window.Editor.FocusedItem?.Volume ?? 0;
+            await window.RunAsync(CommandId.ItemVolumeUp);
+            Check(Math.Abs((window.Editor.FocusedItem?.Volume ?? 0) - before - 0.1) < 0.001, "Control Up raises the item volume by 10 percent");
+
+            var saved = window.Templates.Save(window.Editor.Project, "Self test template", "Self test", "", includeMedia: false);
+            window.FillTemplates();
+            Check(window.Templates.List().Any(t => t.Name == saved.Name && t.Category == "Self test"), "A project can be saved as a template in a folder");
+            var fromTemplate = window.Templates.Create(saved);
+            Check(fromTemplate.Layers.Any(l => l.Items.Any(i => i.Kind == ItemKind.Text)), "The template keeps the text");
+            window.Templates.Delete(saved);
+            Directory.Delete(window.Templates.FolderFor("Self test"), recursive: true);
+
+            try
+            {
+                using var http = new System.Net.Http.HttpClient { Timeout = TimeSpan.FromSeconds(30) };
+                var result = await new OpenverseClient(http).SearchAsync("piano", OnlineAudioCategory.Music);
+                log.Add($"Openverse returned {result.Items.Count} usable results of {result.TotalCount}.");
+                Check(result.Items.All(r => r.License is "cc0" or "pdm" or "by"), "Online results are only public domain or CC BY");
+            }
+            catch (Exception ex)
+            {
+                log.Add("WARN online search not checked (network): " + ex.Message);
+            }
+        });
+
         await Step("save and open", () =>
         {
             var path = Path.Combine(folder, "self test" + ProjectSerializer.FileExtension);
@@ -236,7 +317,7 @@ internal static class SelfTest
         await Step("preview render", async () =>
         {
             var output = Path.Combine(folder, "preview.mp4");
-            var plan = new GraphBuilder(window.Tools!.HasEncoder).Build(new RenderRequest
+            var plan = new GraphBuilder(window.Tools!.HasEncoder, window.Tools!.Text).Build(new RenderRequest
             {
                 Project = window.Editor.Project,
                 Profile = OutputProfile.PreviewVideo,

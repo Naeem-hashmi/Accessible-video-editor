@@ -76,6 +76,29 @@ public sealed class EarconPlayer
         }
     }
 
+    /// <summary>
+    /// Plays a tone that pictures a position: panned by how far across, pitched by how high. Used after
+    /// each step in position mode.
+    /// </summary>
+    public void PlayPosition(double x, double y)
+    {
+        if (_volume == 0 || _theme.Name == "Off")
+        {
+            return;
+        }
+
+        try
+        {
+            _player?.Stop();
+            _player = new SoundPlayer(new MemoryStream(ScaleVolume(WavWriter.PositionTone(x, y), _volume / 100.0), writable: false));
+            _player.Play();
+        }
+        catch (Exception ex)
+        {
+            AppPaths.Log("Position tone failed: " + ex.Message);
+        }
+    }
+
     /// <summary>Scales 16-bit PCM WAV data; other formats are returned unchanged.</summary>
     internal static byte[] ScaleVolume(byte[] wav, double factor)
     {

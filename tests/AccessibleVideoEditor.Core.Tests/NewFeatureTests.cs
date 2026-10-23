@@ -210,6 +210,11 @@ public sealed class SoundAndTextCommandTests
         editor.AddText(new TextStyle { Content = "Second" }, 2, new Placement());
         Assert.Equal(3, editor.Project.Layers.Count);
         Assert.Equal(EarconEvent.Error, editor.AddText(new TextStyle { Content = "  " }, 2, new Placement()).Earcon);
+
+        var withLogo = new EditorController(new ProjectSession(ProjectTemplates.Find("youtube")!.Create()), new AppSettings());
+        withLogo.AddText(new TextStyle { Content = "Hi" }, 2, new Placement());
+        Assert.Equal("Text", withLogo.FocusedLayer!.Name);
+        Assert.Empty(withLogo.Project.Layers.Single(l => l.Name == "Logo").Items);
     }
 
     [Fact]

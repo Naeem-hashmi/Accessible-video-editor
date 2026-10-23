@@ -201,7 +201,7 @@ public sealed class PreviewService : IDisposable
                 OutputPath = output,
                 CanvasOverride = canvas,
             };
-            var plan = new GraphBuilder(Tools!.HasEncoder).Build(request);
+            var plan = new GraphBuilder(Tools!.HasEncoder, Tools!.Text).Build(request);
             var progress = new Progress<double>(p => Preparing?.Invoke(p));
             await Task.Run(() => RenderRunner.RunAsync(Tools, plan, output, progress, cancel.Token), cancel.Token).ConfigureAwait(true);
             _cache[key] = output;

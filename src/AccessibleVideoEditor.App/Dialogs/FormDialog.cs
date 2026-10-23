@@ -91,6 +91,22 @@ public sealed class FormDialog : Window
         return () => box.Text;
     }
 
+    /// <summary>A text box for several lines. Enter starts a new line; Tab moves to the next control.</summary>
+    public Func<string> AddMultilineText(string label, string value, string? help = null)
+    {
+        var box = new TextBox
+        {
+            Text = value,
+            AcceptsReturn = true,
+            TextWrapping = TextWrapping.Wrap,
+            MinWidth = 360,
+            MinHeight = 90,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+        };
+        Add(label, box, ((help ?? "") + " Enter starts a new line. Press Tab to move on, and Tab again to reach OK.").Trim());
+        return () => box.Text;
+    }
+
     /// <summary>A time or duration typed in the user's own words ("1:30", "90", "1m 30s").</summary>
     public Func<double> AddTime(string label, double value, string? help = null, double minimum = 0)
     {

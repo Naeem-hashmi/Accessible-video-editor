@@ -139,29 +139,23 @@ public partial class MainWindow
             case CommandId.LayerProperties: await ShowLayerOptionsAsync(); return true;
             case CommandId.GoToLayer: await GoToLayerAsync(); return true;
             case CommandId.GoToTime: await GoToTimeAsync(); return true;
-            case CommandId.SwitchPane: SwitchPane(); return true;
+            case CommandId.SwitchPane: CycleRegion(1); return true;
+            case CommandId.PreviousPane: CycleRegion(-1); return true;
+            case CommandId.FocusLibrary: FocusRegion(Region.Library); return true;
+            case CommandId.FocusTimelineRegion: FocusRegion(Region.Timeline); return true;
+            case CommandId.FocusProperties: FocusRegion(Region.Properties); return true;
+            case CommandId.FocusPreview: FocusRegion(Region.Preview); return true;
+            case CommandId.FocusLayers: FocusRegion(Region.Layers); return true;
+            case CommandId.AddText: await AddTextAsync(null); return true;
+            case CommandId.EditTextOrRename: await EditTextOrRenameAsync(); return true;
+            case CommandId.OnlineMusic: FocusLibrary(LibraryTab.OnlineMusic); return true;
+            case CommandId.TemplateManager: FillTemplates(); FocusLibrary(LibraryTab.Templates); return true;
+            case CommandId.SaveAsTemplate: SaveAsTemplate(); return true;
             case CommandId.MarkerList: await ShowMarkersAsync(); return true;
             case CommandId.TransitionHere: await TransitionHereAsync(); return true;
             case CommandId.ProjectCheck: await ShowProjectCheckAsync(); return true;
             case CommandId.KeyboardHelp: ShowKeyboardHelp(); return true;
             default: return false;
-        }
-    }
-
-    private void SwitchPane()
-    {
-        if (LayersList.IsKeyboardFocusWithin)
-        {
-            Refresh();
-            FocusAndSay("");
-            if (!ItemsList.IsKeyboardFocusWithin)
-            {
-                FocusTimeline();
-            }
-        }
-        else
-        {
-            FocusLayerList();
         }
     }
 
@@ -192,17 +186,26 @@ public partial class MainWindow
             return;
         }
 
-        var entries = ProjectTemplates.All.Select(t => new ListEntry($"{t.Name}. {t.Description}", t)).ToList();
-        var dialog = new ListDialog(this, "New project", "Templates", entries, intro: "Choose a starting point. Press Enter to create the project.");
+        var entries = Templates.List().Select(t => new ListEntry(t.Spoken, t, t.Category)).ToList();
+        var dialog = new ListDialog(this, "New project", "Templates", entries, searchable: true,
+            intro: "Choose a starting point: a built-in template or one you saved. Press Enter to create the project.");
         dialog.AddAction("C_reate");
-        if (dialog.ShowDialog() != true || dialog.Chosen?.Tag is not ProjectTemplate template)
+        if (dialog.ShowDialog() != true || dialog.Chosen?.Tag is not TemplateInfo template)
         {
             return;
         }
 
-        _shownLayerId = null;
-        var feedback = _editor.Load(new ProjectSession(template.Create()), $"New project from template {template.Name}");
-        _ = ApplyAsync(feedback);
+        try
+        {
+            _shownLayerId = null;
+            var feedback = _editor.Load(new ProjectSession(Templates.Create(template)), $"New project from template {template.Name}");
+            _ = ApplyAsync(feedback);
+        }
+        catch (Exception ex) when (ex is IOException or InvalidDataException or System.Text.Json.JsonException)
+        {
+            _earcons.Play(EarconEvent.Error);
+            Say("That template can't be opened. " + ex.Message);
+        }
     }
 
     private void OpenProject()
@@ -361,6 +364,7 @@ public partial class MainWindow
         }
 
         _settings.LastFolder = Path.GetDirectoryName(dialog.FileNames[0]) ?? "";
+        RememberImported(dialog.FileNames);
         await AddFilesAsync(dialog.FileNames, atPlayhead);
     }
 
@@ -393,6 +397,7 @@ public partial class MainWindow
             }
         }
 
+        RememberImported(infos.Select(i => i.Path));
         var feedback = _editor.AddMedia(infos, atPlayhead);
         if (problems.Count > 0)
         {
@@ -673,7 +678,9 @@ public partial class MainWindow
 
         Func<int>? position = null;
         Func<double>? size = null, opacity = null, customX = null, customY = null;
-        if (isVideoLayer && item.HasVideo)
+        Func<double>? cropLeft = null, cropRight = null, cropTop = null, cropBottom = null;
+        Func<bool>? fill = null;
+        if (isVideoLayer && (item.HasVideo || item.Kind is ItemKind.Text or ItemKind.Color))
         {
             form.AddPage("Picture");
             position = form.AddChoice("Position", PositionNames, (int)item.Placement.Position,
@@ -682,6 +689,34 @@ public partial class MainWindow
             opacity = form.AddNumber("Opacity, percent", item.Placement.OpacityPercent, 0, 100, "100 is solid, 0 is invisible.");
             customX = form.AddNumber("Custom position, percent across", item.Placement.CustomXPercent, 0, 100, "Only for the Custom position: left edge of the picture.");
             customY = form.AddNumber("Custom position, percent down", item.Placement.CustomYPercent, 0, 100, "Only for the Custom position: top edge of the picture.");
+            if (item.Kind != ItemKind.Text)
+            {
+                fill = form.AddCheck("Fill the frame (full frame only): cover it completely, cutting off edges", item.Placement.Fill);
+                cropLeft = form.AddNumber("Crop from the left, percent", item.Placement.CropLeft, 0, 90);
+                cropRight = form.AddNumber("Crop from the right, percent", item.Placement.CropRight, 0, 90);
+                cropTop = form.AddNumber("Crop from the top, percent", item.Placement.CropTop, 0, 90);
+                cropBottom = form.AddNumber("Crop from the bottom, percent", item.Placement.CropBottom, 0, 90);
+            }
+        }
+
+        Func<string>? textContent = null;
+        Func<int>? textFont = null, textColor = null, textBackground = null, textIn = null, textOut = null;
+        Func<double>? textSize = null, textAnimLength = null;
+        Func<bool>? textBold = null, textOutline = null;
+        if (item.Kind == ItemKind.Text)
+        {
+            form.AddPage("Text");
+            textContent = form.AddMultilineText("Text", item.Text.Content);
+            textFont = form.AddChoice("Font", FontCatalog.Fonts.Select(f => $"{f.Name}. {f.Description}").ToList(),
+                FontCatalog.Fonts.ToList().FindIndex(f => f.Name == FontCatalog.Find(item.Text.Font).Name));
+            textSize = form.AddNumber("Text size, percent of the frame height", item.Text.SizePercent, 1, 50, "8 is a good title size, 5 a caption.");
+            textColor = form.AddChoice("Text colour", colorNames, Math.Max(0, colorNames.FindIndex(c => c == item.Text.ColorName)));
+            textBold = form.AddCheck("Bold", item.Text.Bold);
+            textOutline = form.AddCheck("Dark outline around the letters (readable on any picture)", item.Text.Outline);
+            textBackground = form.AddChoice("Background", Enum.GetValues<TextBackground>().Select(TextAnimationCatalog.BackgroundName).ToList(), (int)item.Text.Background);
+            textIn = form.AddChoice("Comes in by", TextAnimationCatalog.All.Select(TextAnimationCatalog.InName).ToList(), (int)item.Text.AnimationIn);
+            textOut = form.AddChoice("Goes out by", TextAnimationCatalog.All.Select(TextAnimationCatalog.OutName).ToList(), (int)item.Text.AnimationOut);
+            textAnimLength = form.AddTime("Animation length", item.Text.AnimationDuration, minimum: 0.05);
         }
 
         Func<double>? volume = null;
@@ -736,6 +771,28 @@ public partial class MainWindow
                     OpacityPercent = opacity!(),
                     CustomXPercent = customX!(),
                     CustomYPercent = customY!(),
+                    Fill = fill?.Invoke() ?? false,
+                    CropLeft = cropLeft?.Invoke() ?? 0,
+                    CropRight = cropRight?.Invoke() ?? 0,
+                    CropTop = cropTop?.Invoke() ?? 0,
+                    CropBottom = cropBottom?.Invoke() ?? 0,
+                };
+            }
+
+            if (textContent is not null)
+            {
+                edited.Text = new TextStyle
+                {
+                    Content = textContent(),
+                    Font = FontCatalog.Fonts[textFont!()].Name,
+                    SizePercent = textSize!(),
+                    ColorName = colorNames[textColor!()],
+                    Bold = textBold!(),
+                    Outline = textOutline!(),
+                    Background = (TextBackground)textBackground!(),
+                    AnimationIn = (TextAnimation)textIn!(),
+                    AnimationOut = (TextAnimation)textOut!(),
+                    AnimationDuration = textAnimLength!(),
                 };
             }
 
@@ -1082,7 +1139,7 @@ public partial class MainWindow
         var project = _editor.Project;
         try
         {
-            plan = new GraphBuilder(Tools!.HasEncoder).Build(new RenderRequest
+            plan = new GraphBuilder(Tools!.HasEncoder, Tools!.Text).Build(new RenderRequest
             {
                 Project = project,
                 Profile = profile,
@@ -1119,6 +1176,18 @@ public partial class MainWindow
             var size = new FileInfo(path).Length / 1024.0 / 1024.0;
             _earcons.Play(EarconEvent.Finished);
             var message = $"Export finished in {TimeFormat.Words(stopwatch.Elapsed.TotalSeconds)}. {Path.GetFileName(path)}, {size:0.#} megabytes.";
+            try
+            {
+                if (Credits.WriteFor(project, path) is { } creditsFile)
+                {
+                    message += $" Credits for the music and sounds are in {Path.GetFileName(creditsFile)}; copy them into your video description.";
+                }
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                AppPaths.Log("Writing credits failed: " + ex.Message);
+            }
+
             Say(message);
             if (showProgress && MessageBox.Show(this, message + " Open the folder?", "Export finished", MessageBoxButton.YesNo, MessageBoxImage.Information) == MessageBoxResult.Yes)
             {
@@ -1145,6 +1214,140 @@ public partial class MainWindow
         finally
         {
             FocusTimeline();
+        }
+    }
+
+    // ------------------------------------------------------------------ text and templates
+
+    /// <summary>Asks for text and its style, then adds it at the playhead.</summary>
+    internal async Task AddTextAsync(TextPreset? preset)
+    {
+        preset ??= TextPresets.All[0];
+        var form = new FormDialog(this, "Add text", tabs: true);
+        form.AddPage("Words");
+        var presets = TextPresets.All.ToList();
+        var content = form.AddMultilineText("Text", "", "The words to show. Several lines are fine.");
+        var style = form.AddChoice("Style", presets.Select(p => $"{p.Name}. {p.Description}").ToList(), presets.IndexOf(preset),
+            "Sets size, place and animation. You can change each one on the other tabs, and later with Enter on the item.");
+        var length = form.AddTime("How long it stays on screen", preset.Duration, minimum: 0.5);
+
+        form.AddPage("Look");
+        var colorNames = ColorCatalog.Colors.Select(c => c.Name).ToList();
+        var font = form.AddChoice("Font", FontCatalog.Fonts.Select(f => $"{f.Name}. {f.Description}").ToList(),
+            FontCatalog.Fonts.ToList().FindIndex(f => f.Name == FontCatalog.Find(preset.Style.Font).Name));
+        var color = form.AddChoice("Text colour", colorNames, Math.Max(0, colorNames.IndexOf(preset.Style.ColorName)));
+        var useStyleLook = form.AddCheck("Use the style's size, colour, box and animation (untick to use the choices on this tab and the next)", true);
+        var size = form.AddNumber("Text size, percent of the frame height", preset.Style.SizePercent, 1, 50);
+        var bold = form.AddCheck("Bold", preset.Style.Bold);
+        var background = form.AddChoice("Background", Enum.GetValues<TextBackground>().Select(TextAnimationCatalog.BackgroundName).ToList(), (int)preset.Style.Background);
+
+        form.AddPage("Place and motion");
+        var position = form.AddChoice("Position", PositionNames, (int)preset.Placement.Position);
+        var animIn = form.AddChoice("Comes in by", TextAnimationCatalog.All.Select(TextAnimationCatalog.InName).ToList(), (int)preset.Style.AnimationIn);
+        var animOut = form.AddChoice("Goes out by", TextAnimationCatalog.All.Select(TextAnimationCatalog.OutName).ToList(), (int)preset.Style.AnimationOut);
+        form.ExtraValidation = () => string.IsNullOrWhiteSpace(content()) ? "Type the text to show on the Words tab." : null;
+        if (form.ShowDialog() != true)
+        {
+            return;
+        }
+
+        var chosen = presets[style()];
+        TextStyle textStyle;
+        Placement placement;
+        if (useStyleLook())
+        {
+            textStyle = chosen.Style.Clone();
+            placement = chosen.Placement.Clone();
+            textStyle.Font = FontCatalog.Fonts[font()].Name;
+            if (colorNames[color()] != preset.Style.ColorName)
+            {
+                textStyle.ColorName = colorNames[color()];
+            }
+        }
+        else
+        {
+            textStyle = chosen.Style.Clone();
+            textStyle.Font = FontCatalog.Fonts[font()].Name;
+            textStyle.ColorName = colorNames[color()];
+            textStyle.SizePercent = size();
+            textStyle.Bold = bold();
+            textStyle.Background = (TextBackground)background();
+            textStyle.AnimationIn = (TextAnimation)animIn();
+            textStyle.AnimationOut = (TextAnimation)animOut();
+            placement = new Placement { Position = (PositionPreset)position() };
+        }
+
+        textStyle.Content = content().TrimEnd();
+        await ApplyAsync(_editor.AddText(textStyle, length(), placement));
+        if (Tools is { } tools && !tools.Text.Available)
+        {
+            Say("Warning: this copy of FFmpeg can't draw text, so the text won't show in previews or exports.", interrupt: false);
+        }
+    }
+
+    private async Task EditTextOrRenameAsync()
+    {
+        if (_editor.FocusedItem is not { } item)
+        {
+            _earcons.Play(EarconEvent.Error);
+            Say(_editor.FocusedLayer is null ? "No layers." : "This layer is empty.");
+            return;
+        }
+
+        var form = new FormDialog(this, item.Kind == ItemKind.Text ? "Edit text" : "Rename");
+        var value = item.Kind == ItemKind.Text ? form.AddMultilineText("Text", item.Text.Content) : form.AddText("Name", item.Name);
+        if (form.ShowDialog() != true)
+        {
+            return;
+        }
+
+        var edited = item.Clone(newId: false);
+        if (item.Kind == ItemKind.Text)
+        {
+            if (string.IsNullOrWhiteSpace(value()))
+            {
+                Say("Text can't be empty. Delete the item instead if you don't want it.");
+                return;
+            }
+
+            edited.Text.Content = value().TrimEnd();
+        }
+        else
+        {
+            edited.Name = value();
+        }
+
+        await ApplyAsync(_editor.UpdateFocusedItem(edited));
+    }
+
+    private void SaveAsTemplate()
+    {
+        var form = new FormDialog(this, "Save as template");
+        form.AddIntro("Templates keep the layers, their default settings, text and colour cards. Choose whether to keep the media files too; media only works on a computer that has the same files.");
+        var name = form.AddText("Template name", _editor.Project.Title);
+        var folders = Templates.Categories().ToList();
+        var folder = form.AddChoice("Folder", folders, 0);
+        var newFolder = form.AddText("Or a new folder name", "", "Leave empty to use the folder chosen above.");
+        var description = form.AddText("Description", "", "A sentence to remind you what this template is for.");
+        var media = form.AddCheck("Keep the video, picture and sound files in the template", false);
+        form.ExtraValidation = () => string.IsNullOrWhiteSpace(name()) ? "Give the template a name." : null;
+        if (form.ShowDialog() != true)
+        {
+            return;
+        }
+
+        var category = string.IsNullOrWhiteSpace(newFolder()) ? folders[folder()] : newFolder().Trim();
+        try
+        {
+            var saved = Templates.Save(_editor.Project, name(), category, description(), media());
+            FillTemplates();
+            _earcons.Play(EarconEvent.Done);
+            Say($"Saved template {saved.Name} in {saved.Category}. Find it with Control N or in the library's Templates tab.");
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            _earcons.Play(EarconEvent.Error);
+            Say("Could not save the template. " + ex.Message);
         }
     }
 

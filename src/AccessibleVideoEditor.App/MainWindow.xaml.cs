@@ -75,6 +75,11 @@ public partial class MainWindow : Window
         WireListEvents();
         BuildKeyTable();
         BuildMenu();
+        BuildLibrary();
+        PropertiesRegion.PreviewKeyDown += OnPropertiesKeyDown;
+        PreviewRegion.GotKeyboardFocus += (_, _) => PreviewRegion.BorderThickness = new Thickness(3);
+        PreviewRegion.LostKeyboardFocus += (_, _) => PreviewRegion.BorderThickness = new Thickness(0);
+        PreviewRegion.MouseDown += (_, _) => FocusRegion(Region.Preview);
 
         _autosave = new DispatcherTimer { Interval = TimeSpan.FromSeconds(20) };
         _autosave.Tick += (_, _) => Autosave();
@@ -84,6 +89,7 @@ public partial class MainWindow : Window
         Closing += OnClosing;
         Closed += (_, _) =>
         {
+            _libraryPlayer.Close();
             _preview.Dispose();
             _announcer.Dispose();
         };
@@ -100,6 +106,8 @@ public partial class MainWindow : Window
     internal IReadOnlyList<SpokenViewModel> ItemEntries => _items;
 
     internal Announcer Speech => _announcer;
+
+    internal string StatusTextValue => StatusText.Text;
 
     internal EarconPlayer Earcons => _earcons;
 
@@ -254,12 +262,20 @@ public partial class MainWindow : Window
             return;
         }
 
+        if (_editor.InPositionMode)
+        {
+            // Position mode owns the keyboard until Enter or Escape, wherever focus is.
+            e.Handled = true;
+            HandlePositionKey(key, modifiers);
+            return;
+        }
+
         if (!_keys.TryGetValue((key, modifiers & (ModifierKeys.Control | ModifierKeys.Alt | ModifierKeys.Shift)), out var command))
         {
             return;
         }
 
-        var inTimeline = ItemsList.IsKeyboardFocusWithin;
+        var inTimeline = ItemsList.IsKeyboardFocusWithin || PreviewRegion.IsKeyboardFocusWithin;
         var inLayers = LayersList.IsKeyboardFocusWithin;
         var info = CommandCatalog.Get(command);
         if (info.IsTimelineOnly && !inTimeline && !inLayers)
@@ -329,6 +345,10 @@ public partial class MainWindow : Window
         if (feedback.Earcon is { } earcon)
         {
             _earcons.Play(earcon);
+        }
+        else if (feedback.Position is { } position)
+        {
+            _earcons.PlayPosition(position.X, position.Y);
         }
 
         FocusAndSay(feedback.Speech);
@@ -432,6 +452,8 @@ public partial class MainWindow : Window
             }
 
             UpdatePlayheadText();
+            RebuildProperties();
+            RefreshLibraryMedia();
         }
         finally
         {
@@ -483,6 +505,20 @@ public partial class MainWindow : Window
     /// </summary>
     private void FocusAndSay(string speech)
     {
+        if (PreviewRegion.IsKeyboardFocusWithin)
+        {
+            // The preview keeps focus; describe the item reached when moving around.
+            Say(string.IsNullOrWhiteSpace(speech) ? _editor.FocusedItemText() : speech);
+            AutomationProperties.SetName(PreviewRegion, "Preview. " + FrameDescriber.Describe(_editor.Project, _editor.Playhead));
+            return;
+        }
+
+        if (LibraryRegion.IsKeyboardFocusWithin || PropertiesRegion.IsKeyboardFocusWithin)
+        {
+            Say(speech);
+            return;
+        }
+
         if (LayersList.IsKeyboardFocusWithin)
         {
             var layerVm = _layers.FirstOrDefault(v => v.Id == _editor.FocusedLayerId);

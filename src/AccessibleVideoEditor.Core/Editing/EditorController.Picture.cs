@@ -168,8 +168,13 @@ public sealed partial class EditorController
         {
             var item = MediaProbe.CreateTextItem(ProjectEditor.ClampText(style), duration, new LayerDefaults(), ProjectEditor.ClampPlacement(placement));
             var lowestVideo = project.Layers.FindIndex(l => l.Kind == LayerKind.Video);
+            // Reuse a layer that already holds text (or is named for it), never a logo or picture layer.
+            static bool IsTextLayer(Layer l) => l.Items.Any(i => i.Kind == ItemKind.Text) ||
+                                                 l.Name.Contains("text", StringComparison.OrdinalIgnoreCase) ||
+                                                 l.Name.Contains("title", StringComparison.OrdinalIgnoreCase);
             var layer = project.Layers
-                .Where((l, i) => l.Kind == LayerKind.Video && i > lowestVideo && ProjectEditor.HasRoomAt(l, time, item.Duration))
+                .Where((l, i) => l.Kind == LayerKind.Video && i > lowestVideo && IsTextLayer(l) &&
+                                 l.Items.All(x => x.Kind == ItemKind.Text) && ProjectEditor.HasRoomAt(l, time, item.Duration))
                 .LastOrDefault();
             if (layer is null)
             {

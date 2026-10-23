@@ -2,7 +2,9 @@
 
 This file is generated from the program's command table (`tools/AccessibleVideoEditor.AssetGenerator --docs docs`). Do not edit it by hand.
 
-Keys without Control or Alt (letters, arrows, Space, Enter, Delete, brackets) work while the timeline or the layer list has focus. Every key can be changed in the keyboard settings file (Tools menu).
+Keys without Control or Alt (letters, arrows, Space, Enter, Delete, brackets) work while the timeline, the layer list or the preview has focus. Every key can be changed in the keyboard settings file (Tools menu).
+
+**Laptops:** every command has at least one key that needs no number pad, no Fn key (Home, End, F1 to F12) and no AltGr (brackets on many non-US keyboards). Where the first key listed is one of those, the second one is the laptop-friendly alternative, for example `I` and `O` for range start and end, `Ctrl+Left` and `Ctrl+Right` for first and last item, `Ctrl+H` for help and `Alt+.` for the next area.
 
 ## File
 
@@ -32,7 +34,7 @@ Keys without Control or Alt (letters, arrows, Space, Enter, Delete, brackets) wo
 | `Ctrl+Delete` | Delete item, keep timing | Delete the focused item and leave silence in its place, so later items do not move. |
 | `Shift+Delete` | Delete range on this layer | Remove everything between range start and range end on the focused layer. |
 | `Ctrl+R` | Ripple editing on or off | With ripple on, deleting, trimming and sliding move later items too. With ripple off, later items keep their time. |
-| `F2` | Edit text or rename | Change the words of a text item, or rename any other item. |
+| `F2` or `Shift+Enter` | Edit text or rename | Change the words of a text item, or rename any other item. |
 | `Enter` | Item options | Open all options for the focused item: length, volume, fades, transition, position, sound clean-up and equaliser. |
 
 ## Add
@@ -56,8 +58,8 @@ Keys without Control or Alt (letters, arrows, Space, Enter, Delete, brackets) wo
 |---|---|---|
 | `Left` | Previous item | Go to the previous item on this layer. The playhead moves to its start. |
 | `Right` | Next item | Go to the next item on this layer. The playhead moves to its start. |
-| `Home` | First item | Go to the first item on this layer. |
-| `End` | Last item | Go to the last item on this layer. |
+| `Home` or `Ctrl+Left` | First item | Go to the first item on this layer. |
+| `End` or `Ctrl+Right` | Last item | Go to the last item on this layer. |
 | `Up` | Layer above in the list | Go to the previous layer, to the item at the playhead. Works with any number of layers. |
 | `Down` | Layer below in the list | Go to the next layer, to the item at the playhead. Works with any number of layers. |
 | `Alt+1` | Go to layer 1 | Focus layer 1 and listen to it on its own. |
@@ -74,10 +76,10 @@ Keys without Control or Alt (letters, arrows, Space, Enter, Delete, brackets) wo
 | `Alt+Left` | Previous marker | Jump the playhead back to the previous marker, range start or range end. |
 | `Alt+Right` | Next marker | Jump the playhead forward to the next marker, range start or range end. |
 | `Ctrl+G` | Go to time | Type a time to move the playhead, for example 1:30, 90, or +5. |
-| `Ctrl+Home` | Go to start | Move the playhead to the start of the project. |
-| `Ctrl+End` | Go to end | Move the playhead to the end of the project. |
-| `F6` | Next area | Move to the next area of the window: library, timeline, layers, properties, preview. |
-| `Shift+F6` | Previous area | Move to the previous area of the window. |
+| `Ctrl+Home` or `Ctrl+Shift+Left` | Go to start | Move the playhead to the start of the project. |
+| `Ctrl+End` or `Ctrl+Shift+Right` | Go to end | Move the playhead to the end of the project. |
+| `F6` or `Alt+.` | Next area | Move to the next area of the window: library, timeline, layers, properties, preview. |
+| `Shift+F6` or `Alt+,` | Previous area | Move to the previous area of the window. |
 | `Ctrl+1` | Go to library | The left area: media, sounds, online music, text styles, templates, import and export. |
 | `Ctrl+2` | Go to timeline | The items of the focused layer. |
 | `Ctrl+3` | Go to properties | The right area: quick settings for the focused item. |
@@ -90,8 +92,8 @@ Keys without Control or Alt (letters, arrows, Space, Enter, Delete, brackets) wo
 |---|---|---|
 | `Alt+Shift+Left` | Move item earlier in order | Swap the focused item with the one before it. |
 | `Alt+Shift+Right` | Move item later in order | Swap the focused item with the one after it. |
-| `Alt+Shift+Home` | Move item to the start | Make the focused item the first on its layer. |
-| `Alt+Shift+End` | Move item to the end | Make the focused item the last on its layer. |
+| `Alt+Shift+Home` or `Alt+Shift+,` | Move item to the start | Make the focused item the first on its layer. |
+| `Alt+Shift+End` or `Alt+Shift+.` | Move item to the end | Make the focused item the last on its layer. |
 | `Alt+J` | Slide item earlier | Slide the focused item earlier by the slide step (1 second unless changed in preferences). |
 | `Alt+L` | Slide item later | Slide the focused item later by the slide step. |
 | `Alt+Shift+J` | Slide item earlier a little | Slide the focused item earlier by the fine step (a tenth of a second). |
@@ -106,10 +108,10 @@ Keys without Control or Alt (letters, arrows, Space, Enter, Delete, brackets) wo
 | Keys | Command | What it does |
 |---|---|---|
 | `S` | Split at playhead | Cut the item at the playhead into two items. |
-| `Shift+[` | Trim start to playhead | Remove the part of the item before the playhead. |
-| `Shift+]` | Trim end to playhead | Remove the part of the item after the playhead. |
-| `[` | Set range start | Mark the playhead as the start of a range. |
-| `]` | Set range end | Mark the playhead as the end of a range. |
+| `Shift+[` or `Shift+I` | Trim start to playhead | Remove the part of the item before the playhead. |
+| `Shift+]` or `Shift+O` | Trim end to playhead | Remove the part of the item after the playhead. |
+| `[` or `I` | Set range start | Mark the playhead as the start of a range. I (in) works on every keyboard. |
+| `]` or `O` | Set range end | Mark the playhead as the end of a range. O (out) works on every keyboard. |
 | `Ctrl+Shift+R` | Clear range | Remove the range start and end marks. |
 | `B` | Add marker | Put a named marker at the playhead. |
 | `Shift+B` | Markers and their options | List all markers to jump, rename, move, delete, split or add a transition there. |
@@ -153,9 +155,9 @@ Keys without Control or Alt (letters, arrows, Space, Enter, Delete, brackets) wo
 | `Shift+T` | Say project status | Say project length, layer, listening mode, ripple and range. |
 | `W` | What's at the playhead | Say what every layer has at the playhead, and where pictures are placed. |
 | `D` | Describe item in detail | Say every setting of the focused item. |
-| `F7` | Check project | List possible problems: missing files, black gaps, muted layers and transitions that cannot play. |
+| `F7` or `Ctrl+Shift+F` | Check project | List possible problems: missing files, black gaps, muted layers and transitions that cannot play. |
 | `Shift+V` | Change how much is spoken | Switch between brief, normal and detailed descriptions. |
-| `F1` | Keyboard help | List every command and its keys. Type to search. |
+| `F1` or `Ctrl+H` | Keyboard help | List every command and its keys. Type to search. |
 
 ## Keys inside position mode
 
@@ -165,8 +167,8 @@ Press `P` on a picture, video or text to enter position mode. A short tone plays
 |---|---|
 | Arrows | Move 5 percent of the frame. With Shift, 1 percent. |
 | Plus and minus | Bigger and smaller. With Shift, in small steps. |
-| 1 to 9 | Snap to a place laid out like a number pad: 7 top left, 8 top centre, 9 top right, 4 middle left, 5 centre, 6 middle right, 1 bottom left, 2 bottom centre, 3 bottom right. |
-| 0 | Full frame (maximise). |
+| 1 to 9 (the number row above the letters, or a number pad) | Snap to a place laid out like a phone keypad upside down, or a number pad: 7 top left, 8 top centre, 9 top right, 4 middle left, 5 centre, 6 middle right, 1 bottom left, 2 bottom centre, 3 bottom right. No number pad is needed. |
+| 0 (number row or number pad) | Full frame (maximise). |
 | F | Full frame only: switch between fit (whole picture, maybe with bars) and fill (covers the frame, edges cut off). |
 | Control and an arrow | Crop 5 percent more from that edge. |
 | Control Shift and an arrow | Give back 5 percent of that edge. |

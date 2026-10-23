@@ -4,7 +4,8 @@
 <style>body{font-family:Segoe UI,sans-serif;max-width:60em;margin:1em auto;padding:0 1em;line-height:1.5}table{border-collapse:collapse;width:100%}th,td{border:1px solid #888;padding:.3em .5em;text-align:left;vertical-align:top}kbd{font-family:inherit;font-weight:bold}</style></head>
 <body>
 <h1>Keyboard reference</h1>
-<p>Keys without Control or Alt (letters, arrows, Space, Enter, Delete, brackets) work while the timeline or the layer list has focus. Each section is a heading and each table has column headers, so screen readers can move by heading (H) and by table cell.</p>
+<p>Keys without Control or Alt (letters, arrows, Space, Enter, Delete, brackets) work while the timeline, the layer list or the preview has focus. Each section is a heading and each table has column headers, so screen readers can move by heading (H) and by table cell.</p>
+<p><strong>Laptops:</strong> every command has at least one key that needs no number pad, no Fn key (Home, End, F1 to F12) and no AltGr (brackets on many non-US keyboards). Where a command lists two keys, the second is the laptop-friendly one: for example I and O for range start and end, Control Left and Control Right for first and last item, Control H for help and Alt period for the next area.</p>
 <h2>File</h2>
 <table><caption>File keys</caption><thead><tr><th scope="col">Keys</th><th scope="col">Command</th><th scope="col">What it does</th></tr></thead><tbody>
 <tr><td><kbd>Control N</kbd></td><th scope="row">New project from template</th><td>Start a new project from a built-in or saved template.</td></tr>
@@ -29,7 +30,7 @@
 <tr><td><kbd>Control Delete</kbd></td><th scope="row">Delete item, keep timing</th><td>Delete the focused item and leave silence in its place, so later items do not move.</td></tr>
 <tr><td><kbd>Shift Delete</kbd></td><th scope="row">Delete range on this layer</th><td>Remove everything between range start and range end on the focused layer.</td></tr>
 <tr><td><kbd>Control R</kbd></td><th scope="row">Ripple editing on or off</th><td>With ripple on, deleting, trimming and sliding move later items too. With ripple off, later items keep their time.</td></tr>
-<tr><td><kbd>F2</kbd></td><th scope="row">Edit text or rename</th><td>Change the words of a text item, or rename any other item.</td></tr>
+<tr><td><kbd>F2</kbd> or <kbd>Shift Enter</kbd></td><th scope="row">Edit text or rename</th><td>Change the words of a text item, or rename any other item.</td></tr>
 <tr><td><kbd>Enter</kbd></td><th scope="row">Item options</th><td>Open all options for the focused item: length, volume, fades, transition, position, sound clean-up and equaliser.</td></tr>
 </tbody></table>
 <h2>Add</h2>
@@ -49,8 +50,8 @@
 <table><caption>Move around keys</caption><thead><tr><th scope="col">Keys</th><th scope="col">Command</th><th scope="col">What it does</th></tr></thead><tbody>
 <tr><td><kbd>left arrow</kbd></td><th scope="row">Previous item</th><td>Go to the previous item on this layer. The playhead moves to its start.</td></tr>
 <tr><td><kbd>right arrow</kbd></td><th scope="row">Next item</th><td>Go to the next item on this layer. The playhead moves to its start.</td></tr>
-<tr><td><kbd>Home</kbd></td><th scope="row">First item</th><td>Go to the first item on this layer.</td></tr>
-<tr><td><kbd>End</kbd></td><th scope="row">Last item</th><td>Go to the last item on this layer.</td></tr>
+<tr><td><kbd>Home</kbd> or <kbd>Control left arrow</kbd></td><th scope="row">First item</th><td>Go to the first item on this layer.</td></tr>
+<tr><td><kbd>End</kbd> or <kbd>Control right arrow</kbd></td><th scope="row">Last item</th><td>Go to the last item on this layer.</td></tr>
 <tr><td><kbd>up arrow</kbd></td><th scope="row">Layer above in the list</th><td>Go to the previous layer, to the item at the playhead. Works with any number of layers.</td></tr>
 <tr><td><kbd>down arrow</kbd></td><th scope="row">Layer below in the list</th><td>Go to the next layer, to the item at the playhead. Works with any number of layers.</td></tr>
 <tr><td><kbd>Alt 1</kbd></td><th scope="row">Go to layer 1</th><td>Focus layer 1 and listen to it on its own.</td></tr>
@@ -67,10 +68,10 @@
 <tr><td><kbd>Alt left arrow</kbd></td><th scope="row">Previous marker</th><td>Jump the playhead back to the previous marker, range start or range end.</td></tr>
 <tr><td><kbd>Alt right arrow</kbd></td><th scope="row">Next marker</th><td>Jump the playhead forward to the next marker, range start or range end.</td></tr>
 <tr><td><kbd>Control G</kbd></td><th scope="row">Go to time</th><td>Type a time to move the playhead, for example 1:30, 90, or +5.</td></tr>
-<tr><td><kbd>Control Home</kbd></td><th scope="row">Go to start</th><td>Move the playhead to the start of the project.</td></tr>
-<tr><td><kbd>Control End</kbd></td><th scope="row">Go to end</th><td>Move the playhead to the end of the project.</td></tr>
-<tr><td><kbd>F6</kbd></td><th scope="row">Next area</th><td>Move to the next area of the window: library, timeline, layers, properties, preview.</td></tr>
-<tr><td><kbd>Shift F6</kbd></td><th scope="row">Previous area</th><td>Move to the previous area of the window.</td></tr>
+<tr><td><kbd>Control Home</kbd> or <kbd>Control Shift left arrow</kbd></td><th scope="row">Go to start</th><td>Move the playhead to the start of the project.</td></tr>
+<tr><td><kbd>Control End</kbd> or <kbd>Control Shift right arrow</kbd></td><th scope="row">Go to end</th><td>Move the playhead to the end of the project.</td></tr>
+<tr><td><kbd>F6</kbd> or <kbd>Alt period</kbd></td><th scope="row">Next area</th><td>Move to the next area of the window: library, timeline, layers, properties, preview.</td></tr>
+<tr><td><kbd>Shift F6</kbd> or <kbd>Alt comma</kbd></td><th scope="row">Previous area</th><td>Move to the previous area of the window.</td></tr>
 <tr><td><kbd>Control 1</kbd></td><th scope="row">Go to library</th><td>The left area: media, sounds, online music, text styles, templates, import and export.</td></tr>
 <tr><td><kbd>Control 2</kbd></td><th scope="row">Go to timeline</th><td>The items of the focused layer.</td></tr>
 <tr><td><kbd>Control 3</kbd></td><th scope="row">Go to properties</th><td>The right area: quick settings for the focused item.</td></tr>
@@ -81,8 +82,8 @@
 <table><caption>Arrange keys</caption><thead><tr><th scope="col">Keys</th><th scope="col">Command</th><th scope="col">What it does</th></tr></thead><tbody>
 <tr><td><kbd>Alt Shift left arrow</kbd></td><th scope="row">Move item earlier in order</th><td>Swap the focused item with the one before it.</td></tr>
 <tr><td><kbd>Alt Shift right arrow</kbd></td><th scope="row">Move item later in order</th><td>Swap the focused item with the one after it.</td></tr>
-<tr><td><kbd>Alt Shift Home</kbd></td><th scope="row">Move item to the start</th><td>Make the focused item the first on its layer.</td></tr>
-<tr><td><kbd>Alt Shift End</kbd></td><th scope="row">Move item to the end</th><td>Make the focused item the last on its layer.</td></tr>
+<tr><td><kbd>Alt Shift Home</kbd> or <kbd>Alt Shift comma</kbd></td><th scope="row">Move item to the start</th><td>Make the focused item the first on its layer.</td></tr>
+<tr><td><kbd>Alt Shift End</kbd> or <kbd>Alt Shift period</kbd></td><th scope="row">Move item to the end</th><td>Make the focused item the last on its layer.</td></tr>
 <tr><td><kbd>Alt J</kbd></td><th scope="row">Slide item earlier</th><td>Slide the focused item earlier by the slide step (1 second unless changed in preferences).</td></tr>
 <tr><td><kbd>Alt L</kbd></td><th scope="row">Slide item later</th><td>Slide the focused item later by the slide step.</td></tr>
 <tr><td><kbd>Alt Shift J</kbd></td><th scope="row">Slide item earlier a little</th><td>Slide the focused item earlier by the fine step (a tenth of a second).</td></tr>
@@ -95,10 +96,10 @@
 <h2>Cut and mark</h2>
 <table><caption>Cut and mark keys</caption><thead><tr><th scope="col">Keys</th><th scope="col">Command</th><th scope="col">What it does</th></tr></thead><tbody>
 <tr><td><kbd>S</kbd></td><th scope="row">Split at playhead</th><td>Cut the item at the playhead into two items.</td></tr>
-<tr><td><kbd>Shift left bracket</kbd></td><th scope="row">Trim start to playhead</th><td>Remove the part of the item before the playhead.</td></tr>
-<tr><td><kbd>Shift right bracket</kbd></td><th scope="row">Trim end to playhead</th><td>Remove the part of the item after the playhead.</td></tr>
-<tr><td><kbd>left bracket</kbd></td><th scope="row">Set range start</th><td>Mark the playhead as the start of a range.</td></tr>
-<tr><td><kbd>right bracket</kbd></td><th scope="row">Set range end</th><td>Mark the playhead as the end of a range.</td></tr>
+<tr><td><kbd>Shift left bracket</kbd> or <kbd>Shift I</kbd></td><th scope="row">Trim start to playhead</th><td>Remove the part of the item before the playhead.</td></tr>
+<tr><td><kbd>Shift right bracket</kbd> or <kbd>Shift O</kbd></td><th scope="row">Trim end to playhead</th><td>Remove the part of the item after the playhead.</td></tr>
+<tr><td><kbd>left bracket</kbd> or <kbd>I</kbd></td><th scope="row">Set range start</th><td>Mark the playhead as the start of a range. I (in) works on every keyboard.</td></tr>
+<tr><td><kbd>right bracket</kbd> or <kbd>O</kbd></td><th scope="row">Set range end</th><td>Mark the playhead as the end of a range. O (out) works on every keyboard.</td></tr>
 <tr><td><kbd>Control Shift R</kbd></td><th scope="row">Clear range</th><td>Remove the range start and end marks.</td></tr>
 <tr><td><kbd>B</kbd></td><th scope="row">Add marker</th><td>Put a named marker at the playhead.</td></tr>
 <tr><td><kbd>Shift B</kbd></td><th scope="row">Markers and their options</th><td>List all markers to jump, rename, move, delete, split or add a transition there.</td></tr>
@@ -136,17 +137,17 @@
 <tr><td><kbd>Shift T</kbd></td><th scope="row">Say project status</th><td>Say project length, layer, listening mode, ripple and range.</td></tr>
 <tr><td><kbd>W</kbd></td><th scope="row">What&#39;s at the playhead</th><td>Say what every layer has at the playhead, and where pictures are placed.</td></tr>
 <tr><td><kbd>D</kbd></td><th scope="row">Describe item in detail</th><td>Say every setting of the focused item.</td></tr>
-<tr><td><kbd>F7</kbd></td><th scope="row">Check project</th><td>List possible problems: missing files, black gaps, muted layers and transitions that cannot play.</td></tr>
+<tr><td><kbd>F7</kbd> or <kbd>Control Shift F</kbd></td><th scope="row">Check project</th><td>List possible problems: missing files, black gaps, muted layers and transitions that cannot play.</td></tr>
 <tr><td><kbd>Shift V</kbd></td><th scope="row">Change how much is spoken</th><td>Switch between brief, normal and detailed descriptions.</td></tr>
-<tr><td><kbd>F1</kbd></td><th scope="row">Keyboard help</th><td>List every command and its keys. Type to search.</td></tr>
+<tr><td><kbd>F1</kbd> or <kbd>Control H</kbd></td><th scope="row">Keyboard help</th><td>List every command and its keys. Type to search.</td></tr>
 </tbody></table>
 <h2>Keys inside position mode</h2>
 <p>Press P on a picture, video or text to enter position mode. A short tone plays after each move: it is panned left or right by where the picture is across the frame, and higher the nearer it is to the top.</p>
 <table><caption>Position mode keys</caption><thead><tr><th scope="col">Keys</th><th scope="col">What it does</th></tr></thead><tbody>
 <tr><td><kbd>Arrows</kbd></td><td>Move 5 percent of the frame. With Shift, 1 percent.</td></tr>
 <tr><td><kbd>Plus and minus</kbd></td><td>Bigger and smaller. With Shift, in small steps.</td></tr>
-<tr><td><kbd>1 to 9</kbd></td><td>Snap to a place laid out like a number pad: 7 top left, 8 top centre, 9 top right, 4 middle left, 5 centre, 6 middle right, 1 bottom left, 2 bottom centre, 3 bottom right.</td></tr>
-<tr><td><kbd>0</kbd></td><td>Full frame (maximise).</td></tr>
+<tr><td><kbd>1 to 9 (the number row above the letters, or a number pad)</kbd></td><td>Snap to a place laid out like a phone keypad upside down, or a number pad: 7 top left, 8 top centre, 9 top right, 4 middle left, 5 centre, 6 middle right, 1 bottom left, 2 bottom centre, 3 bottom right. No number pad is needed.</td></tr>
+<tr><td><kbd>0 (number row or number pad)</kbd></td><td>Full frame (maximise).</td></tr>
 <tr><td><kbd>F</kbd></td><td>Full frame only: switch between fit (whole picture, maybe with bars) and fill (covers the frame, edges cut off).</td></tr>
 <tr><td><kbd>Control and an arrow</kbd></td><td>Crop 5 percent more from that edge.</td></tr>
 <tr><td><kbd>Control Shift and an arrow</kbd></td><td>Give back 5 percent of that edge.</td></tr>

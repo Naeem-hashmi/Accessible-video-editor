@@ -196,6 +196,54 @@ public sealed class KeymapTests
         Assert.Equal(CommandId.Delete, Of("Delete"));
     }
 
+    /// <summary>
+    /// Keys that a laptop may not have without Fn (Home, End, F keys, number pad) or that need AltGr on
+    /// many non-US layouts (brackets). Comma, period, plus and minus are safe: Windows maps them by character.
+    /// </summary>
+    private static bool LaptopSafe(KeyChord chord)
+    {
+        var key = chord.Key;
+        var awkward = key is "Home" or "End" or "PageUp" or "PageDown" or "Insert" or "OemOpenBrackets" or "OemCloseBrackets"
+                      || key.StartsWith("NumPad", StringComparison.Ordinal)
+                      || (key.Length is 2 or 3 && key[0] == 'F' && char.IsDigit(key[1]))
+                      || (key.StartsWith("Oem", StringComparison.Ordinal) && key is not ("OemComma" or "OemPeriod" or "OemPlus" or "OemMinus"));
+        return !awkward && !(chord.Ctrl && chord.Alt);
+    }
+
+    [Fact]
+    public void Every_command_has_a_laptop_friendly_key()
+    {
+        var keymap = Keymap.Default();
+        var missing = CommandCatalog.All.Where(c => !keymap.KeysFor(c.Id).Any(LaptopSafe)).Select(c => c.Id.ToString()).ToList();
+        Assert.True(missing.Count == 0, "No laptop-friendly key for: " + string.Join(", ", missing));
+    }
+
+    [Fact]
+    public void No_shortcut_uses_control_with_alt_which_is_altgr_on_many_keyboards()
+    {
+        Assert.DoesNotContain(CommandCatalog.All.SelectMany(c => c.DefaultKeys), k => k.Contains("Ctrl+Alt") || k.Contains("Alt+Ctrl"));
+    }
+
+    [Fact]
+    public void Laptop_alternatives_match_editing_conventions()
+    {
+        var keymap = Keymap.Default();
+        CommandId Of(string key)
+        {
+            Assert.True(KeyChord.TryParse(key, out var chord));
+            Assert.True(keymap.TryGetCommand(chord, out var id), key);
+            return id;
+        }
+
+        Assert.Equal(CommandId.SetRangeStart, Of("I"));
+        Assert.Equal(CommandId.SetRangeEnd, Of("O"));
+        Assert.Equal(CommandId.FirstItem, Of("Ctrl+Left"));
+        Assert.Equal(CommandId.GoToEnd, Of("Ctrl+Shift+Right"));
+        Assert.Equal(CommandId.KeyboardHelp, Of("Ctrl+H"));
+        Assert.Equal(CommandId.SwitchPane, Of("Alt+OemPeriod"));
+        Assert.Equal(CommandId.EditTextOrRename, Of("Shift+Enter"));
+    }
+
     [Fact]
     public void Overrides_replace_defaults_and_conflicts_are_reported()
     {

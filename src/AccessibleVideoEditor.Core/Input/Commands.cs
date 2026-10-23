@@ -181,7 +181,7 @@ public static class CommandCatalog
         Add(CommandId.DeleteKeepTiming, edit, "Delete item, keep timing", "Delete the focused item and leave silence in its place, so later items do not move.", "Ctrl+Delete");
         Add(CommandId.DeleteRange, edit, "Delete range on this layer", "Remove everything between range start and range end on the focused layer.", "Shift+Delete");
         Add(CommandId.ToggleRipple, edit, "Ripple editing on or off", "With ripple on, deleting, trimming and sliding move later items too. With ripple off, later items keep their time.", "Ctrl+R");
-        Add(CommandId.EditTextOrRename, edit, "Edit text or rename", "Change the words of a text item, or rename any other item.", "F2");
+        Add(CommandId.EditTextOrRename, edit, "Edit text or rename", "Change the words of a text item, or rename any other item.", "F2", "Shift+Enter");
         Add(CommandId.ItemProperties, edit, "Item options", "Open all options for the focused item: length, volume, fades, transition, position, sound clean-up and equaliser.", "Enter");
 
         const string add = "Add";
@@ -199,8 +199,8 @@ public static class CommandCatalog
         const string nav = "Move around";
         Add(CommandId.PreviousItem, nav, "Previous item", "Go to the previous item on this layer. The playhead moves to its start.", "Left");
         Add(CommandId.NextItem, nav, "Next item", "Go to the next item on this layer. The playhead moves to its start.", "Right");
-        Add(CommandId.FirstItem, nav, "First item", "Go to the first item on this layer.", "Home");
-        Add(CommandId.LastItem, nav, "Last item", "Go to the last item on this layer.", "End");
+        Add(CommandId.FirstItem, nav, "First item", "Go to the first item on this layer.", "Home", "Ctrl+Left");
+        Add(CommandId.LastItem, nav, "Last item", "Go to the last item on this layer.", "End", "Ctrl+Right");
         Add(CommandId.PreviousLayer, nav, "Layer above in the list", "Go to the previous layer, to the item at the playhead. Works with any number of layers.", "Up");
         Add(CommandId.NextLayer, nav, "Layer below in the list", "Go to the next layer, to the item at the playhead. Works with any number of layers.", "Down");
         for (var n = 1; n <= 9; n++)
@@ -213,10 +213,10 @@ public static class CommandCatalog
         Add(CommandId.PreviousMarker, nav, "Previous marker", "Jump the playhead back to the previous marker, range start or range end.", "Alt+Left");
         Add(CommandId.NextMarker, nav, "Next marker", "Jump the playhead forward to the next marker, range start or range end.", "Alt+Right");
         Add(CommandId.GoToTime, nav, "Go to time", "Type a time to move the playhead, for example 1:30, 90, or +5.", "Ctrl+G");
-        Add(CommandId.GoToStart, nav, "Go to start", "Move the playhead to the start of the project.", "Ctrl+Home");
-        Add(CommandId.GoToEnd, nav, "Go to end", "Move the playhead to the end of the project.", "Ctrl+End");
-        Add(CommandId.SwitchPane, nav, "Next area", "Move to the next area of the window: library, timeline, layers, properties, preview.", "F6");
-        Add(CommandId.PreviousPane, nav, "Previous area", "Move to the previous area of the window.", "Shift+F6");
+        Add(CommandId.GoToStart, nav, "Go to start", "Move the playhead to the start of the project.", "Ctrl+Home", "Ctrl+Shift+Left");
+        Add(CommandId.GoToEnd, nav, "Go to end", "Move the playhead to the end of the project.", "Ctrl+End", "Ctrl+Shift+Right");
+        Add(CommandId.SwitchPane, nav, "Next area", "Move to the next area of the window: library, timeline, layers, properties, preview.", "F6", "Alt+OemPeriod");
+        Add(CommandId.PreviousPane, nav, "Previous area", "Move to the previous area of the window.", "Shift+F6", "Alt+OemComma");
         Add(CommandId.FocusLibrary, nav, "Go to library", "The left area: media, sounds, online music, text styles, templates, import and export.", "Ctrl+D1");
         Add(CommandId.FocusTimelineRegion, nav, "Go to timeline", "The items of the focused layer.", "Ctrl+D2");
         Add(CommandId.FocusProperties, nav, "Go to properties", "The right area: quick settings for the focused item.", "Ctrl+D3");
@@ -226,8 +226,8 @@ public static class CommandCatalog
         const string arrange = "Arrange";
         Add(CommandId.MoveItemEarlier, arrange, "Move item earlier in order", "Swap the focused item with the one before it.", "Alt+Shift+Left");
         Add(CommandId.MoveItemLater, arrange, "Move item later in order", "Swap the focused item with the one after it.", "Alt+Shift+Right");
-        Add(CommandId.MoveItemFirst, arrange, "Move item to the start", "Make the focused item the first on its layer.", "Alt+Shift+Home");
-        Add(CommandId.MoveItemLast, arrange, "Move item to the end", "Make the focused item the last on its layer.", "Alt+Shift+End");
+        Add(CommandId.MoveItemFirst, arrange, "Move item to the start", "Make the focused item the first on its layer.", "Alt+Shift+Home", "Alt+Shift+OemComma");
+        Add(CommandId.MoveItemLast, arrange, "Move item to the end", "Make the focused item the last on its layer.", "Alt+Shift+End", "Alt+Shift+OemPeriod");
         Add(CommandId.SlideEarlier, arrange, "Slide item earlier", "Slide the focused item earlier by the slide step (1 second unless changed in preferences).", "Alt+J");
         Add(CommandId.SlideLater, arrange, "Slide item later", "Slide the focused item later by the slide step.", "Alt+L");
         Add(CommandId.SlideEarlierFine, arrange, "Slide item earlier a little", "Slide the focused item earlier by the fine step (a tenth of a second).", "Alt+Shift+J");
@@ -239,10 +239,10 @@ public static class CommandCatalog
 
         const string cut = "Cut and mark";
         Add(CommandId.Split, cut, "Split at playhead", "Cut the item at the playhead into two items.", "S");
-        Add(CommandId.TrimStart, cut, "Trim start to playhead", "Remove the part of the item before the playhead.", "Shift+OemOpenBrackets");
-        Add(CommandId.TrimEnd, cut, "Trim end to playhead", "Remove the part of the item after the playhead.", "Shift+OemCloseBrackets");
-        Add(CommandId.SetRangeStart, cut, "Set range start", "Mark the playhead as the start of a range.", "OemOpenBrackets");
-        Add(CommandId.SetRangeEnd, cut, "Set range end", "Mark the playhead as the end of a range.", "OemCloseBrackets");
+        Add(CommandId.TrimStart, cut, "Trim start to playhead", "Remove the part of the item before the playhead.", "Shift+OemOpenBrackets", "Shift+I");
+        Add(CommandId.TrimEnd, cut, "Trim end to playhead", "Remove the part of the item after the playhead.", "Shift+OemCloseBrackets", "Shift+O");
+        Add(CommandId.SetRangeStart, cut, "Set range start", "Mark the playhead as the start of a range. I (in) works on every keyboard.", "OemOpenBrackets", "I");
+        Add(CommandId.SetRangeEnd, cut, "Set range end", "Mark the playhead as the end of a range. O (out) works on every keyboard.", "OemCloseBrackets", "O");
         Add(CommandId.ClearRange, cut, "Clear range", "Remove the range start and end marks.", "Ctrl+Shift+R");
         Add(CommandId.AddMarker, cut, "Add marker", "Put a named marker at the playhead.", "B");
         Add(CommandId.MarkerList, cut, "Markers and their options", "List all markers to jump, rename, move, delete, split or add a transition there.", "Shift+B");
@@ -277,9 +277,9 @@ public static class CommandCatalog
         Add(CommandId.SpeakStatus, info, "Say project status", "Say project length, layer, listening mode, ripple and range.", "Shift+T");
         Add(CommandId.WhatsHere, info, "What's at the playhead", "Say what every layer has at the playhead, and where pictures are placed.", "W");
         Add(CommandId.DescribeItem, info, "Describe item in detail", "Say every setting of the focused item.", "D");
-        Add(CommandId.ProjectCheck, info, "Check project", "List possible problems: missing files, black gaps, muted layers and transitions that cannot play.", "F7");
+        Add(CommandId.ProjectCheck, info, "Check project", "List possible problems: missing files, black gaps, muted layers and transitions that cannot play.", "F7", "Ctrl+Shift+F");
         Add(CommandId.CycleVerbosity, info, "Change how much is spoken", "Switch between brief, normal and detailed descriptions.", "Shift+V");
-        Add(CommandId.KeyboardHelp, info, "Keyboard help", "List every command and its keys. Type to search.", "F1");
+        Add(CommandId.KeyboardHelp, info, "Keyboard help", "List every command and its keys. Type to search.", "F1", "Ctrl+H");
 
         return list;
     }

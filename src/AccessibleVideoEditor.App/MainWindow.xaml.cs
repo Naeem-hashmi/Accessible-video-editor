@@ -275,6 +275,12 @@ public partial class MainWindow : Window
             return;
         }
 
+        if (Keyboard.FocusedElement is TextBox or PasswordBox && IsTextEditingKey(key, modifiers))
+        {
+            // Inside a text box, copy, paste, undo, select all and word movement keep their usual meaning.
+            return;
+        }
+
         var inTimeline = ItemsList.IsKeyboardFocusWithin || PreviewRegion.IsKeyboardFocusWithin;
         var inLayers = LayersList.IsKeyboardFocusWithin;
         var info = CommandCatalog.Get(command);
@@ -302,6 +308,24 @@ public partial class MainWindow : Window
 
         e.Handled = true;
         _ = RunAsync(command);
+    }
+
+    /// <summary>Keys a text box needs for editing, which must not run editor commands there.</summary>
+    private static bool IsTextEditingKey(Key key, ModifierKeys modifiers)
+    {
+        var ctrl = modifiers.HasFlag(ModifierKeys.Control);
+        var alt = modifiers.HasFlag(ModifierKeys.Alt);
+        if (alt)
+        {
+            return false;
+        }
+
+        if (key is Key.Left or Key.Right or Key.Up or Key.Down or Key.Home or Key.End or Key.Delete or Key.Back or Key.Enter or Key.Space)
+        {
+            return true;
+        }
+
+        return ctrl && key is Key.A or Key.C or Key.X or Key.V or Key.Z or Key.Y;
     }
 
     /// <summary>Runs any command, from a key or a menu.</summary>

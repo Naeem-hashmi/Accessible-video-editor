@@ -37,6 +37,15 @@ Automated tests cover the editing logic, rendering and the UI Automation names. 
 | 24 | `F1`, type "slide" | The list filters; Enter runs the chosen command |
 | 25 | `F6` | Moves between the timeline and the layer list; both read properly |
 | 26 | Preferences: theme Retro, verbosity Brief | Sample sound plays when the theme changes; descriptions get shorter |
+| 27 | `Ctrl+1` to `Ctrl+5`, `F6`, `Shift+F6` | Library, timeline, properties, preview and layers are each announced; focus lands on a useful control |
+| 28 | `Ctrl+Shift+T`, type two lines, choose Lower third | Text added on a Text layer; `Shift+W` names it and says "bottom left" |
+| 29 | `P` on the text, arrows, `+`, `9`, `Ctrl+Left` on a picture, `Escape` | Each step is spoken with a panned tone; Escape says it went back |
+| 30 | `P`, `0`, `F`, `Enter` on a portrait photo | "Fill: covers the whole frame"; export shows no black bars |
+| 31 | `Ctrl+Up` / `Ctrl+Down` / `Ctrl+M` on a clip | "Volume 110 percent", "sound muted" |
+| 32 | `Ctrl+3`, change Volume to 50, Enter | Applied and spoken; the timeline item then says "volume 50 percent" |
+| 33 | `Ctrl+Shift+O`, search "rain", Space, Enter | Results read with their licence; preview plays; downloaded and added at the playhead |
+| 34 | Export a project with a CC BY sound | A "credits.txt" file sits next to the video and the finish message mentions it |
+| 35 | `Ctrl+Shift+N` save as a template in a new folder, then `Ctrl+N` | The template is listed under its folder and creates a project with the same layers and text |
 
 ## Things to listen for
 
@@ -51,4 +60,6 @@ Automated tests cover the editing logic, rendering and the UI Automation names. 
 
 - No scrubbing sound while moving the playhead with the arrows (the playhead moves silently, and `T` speaks it).
 - Reverse playback isn't available; `J` jumps back instead.
+- Spoken text sizes are estimates (about 0.55 of the letter height per letter).
+- Right-to-left scripts such as Urdu depend on the bundled FFmpeg's text shaping; check them in an export.
 - On keyboard layouts without bracket keys, change the range keys in the keyboard settings file.

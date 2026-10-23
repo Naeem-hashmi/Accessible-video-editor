@@ -52,6 +52,26 @@ public sealed class AudioOffsetTests(MediaFixture media)
         return (flash, first < 0 ? -1 : first / 16000.0);
     }
 
+    /// <summary>The middle of the white flash and of the loud beep, in seconds.</summary>
+    private async Task<(double Flash, double Beep)> MeasureMiddles(string file)
+    {
+        var info = await media.Probe(file);
+        var white = new List<double>();
+        for (var t = 0.0; t < info.Duration; t += 0.04)
+        {
+            var (r, g, b) = await media.PixelAt(file, t, 10, 10);
+            if (r > 220 && g > 220 && b > 220)
+            {
+                white.Add(t);
+            }
+        }
+
+        var samples = FfmpegStream.DecodeMono(media.Tools, file, 16000);
+        var loud = Enumerable.Range(0, samples.Length).Where(i => Math.Abs(samples[i]) > 0.2).ToList();
+        return (white.Count == 0 ? -1 : (white[0] + white[^1] + 0.04) / 2,
+            loud.Count == 0 ? -1 : (loud[0] + loud[^1]) / 2.0 / 16000);
+    }
+
     [Theory]
     [InlineData(0.5, 0.0)]
     [InlineData(0.5, 1.0)]
@@ -90,9 +110,11 @@ public sealed class AudioOffsetTests(MediaFixture media)
         var length = (await media.Probe(output)).Duration;
         Assert.InRange(length, 2 / speed - 0.1, 2 / speed + 0.1);
         // The flash and beep are 1 s into the clip's part of the file, so (1 / speed) s into the result.
-        var (flash, beep) = await Measure(output);
-        Assert.InRange(flash, 1 / speed - 0.08, 1 / speed + 0.08);
-        Assert.True(Math.Abs(flash - beep) < 0.06, $"Flash at {flash:0.000} s but beep at {beep:0.000} s at speed {speed}");
+        // Stretched sound smears the start of a short beep, so the middles of the flash and the beep are compared.
+        var (flash, beep) = await MeasureMiddles(output);
+        var middle = (1 + 0.06) / speed;
+        Assert.InRange(flash, middle - 0.1, middle + 0.1);
+        Assert.True(Math.Abs(flash - beep) < 0.06, $"Flash centred at {flash:0.000} s but beep at {beep:0.000} s at speed {speed}");
     }
 
     [Fact]

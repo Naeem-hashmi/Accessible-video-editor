@@ -484,7 +484,9 @@ public sealed class GraphBuilder
         else
         {
             var input = AddInput(item, forVideo: true);
-            chain.Append(CultureInfo.InvariantCulture, $"[{input}:v:0]setpts=PTS-STARTPTS,fps={Num(_fps)}");
+            var speed = item.EffectiveSpeed;
+            var pts = Math.Abs(speed - 1) > 1e-6 ? $"(PTS-STARTPTS)/{Num(speed)}" : "PTS-STARTPTS";
+            chain.Append(CultureInfo.InvariantCulture, $"[{input}:v:0]setpts={pts},fps={Num(_fps)}");
         }
 
         var placement = item.Placement;
@@ -564,6 +566,12 @@ public sealed class GraphBuilder
         {
             chain.Append(',').Append(delay);
         }
+
+        if (Tempo(item.EffectiveSpeed) is { } tempo)
+        {
+            chain.Append(',').Append(tempo);
+        }
+
         foreach (var filter in AudioFilters.For(item.Audio))
         {
             chain.Append(',').Append(filter);
@@ -610,8 +618,8 @@ public sealed class GraphBuilder
         foreach (var dip in item.VolumeDips.OrderBy(d => d.Start))
         {
             var ramp = Math.Max(0.01, dip.Ramp);
-            var start = dip.Start - item.SourceIn;
-            var end = dip.End - item.SourceIn;
+            var start = item.ToTimeline(dip.Start);
+            var end = item.ToTimeline(dip.End);
             if (end + ramp <= 0 || start - ramp >= length || end <= start)
             {
                 continue;
@@ -830,6 +838,28 @@ public sealed class GraphBuilder
         return name;
     }
 
+    /// <summary>
+    /// Changes sound speed without changing its pitch, or null at normal speed. One atempo step goes down to
+    /// half speed, so slower speeds use two.
+    /// </summary>
+    internal static string? Tempo(double speed)
+    {
+        if (Math.Abs(speed - 1) < 1e-6)
+        {
+            return null;
+        }
+
+        var steps = new List<string>();
+        while (speed < 0.5 - 1e-9)
+        {
+            steps.Add("atempo=0.5");
+            speed /= 0.5;
+        }
+
+        steps.Add($"atempo={Num(speed)}");
+        return string.Join(",", steps);
+    }
+
     private static string Silence(long samples, string label) =>
         $"anullsrc=r={SampleRate}:cl=stereo,{AudioFormat},atrim=end_sample={samples},asetpts=PTS-STARTPTS[{label}]";
 
@@ -847,7 +877,7 @@ public sealed class GraphBuilder
                 _inputs.AddRange(["-ss", Num(item.SourceIn)]);
             }
 
-            _inputs.AddRange(["-t", Num(item.Duration + 1)]);
+            _inputs.AddRange(["-t", Num(item.SourceLength + 1)]);
             // Each input feeds either picture or sound; skip decoding the other.
             _inputs.Add(forVideo ? "-an" : "-vn");
 

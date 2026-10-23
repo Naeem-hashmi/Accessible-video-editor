@@ -58,7 +58,7 @@ public static class ProjectChecker
                         spans[i].Start, layer.Id, item.Id));
                 }
 
-                if (item.IsTimeLimited && item.SourceIn + item.Duration > item.SourceDuration + 0.05)
+                if (item.IsTimeLimited && item.SourceOut > item.SourceDuration + 0.05)
                 {
                     findings.Add(new CheckFinding(Severity.Warning,
                         $"{name}: {item.Name} is set longer than its file; the last picture will be held.",

@@ -157,7 +157,7 @@ public sealed class KeymapTests
                 .Concat(Enumerable.Range(0, 10).Select(d => $"D{d}"))
                 .Concat(Enumerable.Range(1, 12).Select(f => $"F{f}"))
                 .Concat(["Left", "Right", "Up", "Down", "Home", "End", "Delete", "Enter", "Escape", "Space",
-                    "OemOpenBrackets", "OemCloseBrackets", "OemComma", "OemPeriod"]));
+                    "OemOpenBrackets", "OemCloseBrackets", "OemComma", "OemPeriod", "OemPlus", "OemMinus", "Add", "Subtract", "Apps"]));
         foreach (var command in CommandCatalog.All)
         {
             foreach (var key in command.DefaultKeys)

@@ -250,10 +250,37 @@ public sealed class Item
     /// <summary>Places where this item's sound is lowered, for example under speech (auto-ducking).</summary>
     public List<VolumeDip> VolumeDips { get; set; } = new();
 
-    /// <summary>The maximum duration the source allows from <see cref="SourceIn"/>, or infinity.</summary>
+    /// <summary>
+    /// Playback speed of a video or sound clip: 2 plays twice as fast (half as long), 0.5 in slow motion.
+    /// Sound keeps its pitch. Pictures, colour cards and text are stretched by their length instead.
+    /// </summary>
+    public double Speed { get; set; } = 1.0;
+
+    public const double MinSpeed = 0.25;
+    public const double MaxSpeed = 4;
+
+    /// <summary>The speed actually used: 1 for items that are not clips, and never outside the limits.</summary>
+    [JsonIgnore]
+    public double EffectiveSpeed => Kind is ItemKind.Video or ItemKind.Audio ? Math.Clamp(Speed, MinSpeed, MaxSpeed) : 1;
+
+    /// <summary>Seconds of the file this item plays (its length times its speed).</summary>
+    [JsonIgnore]
+    public double SourceLength => Duration * EffectiveSpeed;
+
+    /// <summary>Where in the file this item stops.</summary>
+    [JsonIgnore]
+    public double SourceOut => SourceIn + SourceLength;
+
+    /// <summary>The file time shown <paramref name="intoItem"/> seconds after the item starts on the timeline.</summary>
+    public double ToSource(double intoItem) => SourceIn + intoItem * EffectiveSpeed;
+
+    /// <summary>How many seconds after the item's start the file time <paramref name="sourceTime"/> plays.</summary>
+    public double ToTimeline(double sourceTime) => (sourceTime - SourceIn) / EffectiveSpeed;
+
+    /// <summary>The maximum duration the source allows from <see cref="SourceIn"/> at this speed, or infinity.</summary>
     [JsonIgnore]
     public double AvailableDuration =>
-        SourceDuration > 0 ? Math.Max(0, SourceDuration - SourceIn) : double.PositiveInfinity;
+        SourceDuration > 0 ? Math.Max(0, SourceDuration - SourceIn) / EffectiveSpeed : double.PositiveInfinity;
 
     [JsonIgnore]
     public bool IsTimeLimited => Kind is ItemKind.Video or ItemKind.Audio && SourceDuration > 0;

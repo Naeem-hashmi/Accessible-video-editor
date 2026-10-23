@@ -37,7 +37,11 @@ public sealed class ProjectSession
     /// <summary>Raised after any change, undo or redo.</summary>
     public event EventHandler? Changed;
 
-    public EditResult Execute(string label, Func<Project, EditResult> edit)
+    /// <param name="merge">
+    /// When the last undo step has the same label, fold this change into it, so holding a key down (sliding,
+    /// stretching) is undone in one step.
+    /// </param>
+    public EditResult Execute(string label, Func<Project, EditResult> edit, bool merge = false)
     {
         var snapshot = ProjectSerializer.ToJson(Project, indented: false);
         EditResult result;
@@ -56,6 +60,13 @@ public sealed class ProjectSession
         {
             // Failed edits must not leave partial changes behind.
             Project = ProjectSerializer.FromJson(snapshot);
+            return result;
+        }
+
+        if (merge && _redo.Count == 0 && _undo.Last?.Value.Label == label)
+        {
+            IsDirty = true;
+            Changed?.Invoke(this, EventArgs.Empty);
             return result;
         }
 

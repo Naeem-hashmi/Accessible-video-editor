@@ -47,7 +47,7 @@ public static class TranscriptEditing
                 continue;
             }
 
-            foreach (var word in transcript.WordsBetween(item.SourceIn, item.SourceIn + item.Duration))
+            foreach (var word in transcript.WordsBetween(item.SourceIn, item.SourceOut))
             {
                 if (text.Length > 0 && text[^1] != '\n')
                 {
@@ -136,7 +136,7 @@ public static class TranscriptEditing
                 ? item.SourceIn
                 : previous.End + Math.Min(KeepAroundCut, Math.Max(0, firstWord.Start - previous.End) / 2);
             var end = next is null
-                ? item.SourceIn + item.Duration
+                ? item.SourceOut
                 : next.Start - Math.Min(KeepAroundCut, Math.Max(0, next.Start - lastWord.End) / 2);
 
             if (!cutsByItem.TryGetValue(itemIndex, out var list))

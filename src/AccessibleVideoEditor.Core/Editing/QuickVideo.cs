@@ -260,9 +260,9 @@ public static class QuickVideo
                 if (request.Speech.TryGetValue(item.Path, out var analysis))
                 {
                     speech.AddRange(analysis.Sound
-                        .Select(s => new TimeStretch(Math.Max(s.Start, item.SourceIn), Math.Min(s.End, item.SourceIn + item.Duration)))
+                        .Select(s => new TimeStretch(Math.Max(s.Start, item.SourceIn), Math.Min(s.End, item.SourceOut)))
                         .Where(s => s.End > s.Start)
-                        .Select(s => new TimeStretch(spans[i].Start + s.Start - item.SourceIn, spans[i].Start + s.End - item.SourceIn)));
+                        .Select(s => new TimeStretch(spans[i].Start + item.ToTimeline(s.Start), spans[i].Start + item.ToTimeline(s.End))));
                 }
             }
 

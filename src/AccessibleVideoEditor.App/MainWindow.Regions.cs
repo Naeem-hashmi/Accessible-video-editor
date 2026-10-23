@@ -484,7 +484,7 @@ public partial class MainWindow
             var transcript = _editor.Project.TranscriptFor(item.Path);
             fields.AddInfo(transcript is null
                 ? "No transcript yet."
-                : $"Transcript: {transcript.WordsBetween(item.SourceIn, item.SourceIn + item.Duration).Count()} words in {Transcript.LanguageName(transcript.Language)}.");
+                : $"Transcript: {transcript.WordsBetween(item.SourceIn, item.SourceOut).Count()} words in {Transcript.LanguageName(transcript.Language)}.");
             fields.AddButton(transcript is null ? "Transcribe speech..." : "Edit by transcript...",
                 () => _ = RunAsync(transcript is null ? CommandId.Transcribe : CommandId.TranscriptEditor));
             fields.AddButton("Shorten pauses...", () => _ = RunAsync(CommandId.ShortenPauses));

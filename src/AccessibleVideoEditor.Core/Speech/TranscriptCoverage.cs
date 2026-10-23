@@ -32,7 +32,7 @@ public static class TranscriptCoverage
             }
 
             length = Math.Max(length, item.SourceDuration);
-            parts.Add(new TimeStretch(item.SourceIn - Margin, item.SourceIn + item.Duration + Margin));
+            parts.Add(new TimeStretch(item.SourceIn - Margin, item.SourceOut + Margin));
         }
 
         return Join(parts, JoinGap, length);

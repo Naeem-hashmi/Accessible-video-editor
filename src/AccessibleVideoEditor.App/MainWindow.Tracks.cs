@@ -70,29 +70,17 @@ public partial class MainWindow
 
             _editor.SetPlayheadFromPlayback(time);
             Refresh();
-            var menu = new ContextMenu { PlacementTarget = Tracks };
-            void Add(string header, CommandId command)
+            var menu = (itemId is null ? null : BuildItemMenu()) ?? new ContextMenu();
+            menu.PlacementTarget = Tracks;
+            if (menu.Items.Count > 0)
             {
-                var entry = new MenuItem { Header = header, InputGestureText = _keymap.GestureText(command) };
-                entry.Click += (_, _) => _ = RunAsync(command);
-                menu.Items.Add(entry);
-            }
-
-            if (itemId is not null)
-            {
-                Add("_Split at this point", CommandId.Split);
-                Add("_Delete", CommandId.Delete);
-                Add("_Options...", CommandId.ItemProperties);
-                Add("_Copy", CommandId.Copy);
-                Add("Shorten _pauses...", CommandId.ShortenPauses);
-                Add("Find _beats", CommandId.FindBeats);
                 menu.Items.Add(new Separator());
             }
 
-            Add("_Add files here", CommandId.ImportAtPlayhead);
-            Add("Add _text here", CommandId.AddText);
-            Add("Add _marker here", CommandId.AddMarker);
-            Add("_Layer options...", CommandId.LayerProperties);
+            menu.Items.Add(Command(CommandId.ImportAtPlayhead, "Add _files here"));
+            menu.Items.Add(Command(CommandId.AddText, "Add te_xt here"));
+            menu.Items.Add(Command(CommandId.AddMarker, "Add mar_ker here"));
+            menu.Items.Add(Command(CommandId.LayerProperties, "La_yer settings..."));
             menu.IsOpen = true;
         };
     }

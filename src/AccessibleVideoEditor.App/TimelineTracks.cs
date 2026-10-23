@@ -164,8 +164,8 @@ public sealed class TimelineTracks : FrameworkElement
                     // Ducked stretches as a darker band at the bottom.
                     foreach (var dip in item.VolumeDips)
                     {
-                        var x0 = (start + dip.Start - item.SourceIn) * _pixelsPerSecond;
-                        var x1 = (start + dip.End - item.SourceIn) * _pixelsPerSecond;
+                        var x0 = (start + item.ToTimeline(dip.Start)) * _pixelsPerSecond;
+                        var x1 = (start + item.ToTimeline(dip.End)) * _pixelsPerSecond;
                         x0 = Math.Max(rect.Left, x0);
                         x1 = Math.Min(rect.Right, x1);
                         if (x1 > x0)

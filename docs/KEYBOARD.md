@@ -35,7 +35,12 @@ Keys without Control or Alt (letters, arrows, Space, Enter, Delete, brackets) wo
 | `Shift+Delete` | Delete range on this layer | Remove everything between range start and range end on the focused layer. |
 | `Ctrl+R` | Ripple editing on or off | With ripple on, deleting, trimming and sliding move later items too. With ripple off, later items keep their time. |
 | `F2` or `Shift+Enter` | Edit text or rename | Change the words of a text item, or rename any other item. |
-| `Enter` | Item options | Open all options for the focused item: length, volume, fades, transition, position, sound clean-up and equaliser. |
+| `Enter` | Item options | Open all options for the focused item: length, speed, volume, fades, transition, position, sound clean-up and equaliser. With several items selected, sets options for all of them. |
+| `Menu key` or `Shift+F10` | Options menu | Open the menu of everything you can do with the focused item, the selected items or the focused layer. |
+| `Shift+Left` | Select to the previous item | Add the previous item to the selection and go to it. Delete, copy, duplicate, mute, volume, slide, length and speed then work on every selected item. |
+| `Shift+Right` | Select to the next item | Add the next item to the selection and go to it. |
+| `Ctrl+Space` | Select or unselect item | Add the focused item to the selection, or take it out. Lets you pick items that are not next to each other. |
+| `Ctrl+A` | Select all items on layer | Select every item on the focused layer. Escape clears the selection. |
 
 ## Add
 
@@ -76,8 +81,8 @@ Keys without Control or Alt (letters, arrows, Space, Enter, Delete, brackets) wo
 | `Alt+Left` | Previous marker | Jump the playhead back to the previous marker, range start or range end. |
 | `Alt+Right` | Next marker | Jump the playhead forward to the next marker, range start or range end. |
 | `Ctrl+G` | Go to time | Type a time to move the playhead, for example 1:30, 90, or +5. |
-| `Shift+Left` | Previous beat | Move the playhead to the previous beat of the music (after Find beats). |
-| `Shift+Right` | Next beat | Move the playhead to the next beat of the music (after Find beats). |
+| `Alt+Shift+B` | Previous beat | Move the playhead to the previous beat of the music (after Find beats). |
+| `Alt+B` | Next beat | Move the playhead to the next beat of the music (after Find beats). |
 | `Ctrl+Home` or `Ctrl+Shift+Left` | Go to start | Move the playhead to the start of the project. |
 | `Ctrl+End` or `Ctrl+Shift+Right` | Go to end | Move the playhead to the end of the project. |
 | `F6` or `Alt+.` | Next area | Move to the next area of the window: library, timeline, layers, properties, preview. |
@@ -98,12 +103,19 @@ Keys without Control or Alt (letters, arrows, Space, Enter, Delete, brackets) wo
 | `Alt+Shift+End` or `Alt+Shift+.` | Move item to the end | Make the focused item the last on its layer. |
 | `Alt+J` | Slide item earlier | Slide the focused item earlier by the slide step (1 second unless changed in preferences). |
 | `Alt+L` | Slide item later | Slide the focused item later by the slide step. |
-| `Alt+Shift+J` | Slide item earlier a little | Slide the focused item earlier by the fine step (a tenth of a second). |
-| `Alt+Shift+L` | Slide item later a little | Slide the focused item later by the fine step. |
+| `Alt+Shift+J` | Slide item earlier a little | Slide the focused item earlier by the fine step (a tenth of a second). Hold the keys to go faster and faster. |
+| `Alt+Shift+L` | Slide item later a little | Slide the focused item later by the fine step. Hold the keys to go faster and faster. |
 | `Ctrl+Shift+J` | Slide whole layer earlier | Move every item on the focused layer earlier by the slide step. |
 | `Ctrl+Shift+L` | Slide whole layer later | Move every item on the focused layer later by the slide step. |
 | `Alt+Shift+Up` | Move layer up the list | Give the focused layer a lower number. For video layers this puts its picture further back. |
 | `Alt+Shift+Down` | Move layer down the list | Give the focused layer a higher number. For video layers this brings its picture to the front. |
+| `Alt+=` or `Alt+Num+` | Make longer | Stretch the focused item by the slide step, keeping its start: a picture or text stays on longer, a clip shows more of its file. Hold to go faster. |
+| `Alt+-` or `Alt+Num-` | Make shorter | Shorten the focused item by the slide step, keeping its start. |
+| `Alt+Shift+=` or `Alt+Shift+Num+` | Make a little longer | Stretch the focused item by the fine step. |
+| `Alt+Shift+-` or `Alt+Shift+Num-` | Make a little shorter | Shorten the focused item by the fine step. |
+| `Alt+]` or `Ctrl+Shift+=` | Play clip faster | Speed up the focused video or sound clip one step (up to 4 times). It gets shorter but keeps all its content; sound keeps its pitch. |
+| `Alt+[` or `Ctrl+Shift+-` | Play clip slower | Slow down the focused clip one step (down to a quarter speed, slow motion). It gets longer. |
+| `Alt+Shift+]` or `Ctrl+Shift+0` | Normal speed | Play the focused clip at its normal speed again. |
 
 ## Cut and mark
 
@@ -158,7 +170,7 @@ Keys without Control or Alt (letters, arrows, Space, Enter, Delete, brackets) wo
 | `Ctrl+Shift+X` | Edit by transcript | Open the words of the focused layer as a document. Delete words or sentences to cut them out of the video, or correct the words for captions. |
 | `Ctrl+Shift+G` | Make captions | Turn the transcript of the focused layer into captions on a Captions layer at the top. |
 | `Ctrl+Shift+H` | Shorten pauses | Find long pauses in the focused clip and shorten or remove them. Says how many and how long before changing anything. |
-| `Ctrl+Shift+B` | Find beats | Find the tempo and beats of the focused music. Then Shift Left and Shift Right jump from beat to beat. |
+| `Ctrl+Shift+B` | Find beats | Find the tempo and beats of the focused music. Then Alt B and Alt Shift B jump from beat to beat. |
 | `Ctrl+Shift+U` | Cut to the beat | Make every picture and clip on the focused layer end on a beat of the music. |
 | `Ctrl+Shift+D` | Lower music under speech | Make the focused music layer quieter wherever someone speaks on the other layers (auto-ducking), or remove that. |
 

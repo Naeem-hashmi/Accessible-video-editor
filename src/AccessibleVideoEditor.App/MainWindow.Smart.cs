@@ -479,7 +479,7 @@ public partial class MainWindow
 
             var entry = document.Entries[index];
             var item = layer.Items[entry.ItemIndex];
-            var time = Timeline.Span(layer, entry.ItemIndex).Start + Math.Max(0, entry.Word.Start - item.SourceIn);
+            var time = Timeline.Span(layer, entry.ItemIndex).Start + Math.Max(0, item.ToTimeline(entry.Word.Start));
             _ = PlayFromAsync(time);
             Say($"Playing from {entry.Word.Text}.", interrupt: false);
         }
@@ -553,7 +553,7 @@ public partial class MainWindow
         }
 
         var analysis = await WithProgressAsync("Finding pauses", (_, token) =>
-            Task.Run(() => SpeechDetector.Analyse(tools, item.Path, item.SourceIn, item.Duration, minimumPause: 0.4, audioOffset: item.AudioOffset).Shift(item.SourceIn), token));
+            Task.Run(() => SpeechDetector.Analyse(tools, item.Path, item.SourceIn, item.SourceLength, minimumPause: 0.4, audioOffset: item.AudioOffset).Shift(item.SourceIn), token));
         if (analysis is null)
         {
             return;

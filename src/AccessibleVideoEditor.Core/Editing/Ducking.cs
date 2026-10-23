@@ -33,8 +33,9 @@ public static class Ducking
                     continue;
                 }
 
-                var analysis = SpeechDetector.Analyse(tools, item.Path, item.SourceIn, item.Duration, minimumPause: 0.4, audioOffset: item.AudioOffset);
-                stretches.AddRange(analysis.Sound.Select(s => new TimeStretch(spans[i].Start + s.Start, Math.Min(spans[i].End, spans[i].Start + s.End))));
+                var analysis = SpeechDetector.Analyse(tools, item.Path, item.SourceIn, item.SourceLength, minimumPause: 0.4, audioOffset: item.AudioOffset);
+                var speed = item.EffectiveSpeed;
+                stretches.AddRange(analysis.Sound.Select(s => new TimeStretch(spans[i].Start + s.Start / speed, Math.Min(spans[i].End, spans[i].Start + s.End / speed))));
             }
         }
 
@@ -83,8 +84,8 @@ public static class Ducking
 
                 item.VolumeDips.Add(new VolumeDip
                 {
-                    Start = item.SourceIn + (start - spans[i].Start),
-                    End = item.SourceIn + (end - spans[i].Start),
+                    Start = item.ToSource(start - spans[i].Start),
+                    End = item.ToSource(end - spans[i].Start),
                     Level = level,
                     Ramp = ramp,
                 });

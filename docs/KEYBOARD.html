@@ -31,7 +31,12 @@
 <tr><td><kbd>Shift Delete</kbd></td><th scope="row">Delete range on this layer</th><td>Remove everything between range start and range end on the focused layer.</td></tr>
 <tr><td><kbd>Control R</kbd></td><th scope="row">Ripple editing on or off</th><td>With ripple on, deleting, trimming and sliding move later items too. With ripple off, later items keep their time.</td></tr>
 <tr><td><kbd>F2</kbd> or <kbd>Shift Enter</kbd></td><th scope="row">Edit text or rename</th><td>Change the words of a text item, or rename any other item.</td></tr>
-<tr><td><kbd>Enter</kbd></td><th scope="row">Item options</th><td>Open all options for the focused item: length, volume, fades, transition, position, sound clean-up and equaliser.</td></tr>
+<tr><td><kbd>Enter</kbd></td><th scope="row">Item options</th><td>Open all options for the focused item: length, speed, volume, fades, transition, position, sound clean-up and equaliser. With several items selected, sets options for all of them.</td></tr>
+<tr><td><kbd>Applications key</kbd> or <kbd>Shift F10</kbd></td><th scope="row">Options menu</th><td>Open the menu of everything you can do with the focused item, the selected items or the focused layer.</td></tr>
+<tr><td><kbd>Shift left arrow</kbd></td><th scope="row">Select to the previous item</th><td>Add the previous item to the selection and go to it. Delete, copy, duplicate, mute, volume, slide, length and speed then work on every selected item.</td></tr>
+<tr><td><kbd>Shift right arrow</kbd></td><th scope="row">Select to the next item</th><td>Add the next item to the selection and go to it.</td></tr>
+<tr><td><kbd>Control Space</kbd></td><th scope="row">Select or unselect item</th><td>Add the focused item to the selection, or take it out. Lets you pick items that are not next to each other.</td></tr>
+<tr><td><kbd>Control A</kbd></td><th scope="row">Select all items on layer</th><td>Select every item on the focused layer. Escape clears the selection.</td></tr>
 </tbody></table>
 <h2>Add</h2>
 <table><caption>Add keys</caption><thead><tr><th scope="col">Keys</th><th scope="col">Command</th><th scope="col">What it does</th></tr></thead><tbody>
@@ -68,8 +73,8 @@
 <tr><td><kbd>Alt left arrow</kbd></td><th scope="row">Previous marker</th><td>Jump the playhead back to the previous marker, range start or range end.</td></tr>
 <tr><td><kbd>Alt right arrow</kbd></td><th scope="row">Next marker</th><td>Jump the playhead forward to the next marker, range start or range end.</td></tr>
 <tr><td><kbd>Control G</kbd></td><th scope="row">Go to time</th><td>Type a time to move the playhead, for example 1:30, 90, or +5.</td></tr>
-<tr><td><kbd>Shift left arrow</kbd></td><th scope="row">Previous beat</th><td>Move the playhead to the previous beat of the music (after Find beats).</td></tr>
-<tr><td><kbd>Shift right arrow</kbd></td><th scope="row">Next beat</th><td>Move the playhead to the next beat of the music (after Find beats).</td></tr>
+<tr><td><kbd>Alt Shift B</kbd></td><th scope="row">Previous beat</th><td>Move the playhead to the previous beat of the music (after Find beats).</td></tr>
+<tr><td><kbd>Alt B</kbd></td><th scope="row">Next beat</th><td>Move the playhead to the next beat of the music (after Find beats).</td></tr>
 <tr><td><kbd>Control Home</kbd> or <kbd>Control Shift left arrow</kbd></td><th scope="row">Go to start</th><td>Move the playhead to the start of the project.</td></tr>
 <tr><td><kbd>Control End</kbd> or <kbd>Control Shift right arrow</kbd></td><th scope="row">Go to end</th><td>Move the playhead to the end of the project.</td></tr>
 <tr><td><kbd>F6</kbd> or <kbd>Alt period</kbd></td><th scope="row">Next area</th><td>Move to the next area of the window: library, timeline, layers, properties, preview.</td></tr>
@@ -88,12 +93,19 @@
 <tr><td><kbd>Alt Shift End</kbd> or <kbd>Alt Shift period</kbd></td><th scope="row">Move item to the end</th><td>Make the focused item the last on its layer.</td></tr>
 <tr><td><kbd>Alt J</kbd></td><th scope="row">Slide item earlier</th><td>Slide the focused item earlier by the slide step (1 second unless changed in preferences).</td></tr>
 <tr><td><kbd>Alt L</kbd></td><th scope="row">Slide item later</th><td>Slide the focused item later by the slide step.</td></tr>
-<tr><td><kbd>Alt Shift J</kbd></td><th scope="row">Slide item earlier a little</th><td>Slide the focused item earlier by the fine step (a tenth of a second).</td></tr>
-<tr><td><kbd>Alt Shift L</kbd></td><th scope="row">Slide item later a little</th><td>Slide the focused item later by the fine step.</td></tr>
+<tr><td><kbd>Alt Shift J</kbd></td><th scope="row">Slide item earlier a little</th><td>Slide the focused item earlier by the fine step (a tenth of a second). Hold the keys to go faster and faster.</td></tr>
+<tr><td><kbd>Alt Shift L</kbd></td><th scope="row">Slide item later a little</th><td>Slide the focused item later by the fine step. Hold the keys to go faster and faster.</td></tr>
 <tr><td><kbd>Control Shift J</kbd></td><th scope="row">Slide whole layer earlier</th><td>Move every item on the focused layer earlier by the slide step.</td></tr>
 <tr><td><kbd>Control Shift L</kbd></td><th scope="row">Slide whole layer later</th><td>Move every item on the focused layer later by the slide step.</td></tr>
 <tr><td><kbd>Alt Shift up arrow</kbd></td><th scope="row">Move layer up the list</th><td>Give the focused layer a lower number. For video layers this puts its picture further back.</td></tr>
 <tr><td><kbd>Alt Shift down arrow</kbd></td><th scope="row">Move layer down the list</th><td>Give the focused layer a higher number. For video layers this brings its picture to the front.</td></tr>
+<tr><td><kbd>Alt equals</kbd> or <kbd>Alt numpad plus</kbd></td><th scope="row">Make longer</th><td>Stretch the focused item by the slide step, keeping its start: a picture or text stays on longer, a clip shows more of its file. Hold to go faster.</td></tr>
+<tr><td><kbd>Alt minus</kbd> or <kbd>Alt numpad minus</kbd></td><th scope="row">Make shorter</th><td>Shorten the focused item by the slide step, keeping its start.</td></tr>
+<tr><td><kbd>Alt Shift equals</kbd> or <kbd>Alt Shift numpad plus</kbd></td><th scope="row">Make a little longer</th><td>Stretch the focused item by the fine step.</td></tr>
+<tr><td><kbd>Alt Shift minus</kbd> or <kbd>Alt Shift numpad minus</kbd></td><th scope="row">Make a little shorter</th><td>Shorten the focused item by the fine step.</td></tr>
+<tr><td><kbd>Alt right bracket</kbd> or <kbd>Control Shift equals</kbd></td><th scope="row">Play clip faster</th><td>Speed up the focused video or sound clip one step (up to 4 times). It gets shorter but keeps all its content; sound keeps its pitch.</td></tr>
+<tr><td><kbd>Alt left bracket</kbd> or <kbd>Control Shift minus</kbd></td><th scope="row">Play clip slower</th><td>Slow down the focused clip one step (down to a quarter speed, slow motion). It gets longer.</td></tr>
+<tr><td><kbd>Alt Shift right bracket</kbd> or <kbd>Control Shift 0</kbd></td><th scope="row">Normal speed</th><td>Play the focused clip at its normal speed again.</td></tr>
 </tbody></table>
 <h2>Cut and mark</h2>
 <table><caption>Cut and mark keys</caption><thead><tr><th scope="col">Keys</th><th scope="col">Command</th><th scope="col">What it does</th></tr></thead><tbody>
@@ -140,7 +152,7 @@
 <tr><td><kbd>Control Shift X</kbd></td><th scope="row">Edit by transcript</th><td>Open the words of the focused layer as a document. Delete words or sentences to cut them out of the video, or correct the words for captions.</td></tr>
 <tr><td><kbd>Control Shift G</kbd></td><th scope="row">Make captions</th><td>Turn the transcript of the focused layer into captions on a Captions layer at the top.</td></tr>
 <tr><td><kbd>Control Shift H</kbd></td><th scope="row">Shorten pauses</th><td>Find long pauses in the focused clip and shorten or remove them. Says how many and how long before changing anything.</td></tr>
-<tr><td><kbd>Control Shift B</kbd></td><th scope="row">Find beats</th><td>Find the tempo and beats of the focused music. Then Shift Left and Shift Right jump from beat to beat.</td></tr>
+<tr><td><kbd>Control Shift B</kbd></td><th scope="row">Find beats</th><td>Find the tempo and beats of the focused music. Then Alt B and Alt Shift B jump from beat to beat.</td></tr>
 <tr><td><kbd>Control Shift U</kbd></td><th scope="row">Cut to the beat</th><td>Make every picture and clip on the focused layer end on a beat of the music.</td></tr>
 <tr><td><kbd>Control Shift D</kbd></td><th scope="row">Lower music under speech</th><td>Make the focused music layer quieter wherever someone speaks on the other layers (auto-ducking), or remove that.</td></tr>
 </tbody></table>

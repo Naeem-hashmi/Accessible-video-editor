@@ -38,7 +38,8 @@ public static class CutEditing
         double Snap(double t) => Math.Round(t / frame) * frame;
 
         var from = item.SourceIn;
-        var to = item.SourceIn + item.Duration;
+        var to = item.SourceOut;
+        var speed = item.EffectiveSpeed;
         var merged = Merge(cuts
             .Select(c => new TimeStretch(Math.Max(from, Snap(c.Start)), Math.Min(to, Snap(c.End))))
             .Where(c => c.Duration > frame / 2));
@@ -70,13 +71,13 @@ public static class CutEditing
             return EditResult.Fail($"That would remove all of {item.Name}. Delete the item instead.");
         }
 
-        var removed = item.Duration - kept.Sum(k => k.Duration);
+        var removed = item.Duration - kept.Sum(k => k.Duration) / speed;
         var pieces = new List<Item>();
         for (var i = 0; i < kept.Count; i++)
         {
             var piece = item.Clone(newId: i > 0);
             piece.SourceIn = kept[i].Start;
-            piece.Duration = kept[i].Duration;
+            piece.Duration = kept[i].Duration / speed;
             piece.SoundJoinFade = JoinFade;
             if (i > 0)
             {
@@ -97,7 +98,7 @@ public static class CutEditing
         layer.Items.InsertRange(index, pieces);
         var count = merged.Count;
         return EditResult.Success(
-            $"Removed {count} {(count == 1 ? Singular(what) : what)}, {TimeFormat.Words(removed)} in all, from {item.Name}. It is now {TimeFormat.Words(kept.Sum(k => k.Duration))} long, in {pieces.Count} {(pieces.Count == 1 ? "piece" : "pieces")}.",
+            $"Removed {count} {(count == 1 ? Singular(what) : what)}, {TimeFormat.Words(removed)} in all, from {item.Name}. It is now {TimeFormat.Words(kept.Sum(k => k.Duration) / speed)} long, in {pieces.Count} {(pieces.Count == 1 ? "piece" : "pieces")}.",
             pieces[0].Id);
     }
 

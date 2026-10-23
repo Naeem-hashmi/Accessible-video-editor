@@ -35,6 +35,13 @@ public sealed class Describer(Verbosity verbosity = Verbosity.Normal, TimeStyle 
         _ => "item",
     };
 
+    /// <summary>"2 times speed" or "slow motion, half speed".</summary>
+    public static string SpeedText(double speed)
+    {
+        var x = Math.Round(speed, 2).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+        return speed < 1 ? $"slow motion, {x} times speed" : $"{x} times speed";
+    }
+
     public static string LayerKindName(LayerKind kind) => kind == LayerKind.Video ? "Video" : "Audio";
 
     public string Layer(Project project, Layer layer)
@@ -95,6 +102,11 @@ public sealed class Describer(Verbosity verbosity = Verbosity.Normal, TimeStyle 
             parts.Add(KindName(item.Kind, layer.Kind));
             parts.Add($"starts {Time(span.Start)}");
             parts.Add($"length {Time(item.Duration)}");
+        }
+
+        if (Math.Abs(item.EffectiveSpeed - 1) > 0.001)
+        {
+            parts.Add(SpeedText(item.EffectiveSpeed));
         }
 
         if (item.GapBefore > Timeline.Epsilon)

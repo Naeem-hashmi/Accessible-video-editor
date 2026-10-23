@@ -469,7 +469,7 @@ public static class ProjectEditor
         second.Duration = item.Duration - offset;
         if (item.Kind is ItemKind.Video or ItemKind.Audio)
         {
-            second.SourceIn = item.SourceIn + offset;
+            second.SourceIn = item.ToSource(offset);
         }
 
         second.GapBefore = 0;
@@ -513,7 +513,7 @@ public static class ProjectEditor
         var previousEnd = index == 0 ? 0 : spans[index - 1].End;
         if (item.Kind is ItemKind.Video or ItemKind.Audio)
         {
-            item.SourceIn += cut;
+            item.SourceIn = item.ToSource(cut);
         }
 
         item.Duration -= cut;
@@ -581,6 +581,11 @@ public static class ProjectEditor
         if (item.IsTimeLimited)
         {
             item.SourceIn = Math.Clamp(edited.SourceIn, 0, Math.Max(0, item.SourceDuration - Timeline.MinItemDuration));
+        }
+
+        if (item.Kind is ItemKind.Video or ItemKind.Audio)
+        {
+            item.Speed = Math.Round(Math.Clamp(edited.Speed, Item.MinSpeed, Item.MaxSpeed), 3);
         }
 
         item.Duration = Math.Clamp(edited.Duration, Timeline.MinItemDuration,

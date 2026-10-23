@@ -27,6 +27,11 @@ public enum CommandId
     ToggleRipple,
     ItemProperties,
     EditTextOrRename,
+    ContextMenu,
+    SelectPrevious,
+    SelectNext,
+    ToggleSelect,
+    SelectAll,
 
     // Add
     ImportToEnd,
@@ -86,6 +91,13 @@ public enum CommandId
     SlideLayerLater,
     MoveLayerUp,
     MoveLayerDown,
+    Longer,
+    Shorter,
+    LongerFine,
+    ShorterFine,
+    Faster,
+    Slower,
+    NormalSpeed,
 
     // Cut and markers
     Split,
@@ -194,7 +206,12 @@ public static class CommandCatalog
         Add(CommandId.DeleteRange, edit, "Delete range on this layer", "Remove everything between range start and range end on the focused layer.", "Shift+Delete");
         Add(CommandId.ToggleRipple, edit, "Ripple editing on or off", "With ripple on, deleting, trimming and sliding move later items too. With ripple off, later items keep their time.", "Ctrl+R");
         Add(CommandId.EditTextOrRename, edit, "Edit text or rename", "Change the words of a text item, or rename any other item.", "F2", "Shift+Enter");
-        Add(CommandId.ItemProperties, edit, "Item options", "Open all options for the focused item: length, volume, fades, transition, position, sound clean-up and equaliser.", "Enter");
+        Add(CommandId.ItemProperties, edit, "Item options", "Open all options for the focused item: length, speed, volume, fades, transition, position, sound clean-up and equaliser. With several items selected, sets options for all of them.", "Enter");
+        Add(CommandId.ContextMenu, edit, "Options menu", "Open the menu of everything you can do with the focused item, the selected items or the focused layer.", "Apps", "Shift+F10");
+        Add(CommandId.SelectPrevious, edit, "Select to the previous item", "Add the previous item to the selection and go to it. Delete, copy, duplicate, mute, volume, slide, length and speed then work on every selected item.", "Shift+Left");
+        Add(CommandId.SelectNext, edit, "Select to the next item", "Add the next item to the selection and go to it.", "Shift+Right");
+        Add(CommandId.ToggleSelect, edit, "Select or unselect item", "Add the focused item to the selection, or take it out. Lets you pick items that are not next to each other.", "Ctrl+Space");
+        Add(CommandId.SelectAll, edit, "Select all items on layer", "Select every item on the focused layer. Escape clears the selection.", "Ctrl+A");
 
         const string add = "Add";
         Add(CommandId.ImportToEnd, add, "Add files to end of layer", "Choose video, picture or audio files and add them after the last item of the focused layer. Sound files go to an audio layer automatically.", "Ctrl+I");
@@ -225,8 +242,8 @@ public static class CommandCatalog
         Add(CommandId.PreviousMarker, nav, "Previous marker", "Jump the playhead back to the previous marker, range start or range end.", "Alt+Left");
         Add(CommandId.NextMarker, nav, "Next marker", "Jump the playhead forward to the next marker, range start or range end.", "Alt+Right");
         Add(CommandId.GoToTime, nav, "Go to time", "Type a time to move the playhead, for example 1:30, 90, or +5.", "Ctrl+G");
-        Add(CommandId.PreviousBeat, nav, "Previous beat", "Move the playhead to the previous beat of the music (after Find beats).", "Shift+Left");
-        Add(CommandId.NextBeat, nav, "Next beat", "Move the playhead to the next beat of the music (after Find beats).", "Shift+Right");
+        Add(CommandId.PreviousBeat, nav, "Previous beat", "Move the playhead to the previous beat of the music (after Find beats).", "Alt+Shift+B");
+        Add(CommandId.NextBeat, nav, "Next beat", "Move the playhead to the next beat of the music (after Find beats).", "Alt+B");
         Add(CommandId.GoToStart, nav, "Go to start", "Move the playhead to the start of the project.", "Ctrl+Home", "Ctrl+Shift+Left");
         Add(CommandId.GoToEnd, nav, "Go to end", "Move the playhead to the end of the project.", "Ctrl+End", "Ctrl+Shift+Right");
         Add(CommandId.SwitchPane, nav, "Next area", "Move to the next area of the window: library, timeline, layers, properties, preview.", "F6", "Alt+OemPeriod");
@@ -244,12 +261,20 @@ public static class CommandCatalog
         Add(CommandId.MoveItemLast, arrange, "Move item to the end", "Make the focused item the last on its layer.", "Alt+Shift+End", "Alt+Shift+OemPeriod");
         Add(CommandId.SlideEarlier, arrange, "Slide item earlier", "Slide the focused item earlier by the slide step (1 second unless changed in preferences).", "Alt+J");
         Add(CommandId.SlideLater, arrange, "Slide item later", "Slide the focused item later by the slide step.", "Alt+L");
-        Add(CommandId.SlideEarlierFine, arrange, "Slide item earlier a little", "Slide the focused item earlier by the fine step (a tenth of a second).", "Alt+Shift+J");
-        Add(CommandId.SlideLaterFine, arrange, "Slide item later a little", "Slide the focused item later by the fine step.", "Alt+Shift+L");
+        Add(CommandId.SlideEarlierFine, arrange, "Slide item earlier a little", "Slide the focused item earlier by the fine step (a tenth of a second). Hold the keys to go faster and faster.", "Alt+Shift+J");
+        Add(CommandId.SlideLaterFine, arrange, "Slide item later a little", "Slide the focused item later by the fine step. Hold the keys to go faster and faster.", "Alt+Shift+L");
         Add(CommandId.SlideLayerEarlier, arrange, "Slide whole layer earlier", "Move every item on the focused layer earlier by the slide step.", "Ctrl+Shift+J");
         Add(CommandId.SlideLayerLater, arrange, "Slide whole layer later", "Move every item on the focused layer later by the slide step.", "Ctrl+Shift+L");
         Add(CommandId.MoveLayerUp, arrange, "Move layer up the list", "Give the focused layer a lower number. For video layers this puts its picture further back.", "Alt+Shift+Up");
         Add(CommandId.MoveLayerDown, arrange, "Move layer down the list", "Give the focused layer a higher number. For video layers this brings its picture to the front.", "Alt+Shift+Down");
+
+        Add(CommandId.Longer, arrange, "Make longer", "Stretch the focused item by the slide step, keeping its start: a picture or text stays on longer, a clip shows more of its file. Hold to go faster.", "Alt+OemPlus", "Alt+Add");
+        Add(CommandId.Shorter, arrange, "Make shorter", "Shorten the focused item by the slide step, keeping its start.", "Alt+OemMinus", "Alt+Subtract");
+        Add(CommandId.LongerFine, arrange, "Make a little longer", "Stretch the focused item by the fine step.", "Alt+Shift+OemPlus", "Alt+Shift+Add");
+        Add(CommandId.ShorterFine, arrange, "Make a little shorter", "Shorten the focused item by the fine step.", "Alt+Shift+OemMinus", "Alt+Shift+Subtract");
+        Add(CommandId.Faster, arrange, "Play clip faster", "Speed up the focused video or sound clip one step (up to 4 times). It gets shorter but keeps all its content; sound keeps its pitch.", "Alt+OemCloseBrackets", "Ctrl+Shift+OemPlus");
+        Add(CommandId.Slower, arrange, "Play clip slower", "Slow down the focused clip one step (down to a quarter speed, slow motion). It gets longer.", "Alt+OemOpenBrackets", "Ctrl+Shift+OemMinus");
+        Add(CommandId.NormalSpeed, arrange, "Normal speed", "Play the focused clip at its normal speed again.", "Alt+Shift+OemCloseBrackets", "Ctrl+Shift+D0");
 
         const string cut = "Cut and mark";
         Add(CommandId.Split, cut, "Split at playhead", "Cut the item at the playhead into two items.", "S");
@@ -292,7 +317,7 @@ public static class CommandCatalog
         Add(CommandId.TranscriptEditor, smart, "Edit by transcript", "Open the words of the focused layer as a document. Delete words or sentences to cut them out of the video, or correct the words for captions.", "Ctrl+Shift+X");
         Add(CommandId.MakeCaptions, smart, "Make captions", "Turn the transcript of the focused layer into captions on a Captions layer at the top.", "Ctrl+Shift+G");
         Add(CommandId.ShortenPauses, smart, "Shorten pauses", "Find long pauses in the focused clip and shorten or remove them. Says how many and how long before changing anything.", "Ctrl+Shift+H");
-        Add(CommandId.FindBeats, smart, "Find beats", "Find the tempo and beats of the focused music. Then Shift Left and Shift Right jump from beat to beat.", "Ctrl+Shift+B");
+        Add(CommandId.FindBeats, smart, "Find beats", "Find the tempo and beats of the focused music. Then Alt B and Alt Shift B jump from beat to beat.", "Ctrl+Shift+B");
         Add(CommandId.CutToBeats, smart, "Cut to the beat", "Make every picture and clip on the focused layer end on a beat of the music.", "Ctrl+Shift+U");
         Add(CommandId.AutoDuck, smart, "Lower music under speech", "Make the focused music layer quieter wherever someone speaks on the other layers (auto-ducking), or remove that.", "Ctrl+Shift+D");
 

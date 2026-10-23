@@ -72,6 +72,29 @@ public sealed class AudioOffsetTests(MediaFixture media)
         Assert.True(Math.Abs(flash - beep) < 0.06, $"Flash at {flash:0.000} s but beep at {beep:0.000} s (sound stored {audioDelay} s late, clip starts at {sourceIn} s)");
     }
 
+    [Theory]
+    [InlineData(2.0)]
+    [InlineData(0.5)]
+    [InlineData(0.25)]
+    public async Task A_faster_or_slower_clip_keeps_sound_with_picture_and_has_the_right_length(double speed)
+    {
+        var file = await FlashAndBeep("speed source.mkv", 0);
+        var project = new Project { Width = 160, Height = 120, FrameRate = 25 };
+        var layer = ProjectEditor.AddLayer(project, LayerKind.Video);
+        var item = await media.ItemFor(file, LayerKind.Video);
+        item.SourceIn = 1;
+        item.Duration = 2;
+        layer.Items.Add(item);
+        Assert.True(StretchEditing.SetSpeed(layer, 0, speed, ripple: true).Ok);
+        var (output, _) = await media.Render(new RenderRequest { Project = project, Profile = OutputProfile.ProjectSize, OutputPath = media.OutPath($"speed {speed}.mp4") });
+        var length = (await media.Probe(output)).Duration;
+        Assert.InRange(length, 2 / speed - 0.1, 2 / speed + 0.1);
+        // The flash and beep are 1 s into the clip's part of the file, so (1 / speed) s into the result.
+        var (flash, beep) = await Measure(output);
+        Assert.InRange(flash, 1 / speed - 0.08, 1 / speed + 0.08);
+        Assert.True(Math.Abs(flash - beep) < 0.06, $"Flash at {flash:0.000} s but beep at {beep:0.000} s at speed {speed}");
+    }
+
     [Fact]
     public async Task The_offset_is_read_when_the_file_is_added()
     {

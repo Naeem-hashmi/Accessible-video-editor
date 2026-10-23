@@ -37,10 +37,10 @@ public static class Captions
                 continue;
             }
 
-            foreach (var word in transcript.WordsBetween(item.SourceIn, item.SourceIn + item.Duration))
+            foreach (var word in transcript.WordsBetween(item.SourceIn, item.SourceOut))
             {
-                var start = spans[i].Start + Math.Max(0, word.Start - item.SourceIn);
-                var end = spans[i].Start + Math.Min(item.Duration, word.End - item.SourceIn);
+                var start = spans[i].Start + Math.Max(0, item.ToTimeline(word.Start));
+                var end = spans[i].Start + Math.Min(item.Duration, item.ToTimeline(word.End));
                 result.Add(new TimedWord(word.Text, start, Math.Max(start, end)));
             }
         }

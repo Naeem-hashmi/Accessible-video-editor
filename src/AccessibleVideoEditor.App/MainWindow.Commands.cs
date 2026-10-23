@@ -132,7 +132,9 @@ public partial class MainWindow
             case CommandId.Export: await ExportAsync(); return true;
             case CommandId.ProjectSettings: await ShowProjectSettingsAsync(); return true;
             case CommandId.Preferences: ShowPreferences(); return true;
+            case CommandId.ItemProperties when _editor.SelectedIndexes.Count > 1: await ShowSelectionOptionsAsync(); return true;
             case CommandId.ItemProperties: await ShowItemOptionsAsync(); return true;
+            case CommandId.ContextMenu: ShowOptionsMenu(); return true;
             case CommandId.ImportToEnd: await ImportAsync(atPlayhead: false); return true;
             case CommandId.ImportAtPlayhead: await ImportAsync(atPlayhead: true); return true;
             case CommandId.AddSoundEffect: await AddSoundEffectAsync(); return true;
@@ -642,6 +644,9 @@ public partial class MainWindow
     private static string[] DecibelNames(int frequency) =>
         DecibelSteps.Select(db => db == 0 ? "0 decibels (unchanged)" : $"{(db > 0 ? "plus" : "minus")} {Math.Abs(db)} decibels").ToArray();
 
+    private static string SpeedName(double speed) =>
+        Math.Abs(speed - 1) < 1e-6 ? "Normal speed" : char.ToUpperInvariant(Describer.SpeedText(speed)[0]) + Describer.SpeedText(speed)[1..];
+
     internal FormDialog? BuildItemOptions(out Action? apply)
     {
         apply = null;
@@ -671,6 +676,15 @@ public partial class MainWindow
         }
 
         var duration = form.AddTime("Length", item.Duration, item.IsTimeLimited ? $"At most {TimeFormat.Words(item.AvailableDuration)} from the start point." : null, Timeline.MinItemDuration);
+        Func<int>? speed = null;
+        var speeds = StretchEditing.SpeedSteps;
+        if (item.Kind is ItemKind.Video or ItemKind.Audio)
+        {
+            var current = speeds.Select((v, i) => (v, i)).MinBy(p => Math.Abs(p.v - item.EffectiveSpeed)).i;
+            speed = form.AddChoice("Speed", speeds.Select(SpeedName).ToList(), current,
+                "Faster clips get shorter and slower ones longer, keeping the same part of the file. Sound keeps its pitch.");
+        }
+
         var gap = form.AddTime("Gap before", item.GapBefore, "Silence or empty picture before this item starts.");
         var fadeIn = form.AddTime("Fade in", item.FadeIn, "Picture and sound fade in over this time.");
         var fadeOut = form.AddTime("Fade out", item.FadeOut, "Picture and sound fade out over this time.");
@@ -767,6 +781,16 @@ public partial class MainWindow
             }
 
             edited.Duration = duration();
+            if (speed is not null && Math.Abs(speeds[speed()] - item.EffectiveSpeed) > 1e-6)
+            {
+                edited.Speed = speeds[speed()];
+                if (Math.Abs(duration() - item.Duration) < 0.001)
+                {
+                    // Only the speed changed: keep the same part of the file.
+                    edited.Duration = item.SourceLength / edited.Speed;
+                }
+            }
+
             edited.GapBefore = gap();
             edited.FadeIn = fadeIn();
             edited.FadeOut = fadeOut();

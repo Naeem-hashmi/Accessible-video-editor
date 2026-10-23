@@ -93,6 +93,11 @@ public readonly record struct KeyChord(string Key, bool Ctrl, bool Alt, bool Shi
         "OemCloseBrackets" => "right bracket",
         "OemComma" => "comma",
         "OemPeriod" => "period",
+        "OemPlus" => "equals",
+        "OemMinus" => "minus",
+        "Add" => "numpad plus",
+        "Subtract" => "numpad minus",
+        "Apps" => "Applications key",
         "Left" => "left arrow",
         "Right" => "right arrow",
         "Up" => "up arrow",
@@ -206,6 +211,11 @@ public sealed class Keymap
             .Replace("OemCloseBrackets", "]")
             .Replace("OemComma", ",")
             .Replace("OemPeriod", ".")
+            .Replace("OemPlus", "=")
+            .Replace("OemMinus", "-")
+            .Replace("+Add", "+Num+")
+            .Replace("+Subtract", "+Num-")
+            .Replace("Apps", "Menu key")
             .Replace("+D0", "+0").Replace("+D1", "+1").Replace("+D2", "+2").Replace("+D3", "+3").Replace("+D4", "+4")
             .Replace("+D5", "+5").Replace("+D6", "+6").Replace("+D7", "+7").Replace("+D8", "+8").Replace("+D9", "+9");
     }

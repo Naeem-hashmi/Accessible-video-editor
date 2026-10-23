@@ -35,7 +35,7 @@ public static class BeatEditing
         var item = layer.Items[index];
         var span = Timeline.Span(layer, index);
         return item.Beats
-            .Select(b => span.Start + (b - item.SourceIn))
+            .Select(b => span.Start + item.ToTimeline(b))
             .Where(t => t >= span.Start - Timeline.Epsilon && t <= span.End + Timeline.Epsilon)
             .ToList();
     }

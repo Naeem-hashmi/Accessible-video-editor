@@ -30,6 +30,7 @@ public partial class MainWindow : Window
     private readonly AppSettings _settings;
     private readonly Keymap _keymap;
     private readonly Dictionary<(Key, ModifierKeys), CommandId> _keys = new();
+    private readonly HoldAccelerator _hold = new();
     private readonly ObservableCollection<SpokenViewModel> _layers = new();
     private readonly ObservableCollection<SpokenViewModel> _items = new();
     private readonly EditorController _editor;
@@ -79,6 +80,8 @@ public partial class MainWindow : Window
         BuildTransport();
         WireTracks();
         PropertiesRegion.PreviewKeyDown += OnPropertiesKeyDown;
+        ItemsList.MouseRightButtonUp += OnListRightClick;
+        LayersList.MouseRightButtonUp += OnListRightClick;
         PreviewRegion.GotKeyboardFocus += (_, _) => PreviewRegion.BorderThickness = new Thickness(3);
         PreviewRegion.LostKeyboardFocus += (_, _) => PreviewRegion.BorderThickness = new Thickness(0);
         PreviewRegion.MouseDown += (_, _) => FocusRegion(Region.Preview);
@@ -294,6 +297,11 @@ public partial class MainWindow : Window
             return;
         }
 
+        if (command == CommandId.ContextMenu && !inTimeline && !inLayers)
+        {
+            return; // Elsewhere (text boxes, the library) the key opens that control's own menu.
+        }
+
         if (inLayers)
         {
             switch (command)
@@ -313,7 +321,8 @@ public partial class MainWindow : Window
 
         e.Handled = true;
         SyncFocusFromScreen();
-        _ = RunAsync(command);
+        var chord = new KeyChord(key.ToString(), modifiers.HasFlag(ModifierKeys.Control), modifiers.HasFlag(ModifierKeys.Alt), modifiers.HasFlag(ModifierKeys.Shift));
+        _ = RunAsync(command, e.IsRepeat, _hold.Factor(chord, e.IsRepeat, DateTime.UtcNow));
     }
 
     /// <summary>
@@ -356,13 +365,17 @@ public partial class MainWindow : Window
     }
 
     /// <summary>Runs any command, from a key or a menu.</summary>
-    internal async Task RunAsync(CommandId command)
+    /// <param name="repeating">The key is being held down: the change joins the previous undo step.</param>
+    /// <param name="holdFactor">How much bigger each step is because the key has been held (see <see cref="HoldAccelerator"/>).</param>
+    internal async Task RunAsync(CommandId command, bool repeating = false, double holdFactor = 1)
     {
         if (_busy)
         {
             return;
         }
 
+        _editor.Repeating = repeating;
+        _editor.HoldFactor = holdFactor;
         try
         {
             if (await RunWindowCommandAsync(command))
@@ -381,6 +394,27 @@ public partial class MainWindow : Window
             _earcons.Play(EarconEvent.Error);
             Say($"Sorry, {CommandCatalog.Get(command).Title} failed: {ex.Message}");
         }
+        finally
+        {
+            _editor.Repeating = false;
+            _editor.HoldFactor = 1;
+        }
+    }
+
+    private void OnListRightClick(object sender, MouseButtonEventArgs e)
+    {
+        if (e.OriginalSource is DependencyObject source && ItemsControl.ContainerFromElement((ItemsControl)sender, source) is ListBoxItem container)
+        {
+            container.Focus();
+            SyncFocusFromScreen();
+        }
+        else
+        {
+            ((UIElement)sender).Focus();
+        }
+
+        e.Handled = true;
+        ShowOptionsMenu();
     }
 
     /// <summary>Acts on a controller result: refresh, sound, speech and focus, then playback.</summary>
@@ -503,8 +537,9 @@ public partial class MainWindow : Window
             {
                 var span = Timeline.Span(layer!, i);
                 vm.Icon = Icons.ForItem(item.Kind, layer!.Kind);
-                vm.Update(describer.Item(layer!, i),
-                    $"{i + 1}. {item.Name}\n{describer.Time(span.Start)}, {describer.Time(item.Duration)} long");
+                var selected = _editor.IsSelected(item.Id);
+                vm.Update((selected ? "Selected, " : "") + describer.Item(layer!, i),
+                    $"{(selected ? "✓ " : "")}{i + 1}. {item.Name}\n{describer.Time(span.Start)}, {describer.Time(item.Duration)} long");
             });
             ItemsList.SelectedItem = _items.FirstOrDefault(v => v.Id == _editor.FocusedItemId);
 

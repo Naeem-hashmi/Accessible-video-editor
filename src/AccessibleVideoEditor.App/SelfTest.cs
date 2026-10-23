@@ -437,7 +437,7 @@ internal static class SelfTest
             window.Editor.SetPlayheadFromPlayback(0.01);
             await window.RunAsync(CommandId.NextBeat);
             var first = BeatEditing.BeatTimes(window.Editor.Project).FirstOrDefault(b => b > 0.02);
-            Check(Math.Abs(window.Editor.Playhead - first) < 1e-6, $"Shift Right jumps to the next beat ({window.Editor.Playhead:0.000} s)");
+            Check(Math.Abs(window.Editor.Playhead - first) < 1e-6, $"Alt B jumps to the next beat ({window.Editor.Playhead:0.000} s)");
         });
 
         await Step("offline speech recognition", async () =>
@@ -514,6 +514,61 @@ internal static class SelfTest
             var fromMiddle = await window.Preview.PlayAsync(window.Editor.Project, RenderScope.AllLayers, 3);
             Check(fromMiddle is null && window.Preview.CurrentTime >= 3, "The preview can start from the middle");
             window.Preview.Pause();
+        });
+
+        await Step("selection, stretch, speed and options menus", async () =>
+        {
+            var main = window.Editor.Project.Layers.First(l => l.Items.Count >= 2);
+            window.Editor.FocusLayer(main.Id);
+            window.Editor.FocusItem(main.Items[0].Id);
+            window.Refresh();
+            window.FocusTimeline();
+            await Settle();
+            await window.RunAsync(CommandId.SelectNext);
+            Check(window.Editor.SelectedIndexes.Count == 2, $"Shift Right selects two items ({window.Editor.SelectedIndexes.Count})");
+            Check(window.ItemEntries.Count(e => e.Description.StartsWith("Selected,", StringComparison.Ordinal)) == 2, "Selected items say so in the list");
+            var menu = window.ShowOptionsMenu();
+            await Settle();
+            Check(menu is { IsOpen: true } && menu.Items.OfType<MenuItem>().Any(m => (m.Header as string ?? "").Contains("2 selected items", StringComparison.Ordinal)),
+                "The Applications key menu offers settings for the selected items");
+            if (menu is not null)
+            {
+                menu.IsOpen = false;
+            }
+
+            await window.RunAsync(CommandId.Stop);
+            Check(!window.Editor.HasSelection, "Escape clears the selection");
+
+            var clip = main.Items.FindIndex(i => i.Kind is ItemKind.Video or ItemKind.Audio);
+            if (clip >= 0)
+            {
+                window.Editor.FocusItem(window.Editor.Project.Layers.First(l => l.Id == main.Id).Items[clip].Id);
+                var before = window.Editor.FocusedItem!.Duration;
+                await window.RunAsync(CommandId.Faster);
+                var item = window.Editor.FocusedItem!;
+                Check(Math.Abs(item.Speed - 1.25) < 1e-6 && Math.Abs(item.Duration - before / 1.25) < 0.01, $"A clip plays faster and gets shorter ({item.Speed}x, {item.Duration:0.00} s)");
+                await window.RunAsync(CommandId.Undo);
+                menu = window.ShowOptionsMenu();
+                await Settle();
+                Check(menu is not null && menu.Items.OfType<MenuItem>().Any(m => (m.Header as string ?? "").StartsWith("All _settings", StringComparison.Ordinal)),
+                    "The options menu for one item opens with All settings");
+                if (menu is not null)
+                {
+                    menu.IsOpen = false;
+                }
+            }
+
+            var focused = window.Editor.FocusedItem!;
+            var layerNow = window.Editor.FocusedLayer!;
+            var start = Timeline.Span(layerNow, window.Editor.FocusedItemIndex).Start;
+            await window.RunAsync(CommandId.SlideLaterFine);
+            await window.RunAsync(CommandId.SlideLaterFine, repeating: true, holdFactor: 10);
+            var moved = Timeline.Span(window.Editor.FocusedLayer!, window.Editor.FocusedItemIndex).Start - start;
+            Check(Math.Abs(moved - 1.1) < 0.01, $"Holding Alt Shift L slides further each step ({moved:0.00} s)");
+            await window.RunAsync(CommandId.Undo);
+            var back = Timeline.Span(window.Editor.FocusedLayer!, window.Editor.FocusedItemIndex).Start;
+            Check(Math.Abs(back - start) < 0.01, "One undo takes back the whole held slide");
+            Check(focused.Id == window.Editor.FocusedItem!.Id, "Focus stays on the item");
         });
 
         await Step("every command runs without crashing", async () =>

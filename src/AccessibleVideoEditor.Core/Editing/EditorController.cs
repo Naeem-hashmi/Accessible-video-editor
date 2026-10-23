@@ -58,7 +58,7 @@ public sealed record Feedback
 /// </summary>
 public sealed partial class EditorController
 {
-    private Item? _clipboard;
+    private List<Item> _clipboard = new();
     private LayerKind _clipboardLayerKind;
 
     public EditorController(ProjectSession session, AppSettings settings)
@@ -144,6 +144,11 @@ public sealed partial class EditorController
     /// <summary>Runs a command that needs no dialog. Returns null for commands the window must handle.</summary>
     public Feedback? Execute(CommandId command)
     {
+        if (ExecuteSelection(command) is { } many)
+        {
+            return many;
+        }
+
         switch (command)
         {
             case CommandId.Undo: return UndoRedo(Session.Undo());
@@ -184,10 +189,10 @@ public sealed partial class EditorController
             case CommandId.MoveItemLater: return ItemEdit("move", (layer, i) => ProjectEditor.MoveItem(layer, i, 1));
             case CommandId.MoveItemFirst: return ItemEdit("move", (layer, i) => ProjectEditor.MoveItemTo(layer, i, 0));
             case CommandId.MoveItemLast: return ItemEdit("move", (layer, i) => ProjectEditor.MoveItemTo(layer, i, layer.Items.Count - 1));
-            case CommandId.SlideEarlier: return Slide(-Settings.SlideStep);
-            case CommandId.SlideLater: return Slide(Settings.SlideStep);
-            case CommandId.SlideEarlierFine: return Slide(-Settings.FineSlideStep);
-            case CommandId.SlideLaterFine: return Slide(Settings.FineSlideStep);
+            case CommandId.SlideEarlier: return Slide(-Settings.SlideStep * HoldFactor);
+            case CommandId.SlideLater: return Slide(Settings.SlideStep * HoldFactor);
+            case CommandId.SlideEarlierFine: return Slide(-Settings.FineSlideStep * HoldFactor);
+            case CommandId.SlideLaterFine: return Slide(Settings.FineSlideStep * HoldFactor);
             case CommandId.SlideLayerEarlier: return LayerEdit("slide layer", layer => ProjectEditor.SlideLayer(layer, -Settings.SlideStep));
             case CommandId.SlideLayerLater: return LayerEdit("slide layer", layer => ProjectEditor.SlideLayer(layer, Settings.SlideStep));
             case CommandId.MoveLayerUp: return LayerEdit("move layer", layer => ProjectEditor.MoveLayer(Project, layer.Id, -1));
@@ -660,7 +665,7 @@ public sealed partial class EditorController
         }
 
         var ripple = Settings.Ripple;
-        var feedback = ItemEdit("slide", (layer, i) => ProjectEditor.SlideItem(layer, i, seconds, ripple));
+        var feedback = ItemEdit("slide", (layer, i) => ProjectEditor.SlideItem(layer, i, seconds, ripple), merge: Repeating);
         if (!feedback.IsError && FocusedItemIndex >= 0)
         {
             Playhead = Timeline.Span(FocusedLayer!, FocusedItemIndex).Start;
@@ -710,7 +715,7 @@ public sealed partial class EditorController
             return Error("No item to copy.");
         }
 
-        _clipboard = item.Clone();
+        _clipboard = [item.Clone()];
         _clipboardLayerKind = FocusedLayer!.Kind;
         return Say($"Copied {item.Name}.", EarconEvent.Done);
     }
@@ -729,7 +734,7 @@ public sealed partial class EditorController
 
     private Feedback Paste()
     {
-        if (_clipboard is null)
+        if (_clipboard.Count == 0)
         {
             return Error("Nothing has been copied. Copy an item with Control C first.");
         }
@@ -739,28 +744,48 @@ public sealed partial class EditorController
             return Error("No layers.");
         }
 
-        var copy = _clipboard.Clone();
-        if (target.Kind == LayerKind.Audio && copy.Kind is ItemKind.Image or ItemKind.Color)
+        var copies = new List<Item>();
+        foreach (var original in _clipboard)
         {
-            return Error("Pictures and colour cards can only be pasted on a video layer.");
-        }
+            var copy = original.Clone();
+            if (target.Kind == LayerKind.Audio && copy.Kind is ItemKind.Image or ItemKind.Color or ItemKind.Text)
+            {
+                return Error("Pictures, colour cards and text can only be pasted on a video layer.");
+            }
 
-        if (target.Kind == LayerKind.Video && copy.Kind == ItemKind.Audio)
-        {
-            return Error("Audio can only be pasted on an audio layer.");
-        }
+            if (target.Kind == LayerKind.Video && copy.Kind == ItemKind.Audio)
+            {
+                return Error("Audio can only be pasted on an audio layer.");
+            }
 
-        if (target.Kind == LayerKind.Video && copy.Kind == ItemKind.Video && _clipboardLayerKind == LayerKind.Audio)
-        {
-            copy.HasVideo = copy.SourceWidth > 0;
-        }
-        else if (target.Kind == LayerKind.Audio)
-        {
-            copy.HasVideo = false;
+            if (target.Kind == LayerKind.Video && copy.Kind == ItemKind.Video && _clipboardLayerKind == LayerKind.Audio)
+            {
+                copy.HasVideo = copy.SourceWidth > 0;
+            }
+            else if (target.Kind == LayerKind.Audio)
+            {
+                copy.HasVideo = false;
+            }
+
+            copies.Add(copy);
         }
 
         var index = FocusedItemIndex;
-        var result = Session.Execute("paste", p => ProjectEditor.InsertAfter(p.FindLayer(target.Id)!, index, copy));
+        var result = Session.Execute("paste", p =>
+        {
+            var layer = p.FindLayer(target.Id)!;
+            EditResult last = EditResult.Fail("");
+            for (var i = 0; i < copies.Count; i++)
+            {
+                last = ProjectEditor.InsertAfter(layer, index + i, copies[i]);
+                if (!last.Ok)
+                {
+                    return last;
+                }
+            }
+
+            return copies.Count == 1 ? last : EditResult.Success($"Pasted {copies.Count} items.", copies[0].Id);
+        });
         return AfterItemEdit(result, EarconEvent.Done);
     }
 
@@ -825,7 +850,7 @@ public sealed partial class EditorController
     }
 
     /// <summary>Runs an edit on the focused item.</summary>
-    private Feedback ItemEdit(string label, Func<Layer, int, EditResult> edit, EarconEvent earcon = EarconEvent.Done)
+    private Feedback ItemEdit(string label, Func<Layer, int, EditResult> edit, EarconEvent earcon = EarconEvent.Done, bool merge = false)
     {
         if (FocusedItemIndex < 0)
         {
@@ -834,7 +859,7 @@ public sealed partial class EditorController
 
         var layerId = FocusedLayerId!.Value;
         var index = FocusedItemIndex;
-        var result = Session.Execute(label, p => edit(p.FindLayer(layerId)!, index));
+        var result = Session.Execute(label, p => edit(p.FindLayer(layerId)!, index), merge);
         return AfterItemEdit(result, earcon);
     }
 

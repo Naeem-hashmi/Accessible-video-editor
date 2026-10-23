@@ -44,7 +44,7 @@ public static class ProjectWindow
                 var cut = start - span.Start;
                 if (item.Kind is ItemKind.Video or ItemKind.Audio)
                 {
-                    item.SourceIn += cut;
+                    item.SourceIn = item.ToSource(cut);
                 }
 
                 item.Duration -= cut;

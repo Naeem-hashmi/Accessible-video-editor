@@ -2,6 +2,11 @@
 
 This lists what the editor can't do yet, roughly in order of value to blind and low-vision creators, with how each could be built. It is honest about the current limits so nobody is surprised.
 
+## What version 0.4.1 fixed
+
+- **Projects without video play in the preview**: only sound (WAV, MP3 with cover art, M4A), only pictures, or only text. The picture shows black when there is only sound, instead of the last frame of a deleted clip.
+- **Space after deleting a long clip** starts from the beginning instead of saying the playhead is at the end, and listening to a layer that has become empty plays all layers.
+
 ## What version 0.4 added
 
 - **Several items at once**: `Shift+Left`/`Shift+Right` select a range, `Ctrl+Space` picks single items, `Ctrl+A` the whole layer; delete, copy, cut, paste, duplicate, mute, volume, slide, length and speed then work on all of them, and `Enter` opens one settings dialog for them all. Beat jumps moved to `Alt+B` and `Alt+Shift+B`.

@@ -818,8 +818,32 @@ public partial class MainWindow : Window
         _wasPlaying = _preview.IsPlaying;
         _preparingStarted = Stopwatch.StartNew();
         _preparingSpoken = 0;
-        var error = await _preview.PlayAsync(_editor.Project, _editor.CurrentScope, _editor.Playhead);
+        var scope = _editor.CurrentScope;
+        var note = "";
+        if (scope.LayerId is not null && Timeline.Duration(scope.Select(_editor.Project)) <= 0.05 &&
+            Timeline.Duration(RenderScope.AllLayers.Select(_editor.Project)) > 0.05)
+        {
+            // Listening to one layer that is empty (for example after deleting its video): play everything instead.
+            scope = RenderScope.AllLayers;
+            note = "This layer is empty, so all layers play. ";
+        }
+
+        var end = Timeline.Duration(scope.Select(_editor.Project));
+        if (!quiet && end > 0.05 && _editor.Playhead >= end - 0.05)
+        {
+            // At the end (for example after deleting a long clip): start again from the beginning, like any player.
+            _editor.SetPlayheadFromPlayback(0);
+            UpdatePlayheadText();
+            note += "From the start. ";
+        }
+
+        var error = await _preview.PlayAsync(_editor.Project, scope, _editor.Playhead);
         _preparingStarted = null;
+        if (error is null && note.Length > 0)
+        {
+            Say(note.Trim(), interrupt: false);
+        }
+
         if (error is not null)
         {
             _earcons.Play(EarconEvent.Error);

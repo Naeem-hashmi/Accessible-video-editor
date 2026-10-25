@@ -94,9 +94,11 @@ public sealed class PreviewService : IDisposable
         }
 
         _session = session;
-        if (session.HasPicture)
+        EnsureBitmap(session.FrameWidth, session.FrameHeight);
+        if (!session.HasPicture)
         {
-            EnsureBitmap(session.FrameWidth, session.FrameHeight);
+            // Only sound is playing: show an empty (black) picture, not the last frame of a clip that is gone.
+            ClearPicture();
         }
 
         var clock = Stopwatch.StartNew();
@@ -131,8 +133,18 @@ public sealed class PreviewService : IDisposable
     /// </summary>
     public void ShowFrame(Project project, double time)
     {
-        if (Tools is null || IsPlaying || IsPreparing || !GraphBuilder.ScopeHasVideo(project, RenderScope.AllLayers))
+        if (Tools is null || IsPlaying || IsPreparing)
         {
+            return;
+        }
+
+        if (!GraphBuilder.ScopeHasVideo(project, RenderScope.AllLayers))
+        {
+            // No pictures at all (only sound): the preview shows black, like the exported video.
+            _still?.Cancel();
+            var (cw, ch) = PreviewCanvas(project, 960, 540);
+            EnsureBitmap(cw, ch);
+            ClearPicture();
             return;
         }
 
@@ -243,6 +255,23 @@ public sealed class PreviewService : IDisposable
             Stop();
             ReachedEnd?.Invoke();
         }
+    }
+
+    /// <summary>Fills the preview picture with black.</summary>
+    private void ClearPicture()
+    {
+        if (_bitmap is null)
+        {
+            return;
+        }
+
+        var black = new byte[_bitmap.PixelWidth * _bitmap.PixelHeight * 4];
+        for (var i = 3; i < black.Length; i += 4)
+        {
+            black[i] = 255;
+        }
+
+        _bitmap.WritePixels(new Int32Rect(0, 0, _bitmap.PixelWidth, _bitmap.PixelHeight), black, _bitmap.PixelWidth * 4, 0);
     }
 
     private void EnsureBitmap(int width, int height)

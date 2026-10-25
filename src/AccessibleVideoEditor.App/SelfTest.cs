@@ -474,6 +474,91 @@ internal static class SelfTest
             Check(TranscriptCoverage.Missing(partial, [part]).Count == 0, "A transcribed part is not done again");
         });
 
+        await Step("preview with no video: only sound, only pictures, only text", async () =>
+        {
+            var original = window.Editor.Session;
+            var tools = window.Tools!;
+            var wav = Path.Combine(folder, "only voice.wav");
+            var mp3 = Path.Combine(folder, "song with cover.mp3");
+            var m4a = Path.Combine(folder, "phone voice.m4a");
+            var jpg = Path.Combine(folder, "photo.jpg");
+            await RunFfmpeg(tools, "-f", "lavfi", "-i", "sine=frequency=440:duration=5", "-ac", "2", wav);
+            await RunFfmpeg(tools, "-f", "lavfi", "-i", "sine=frequency=550:duration=5", "-f", "lavfi", "-i", "testsrc=size=300x300:duration=1",
+                "-map", "0:a", "-map", "1:v", "-frames:v", "1", "-c:v", "mjpeg", "-disposition:v", "attached_pic", "-c:a", "libmp3lame", mp3);
+            await RunFfmpeg(tools, "-f", "lavfi", "-i", "sine=frequency=660:duration=5", "-c:a", "aac", m4a);
+            await RunFfmpeg(tools, "-f", "lavfi", "-i", "testsrc=size=640x360", "-frames:v", "1", jpg);
+
+            async Task Try(string what, Project project, bool expectPicture)
+            {
+                await window.ApplyAsync(window.Editor.Load(new ProjectSession(project), what));
+                window.Editor.SetPlayheadFromPlayback(0);
+                window.FocusTimeline();
+                await Settle();
+                await window.RunAsync(CommandId.PlayPause);
+                await Task.Delay(1500);
+                var at = window.Preview.CurrentTime;
+                var said = window.StatusTextValue;
+                var picture = window.PreviewImage.Source is System.Windows.Media.Imaging.WriteableBitmap b && HasPicture(b);
+                log.Add($"{what}: playing {window.Preview.IsPlaying}, at {at:0.00} s, picture {picture}, last message \"{said}\"");
+                Check(window.Preview.IsPlaying && at > 0.5, $"{what} plays in the preview");
+                if (expectPicture)
+                {
+                    Check(picture, $"{what} shows its picture while playing");
+                }
+
+                window.Preview.Pause();
+            }
+
+            async Task<Project> Audio(string file)
+            {
+                var project = new Project { Title = "Sound only" };
+                var info = await MediaProbe.ProbeAsync(tools, file);
+                var layer = ProjectEditor.AddLayer(project, LayerKind.Audio);
+                layer.Items.Add(MediaProbe.CreateItem(info, layer.Defaults, LayerKind.Audio));
+                return project;
+            }
+
+            await Try("Only a WAV sound", await Audio(wav), false);
+            await Try("Only an MP3 with cover art", await Audio(mp3), false);
+            await Try("Only an M4A sound", await Audio(m4a), false);
+
+            var withEmptyVideo = await Audio(wav);
+            ProjectEditor.AddLayer(withEmptyVideo, LayerKind.Video, index: 0);
+            await Try("Sound with an empty video layer", withEmptyVideo, false);
+
+            // As after deleting a long video: the playhead is past the end, and the empty video layer has focus,
+            // listened to on its own. Space must still play the sound, from the start.
+            await window.ApplyAsync(window.Editor.Load(new ProjectSession(withEmptyVideo), "After deleting the video"));
+            await window.RunAsync(CommandId.Layer1);
+            window.Editor.SetPlayheadFromPlayback(window.Editor.ProjectDuration);
+            window.FocusTimeline();
+            await Settle();
+            await window.RunAsync(CommandId.PlayPause);
+            await Task.Delay(1500);
+            log.Add($"After deleting the video: playing {window.Preview.IsPlaying}, at {window.Preview.CurrentTime:0.00} s, last message \"{window.StatusTextValue}\"");
+            Check(window.Preview.IsPlaying && window.Preview.CurrentTime is > 0.5 and < 3,
+                "With the playhead at the end and an empty layer focused, Space plays the sound from the start");
+            window.Preview.Pause();
+
+            var pictures = new Project { Title = "Pictures only" };
+            var pictureLayer = ProjectEditor.AddLayer(pictures, LayerKind.Video);
+            foreach (var file in new[] { jpg, Path.Combine(folder, "logo.png") }.Where(File.Exists))
+            {
+                var item = MediaProbe.CreateItem(await MediaProbe.ProbeAsync(tools, file), pictureLayer.Defaults, LayerKind.Video);
+                item.Duration = 3;
+                pictureLayer.Items.Add(item);
+            }
+
+            await Try("Only pictures", pictures, true);
+
+            var text = new Project { Title = "Text only" };
+            var textLayer = ProjectEditor.AddLayer(text, LayerKind.Video);
+            textLayer.Items.Add(MediaProbe.CreateTextItem(new TextStyle { Content = "Hello" }, 4, textLayer.Defaults));
+            await Try("Only a title", text, true);
+
+            await window.ApplyAsync(window.Editor.Load(original, "Back to the test project"));
+        });
+
         await Step("real recorded sounds", () =>
         {
             var sounds = RecordedSounds.Load(AppPaths.Recordings);

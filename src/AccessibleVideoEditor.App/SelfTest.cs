@@ -483,8 +483,8 @@ internal static class SelfTest
             var m4a = Path.Combine(folder, "phone voice.m4a");
             var jpg = Path.Combine(folder, "photo.jpg");
             await RunFfmpeg(tools, "-f", "lavfi", "-i", "sine=frequency=440:duration=5", "-ac", "2", wav);
-            await RunFfmpeg(tools, "-f", "lavfi", "-i", "sine=frequency=550:duration=5", "-f", "lavfi", "-i", "testsrc=size=300x300:duration=1",
-                "-map", "0:a", "-map", "1:v", "-frames:v", "1", "-c:v", "mjpeg", "-disposition:v", "attached_pic", "-c:a", "libmp3lame", mp3);
+            await RunFfmpeg(tools, "-f", "lavfi", "-i", "sine=frequency=550:duration=5", "-f", "lavfi", "-i", "testsrc=size=300x300:rate=1:duration=1",
+                "-map", "0:a", "-map", "1:v", "-c:v", "mjpeg", "-disposition:v", "attached_pic", "-c:a", "libmp3lame", mp3);
             await RunFfmpeg(tools, "-f", "lavfi", "-i", "sine=frequency=660:duration=5", "-c:a", "aac", m4a);
             await RunFfmpeg(tools, "-f", "lavfi", "-i", "testsrc=size=640x360", "-frames:v", "1", jpg);
 
@@ -515,6 +515,7 @@ internal static class SelfTest
                 var info = await MediaProbe.ProbeAsync(tools, file);
                 var layer = ProjectEditor.AddLayer(project, LayerKind.Audio);
                 layer.Items.Add(MediaProbe.CreateItem(info, layer.Defaults, LayerKind.Audio));
+                Check(info.Duration > 4.5 && info.HasAudio, $"{Path.GetFileName(file)} is read as {info.Duration:0.00} s of sound");
                 return project;
             }
 

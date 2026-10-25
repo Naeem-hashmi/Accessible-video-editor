@@ -56,6 +56,20 @@ public sealed class PreviewOnlyTests(MediaFixture media)
     }
 
     [Fact]
+    public async Task An_mp3_with_cover_art_is_sound_and_plays_in_full()
+    {
+        var mp3 = await media.Generate("song with cover.mp3", "-f", "lavfi", "-i", "sine=frequency=550:duration=5", "-f", "lavfi", "-i",
+            "testsrc=size=300x300:rate=1:duration=1", "-map", "0:a", "-map", "1:v", "-c:v", "mjpeg", "-disposition:v", "attached_pic", "-c:a", "libmp3lame");
+        var info = await media.Probe(mp3);
+        Assert.Equal(ItemKind.Audio, info.Kind); // The cover picture is not a video.
+        Assert.InRange(info.Duration, 4.9, 5.2);
+        var project = new Project { Width = 320, Height = 180, FrameRate = 25 };
+        ProjectEditor.AddLayer(project, LayerKind.Audio).Items.Add(await media.ItemFor(mp3, LayerKind.Audio));
+        var (sound, _, errors) = Stream(project);
+        Assert.True(sound > 4.8, $"{sound:0.00} s of sound. {errors}");
+    }
+
+    [Fact]
     public async Task An_empty_video_layer_beside_audio_still_plays()
     {
         var project = new Project { Width = 320, Height = 180, FrameRate = 25 };
